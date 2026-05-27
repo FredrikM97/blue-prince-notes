@@ -48,8 +48,34 @@ jobs:
 
       - name: Prepare static artifact
         run: |
-          cp dist/client/index.html dist/client/404.html
-          touch dist/client/.nojekyll
+          rm -rf pages-dist
+          mkdir -p pages-dist
+
+          if [[ -f dist/client/index.html ]]; then
+            SRC_DIR="dist/client"
+          elif [[ -f dist/index.html ]]; then
+            SRC_DIR="dist"
+          elif [[ -f .output/public/index.html ]]; then
+            SRC_DIR=".output/public"
+          else
+            echo "Could not find static output directory."
+            echo "Checked: dist/client, dist, .output/public"
+            ls -la
+            [[ -d dist ]] && find dist -maxdepth 3 -type f | head -n 50 || true
+            [[ -d .output ]] && find .output -maxdepth 4 -type f | head -n 50 || true
+            exit 1
+          fi
+
+          cp -R "$SRC_DIR"/. pages-dist/
+
+          if [[ ! -f pages-dist/index.html ]]; then
+            echo "index.html not found in prepared artifact directory"
+            find pages-dist -maxdepth 3 -type f | head -n 50 || true
+            exit 1
+          fi
+
+          cp pages-dist/index.html pages-dist/404.html
+          touch pages-dist/.nojekyll
 
       - name: Setup Pages
         uses: actions/configure-pages@v5
@@ -57,7 +83,7 @@ jobs:
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: dist/client
+          path: pages-dist
 
   deploy:
     runs-on: ubuntu-latest
