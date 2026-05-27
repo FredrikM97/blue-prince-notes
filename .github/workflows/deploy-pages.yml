@@ -47,6 +47,8 @@ jobs:
         run: npm run build
 
       - name: Prepare static artifact
+        env:
+          BASE_PATH: ${{ steps.base_path.outputs.base_path }}
         run: |
           rm -rf pages-dist
           mkdir -p pages-dist
@@ -58,20 +60,53 @@ jobs:
           elif [[ -f .output/public/index.html ]]; then
             SRC_DIR=".output/public"
           else
-            echo "Could not find static output directory."
-            echo "Checked: dist/client, dist, .output/public"
-            ls -la
-            [[ -d dist ]] && find dist -maxdepth 3 -type f | head -n 50 || true
-            [[ -d .output ]] && find .output -maxdepth 4 -type f | head -n 50 || true
-            exit 1
+            if [[ -d dist/client/assets ]]; then
+              SRC_DIR="dist/client"
+            else
+              echo "Could not find static output directory."
+              echo "Checked: dist/client, dist, .output/public"
+              ls -la
+              [[ -d dist ]] && find dist -maxdepth 3 -type f | head -n 50 || true
+              [[ -d .output ]] && find .output -maxdepth 4 -type f | head -n 50 || true
+              exit 1
+            fi
           fi
 
           cp -R "$SRC_DIR"/. pages-dist/
 
           if [[ ! -f pages-dist/index.html ]]; then
-            echo "index.html not found in prepared artifact directory"
-            find pages-dist -maxdepth 3 -type f | head -n 50 || true
-            exit 1
+            ENTRY_JS=$(find pages-dist/assets -maxdepth 1 -type f -name 'index-*.js' | head -n 1 || true)
+            ENTRY_CSS=$(find pages-dist/assets -maxdepth 1 -type f -name 'styles-*.css' | head -n 1 || true)
+
+            if [[ -z "$ENTRY_JS" ]]; then
+              echo "index.html missing and no index-*.js entry found under pages-dist/assets"
+              find pages-dist -maxdepth 3 -type f | head -n 100 || true
+              exit 1
+            fi
+
+            ENTRY_JS_BASENAME=$(basename "$ENTRY_JS")
+            ENTRY_CSS_BASENAME=$(basename "$ENTRY_CSS")
+
+            if [[ -n "$ENTRY_CSS" ]]; then
+              CSS_TAG="<link rel=\"stylesheet\" href=\"${BASE_PATH}assets/${ENTRY_CSS_BASENAME}\">"
+            else
+              CSS_TAG=""
+            fi
+
+            cat > pages-dist/index.html <<EOF
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    ${CSS_TAG}
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="${BASE_PATH}assets/${ENTRY_JS_BASENAME}"></script>
+  </body>
+</html>
+EOF
           fi
 
           cp pages-dist/index.html pages-dist/404.html
