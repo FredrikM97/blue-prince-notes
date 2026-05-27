@@ -46,13 +46,18 @@ jobs:
           BASE_PATH: ${{ steps.base_path.outputs.base_path }}
         run: npm run build
 
+      - name: Finalize Pages artifact
+        run: |
+          cp dist/client/index.html dist/client/404.html
+          touch dist/client/.nojekyll
+
       - name: Setup Pages
         uses: actions/configure-pages@v5
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: dist
+          path: dist/client
 
   deploy:
     runs-on: ubuntu-latest

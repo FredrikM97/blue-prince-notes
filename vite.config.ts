@@ -15,6 +15,9 @@ export default defineConfig({
   tanstackStart: {
     spa: {
       enabled: true,
+      prerender: {
+        outputPath: "/index",
+      },
     },
     // Keep the server runtime entry for prerendering the SPA shell at build time.
     server: { entry: "server" },
