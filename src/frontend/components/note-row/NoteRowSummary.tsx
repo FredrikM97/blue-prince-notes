@@ -18,6 +18,7 @@ export function NoteRowSummary({
   open: boolean;
 }) {
   const Icon = TYPE_ICON[note.type] ?? Lightbulb;
+  const hasImages = note.imageIds.length > 0;
 
   return (
     <>
@@ -34,14 +35,14 @@ export function NoteRowSummary({
         </div>
         {note.body && !open && <p className="mt-0.5 line-clamp-1 text-sm text-muted-foreground">{note.body}</p>}
         <div className="mt-1 flex flex-wrap items-center gap-1.5">
-          {note.room && <Pill className="border-brass/40 text-brass">@{note.room}</Pill>}
-          {note.tags.map((t) => (
+          {!hasImages && note.room && <Pill className="border-brass/40 text-brass">@{note.room}</Pill>}
+          {!hasImages && note.tags.map((t) => (
             <Pill key={t} className="border-border bg-secondary text-foreground">#{t}</Pill>
           ))}
           {note.status === "solved" && (
             <Pill className="border-green-700/40 bg-green-700/30 text-green-200">solved</Pill>
           )}
-          {note.imageIds.length > 0 && <span className="text-xs text-muted-foreground">📎 {note.imageIds.length}</span>}
+          {hasImages && <span className="text-xs text-muted-foreground">📎 {note.imageIds.length}</span>}
         </div>
       </div>
       <span className="mt-1 text-muted-foreground opacity-0 group-hover:opacity-100">

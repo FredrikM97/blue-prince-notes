@@ -1,7 +1,13 @@
 import { useMemo } from "react";
 import { useStore } from "@/frontend/data/store";
-import { DEFAULT_ROOMS } from "@/frontend/data/rooms";
 import type { Note } from "@/lib/types";
+
+const GRAPH_VIEWBOX = "0 0 1000 680";
+const LAYOUT_CENTER_X = 500;
+const LAYOUT_CENTER_Y = 340;
+const LAYOUT_RADIUS = 250;
+const NODE_RADIUS = 11;
+const EDGE_NODE_PADDING = 14;
 
 interface GraphNode {
   id: string;
@@ -11,9 +17,34 @@ interface GraphNode {
 }
 
 interface GraphEdge {
-  a: string;
-  b: string;
+  from: string;
+  to: string;
   weight: number;
+  relations: string[];
+}
+
+interface GraphModel {
+  nodes: GraphNode[];
+  edges: GraphEdge[];
+}
+
+interface ReferenceSignals {
+  tags: Set<string>;
+  rooms: Set<string>;
+}
+
+interface OwnerSignals {
+  tags: Set<string>;
+  room: string | null;
+}
+
+interface LineGeometry {
+  x1: number;
+  y1: number;
+  x2: number;
+  y2: number;
+  mx: number;
+  my: number;
 }
 
 const TYPE_COLOR: Record<Note["type"], string> = {
@@ -29,6 +60,7 @@ export function GraphPage() {
   const notes = useStore((s) => s.notes);
 
   const { nodes, edges } = useMemo(() => buildGraph(notes), [notes]);
+  const nodeById = useMemo(() => indexNodes(nodes), [nodes]);
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-6">
@@ -36,7 +68,7 @@ export function GraphPage() {
         <div>
           <h1 className="font-serif text-2xl">Connections</h1>
           <p className="text-xs text-muted-foreground">
-            Notes connect when they share a room, tag, or attached image.
+            Arrows show explicit references: @room and #tag.
           </p>
         </div>
         <div className="text-xs text-muted-foreground">
@@ -50,48 +82,25 @@ export function GraphPage() {
         </div>
       ) : (
         <div className="overflow-hidden rounded-lg border border-border bg-card/40 p-2">
-          <svg viewBox="0 0 1000 680" className="h-[68vh] min-h-[420px] w-full">
+          <svg viewBox={GRAPH_VIEWBOX} className="h-[68vh] min-h-[420px] w-full">
             <rect x="0" y="0" width="1000" height="680" fill="transparent" />
+            <defs>
+              <marker
+                id="graph-arrow"
+                viewBox="0 0 10 10"
+                refX="8"
+                refY="5"
+                markerWidth="6"
+                markerHeight="6"
+                orient="auto-start-reverse"
+              >
+                <path d="M 0 0 L 10 5 L 0 10 z" fill="rgba(255,255,255,0.45)" />
+              </marker>
+            </defs>
 
-            {edges.map((edge) => {
-              const from = nodes.find((n) => n.id === edge.a);
-              const to = nodes.find((n) => n.id === edge.b);
-              if (!from || !to) return null;
-              return (
-                <line
-                  key={`${edge.a}-${edge.b}`}
-                  x1={from.x}
-                  y1={from.y}
-                  x2={to.x}
-                  y2={to.y}
-                  stroke="rgba(255,255,255,0.22)"
-                  strokeWidth={Math.min(1 + edge.weight * 0.4, 3)}
-                />
-              );
-            })}
+            {edges.map((edge) => renderEdge(edge, nodeById))}
 
-            {nodes.map((node) => (
-              <g key={node.id}>
-                <circle
-                  cx={node.x}
-                  cy={node.y}
-                  r={11}
-                  fill={TYPE_COLOR[node.note.type]}
-                  stroke="rgba(0,0,0,0.35)"
-                  strokeWidth={1}
-                >
-                  <title>{node.note.title}</title>
-                </circle>
-                <text
-                  x={node.x + 14}
-                  y={node.y + 4}
-                  fill="rgba(255,255,255,0.86)"
-                  fontSize="11"
-                >
-                  {trim(node.note.title, 24)}
-                </text>
-              </g>
-            ))}
+            {nodes.map(renderNode)}
           </svg>
         </div>
       )}
@@ -99,86 +108,200 @@ export function GraphPage() {
   );
 }
 
-function buildGraph(notes: Note[]): { nodes: GraphNode[]; edges: GraphEdge[] } {
+function buildGraph(notes: Note[]): GraphModel {
   if (notes.length === 0) return { nodes: [], edges: [] };
 
-  const knownRooms = new Set<string>(DEFAULT_ROOMS.map((r) => normalizeRoom(r.name)));
-  notes.forEach((note) => {
-    if (note.room) knownRooms.add(normalizeRoom(note.room));
-  });
+  const refs = buildReferenceSignals(notes);
+  const owners = buildOwnerSignals(notes);
 
-  const signals = new Map<string, { tags: Set<string>; rooms: Set<string>; images: Set<string> }>();
-  notes.forEach((note) => {
-    signals.set(note.id, extractSignals(note, knownRooms));
-  });
+  return {
+    nodes: buildNodes(notes),
+    edges: buildEdges(notes, refs, owners),
+  };
+}
 
-  const centerX = 500;
-  const centerY = 340;
-  const radius = 250;
-
-  const nodes = notes.map((note, i) => {
+function buildNodes(notes: Note[]): GraphNode[] {
+  return notes.map((note, i) => {
     const angle = (2 * Math.PI * i) / Math.max(notes.length, 1);
     const wobble = (hashId(note.id) % 40) - 20;
     return {
       id: note.id,
       note,
-      x: centerX + Math.cos(angle) * (radius + wobble),
-      y: centerY + Math.sin(angle) * (radius + wobble),
+      x: LAYOUT_CENTER_X + Math.cos(angle) * (LAYOUT_RADIUS + wobble),
+      y: LAYOUT_CENTER_Y + Math.sin(angle) * (LAYOUT_RADIUS + wobble),
     };
   });
+}
 
+function buildReferenceSignals(notes: Note[]): Map<string, ReferenceSignals> {
+  const refs = new Map<string, ReferenceSignals>();
+  notes.forEach((note) => {
+    refs.set(note.id, extractReferences(note));
+  });
+  return refs;
+}
+
+function buildOwnerSignals(notes: Note[]): Map<string, OwnerSignals> {
+  const owners = new Map<string, OwnerSignals>();
+  notes.forEach((note) => {
+    owners.set(note.id, {
+      tags: new Set<string>(note.tags.map((t) => normalizeTag(t))),
+      room: note.room ? normalizeRoom(note.room) : null,
+    });
+  });
+  return owners;
+}
+
+function buildEdges(
+  notes: Note[],
+  refs: Map<string, ReferenceSignals>,
+  owners: Map<string, OwnerSignals>,
+): GraphEdge[] {
   const edges: GraphEdge[] = [];
 
   for (let i = 0; i < notes.length; i += 1) {
-    for (let j = i + 1; j < notes.length; j += 1) {
-      const a = notes[i];
-      const b = notes[j];
+    const source = notes[i];
+    const sourceRefs = refs.get(source.id);
+    if (!sourceRefs) continue;
 
-      const sigA = signals.get(a.id);
-      const sigB = signals.get(b.id);
-      if (!sigA || !sigB) continue;
+    for (let j = 0; j < notes.length; j += 1) {
+      if (i === j) continue;
 
-      const sharedTags = intersectCount(sigA.tags, sigB.tags);
-      const sharedRoom = intersectCount(sigA.rooms, sigB.rooms);
-      const sharedImages = intersectCount(sigA.images, sigB.images);
-      const weight = sharedTags + sharedRoom + sharedImages;
+      const target = notes[j];
+      const targetOwner = owners.get(target.id);
+      if (!targetOwner) continue;
 
-      if (weight > 0) {
-        edges.push({ a: a.id, b: b.id, weight });
-      }
+      const edge = buildDirectedEdge(source.id, target.id, sourceRefs, targetOwner);
+      if (edge) edges.push(edge);
     }
   }
 
-  return { nodes, edges };
+  return edges;
 }
 
-function extractSignals(
-  note: Note,
-  knownRooms: Set<string>,
-): { tags: Set<string>; rooms: Set<string>; images: Set<string> } {
-  const tags = new Set<string>(note.tags.map((t) => normalizeTag(t)));
-  const rooms = new Set<string>();
-  const images = new Set<string>(note.imageIds);
+function buildDirectedEdge(
+  sourceId: string,
+  targetId: string,
+  sourceRefs: ReferenceSignals,
+  targetOwner: OwnerSignals,
+): GraphEdge | null {
+  let weight = 0;
+  const relations: string[] = [];
 
-  if (note.room) rooms.add(normalizeRoom(note.room));
+  if (targetOwner.room && sourceRefs.rooms.has(targetOwner.room)) {
+    weight += 1;
+    relations.push("room");
+  }
+
+  const sharedTags = intersectCount(sourceRefs.tags, targetOwner.tags);
+  if (sharedTags > 0) {
+    weight += Math.min(sharedTags, 2);
+    relations.push("tag");
+  }
+
+  if (weight === 0) return null;
+  return { from: sourceId, to: targetId, weight, relations };
+}
+
+function extractReferences(note: Note): ReferenceSignals {
+  const tags = new Set<string>();
+  const rooms = new Set<string>();
 
   const raw = `${note.title} ${note.body}`;
-  const lowered = raw.toLowerCase();
 
-  // #tag references in title/details.
+  // Explicit #tag references in title/details.
   const hashMatches = raw.match(/#[\w-]+/g) ?? [];
   hashMatches.forEach((tok) => tags.add(normalizeTag(tok.slice(1))));
 
-  // @room_name references in title/details.
+  // Explicit @room_name references in title/details.
   const roomMatches = raw.match(/@[\w-]+/g) ?? [];
   roomMatches.forEach((tok) => rooms.add(normalizeRoom(tok.slice(1).replace(/_/g, " "))));
 
-  // Mentioned room names in free text details.
-  knownRooms.forEach((room) => {
-    if (room && lowered.includes(room)) rooms.add(room);
-  });
+  return { tags, rooms };
+}
 
-  return { tags, rooms, images };
+function indexNodes(nodes: GraphNode[]) {
+  const map = new Map<string, GraphNode>();
+  nodes.forEach((node) => {
+    map.set(node.id, node);
+  });
+  return map;
+}
+
+function renderEdge(edge: GraphEdge, nodeById: Map<string, GraphNode>) {
+  const from = nodeById.get(edge.from);
+  const to = nodeById.get(edge.to);
+  if (!from || !to) return null;
+
+  const line = edgeGeometry(from, to, EDGE_NODE_PADDING);
+
+  return (
+    <g key={`${edge.from}-${edge.to}`}>
+      <line
+        x1={line.x1}
+        y1={line.y1}
+        x2={line.x2}
+        y2={line.y2}
+        stroke="rgba(255,255,255,0.22)"
+        strokeWidth={Math.min(1 + edge.weight * 0.4, 3)}
+        markerEnd="url(#graph-arrow)"
+      />
+      <text
+        x={line.mx}
+        y={line.my - 4}
+        fill="rgba(255,255,255,0.7)"
+        fontSize="9"
+        textAnchor="middle"
+      >
+        {edge.relations.join("+")}
+      </text>
+    </g>
+  );
+}
+
+function renderNode(node: GraphNode) {
+  return (
+    <g key={node.id}>
+      <circle
+        cx={node.x}
+        cy={node.y}
+        r={NODE_RADIUS}
+        fill={TYPE_COLOR[node.note.type]}
+        stroke="rgba(0,0,0,0.35)"
+        strokeWidth={1}
+      >
+        <title>{node.note.title}</title>
+      </circle>
+      <text
+        x={node.x + 14}
+        y={node.y + 4}
+        fill="rgba(255,255,255,0.86)"
+        fontSize="11"
+      >
+        {trim(node.note.title, 24)}
+      </text>
+    </g>
+  );
+}
+
+function edgeGeometry(from: GraphNode, to: GraphNode, pad: number): LineGeometry {
+  const dx = to.x - from.x;
+  const dy = to.y - from.y;
+  const distance = Math.hypot(dx, dy) || 1;
+
+  const x1 = from.x + (dx / distance) * pad;
+  const y1 = from.y + (dy / distance) * pad;
+  const x2 = to.x - (dx / distance) * pad;
+  const y2 = to.y - (dy / distance) * pad;
+
+  return {
+    x1,
+    y1,
+    x2,
+    y2,
+    mx: (x1 + x2) / 2,
+    my: (y1 + y2) / 2,
+  };
 }
 
 function normalizeTag(value: string) {
