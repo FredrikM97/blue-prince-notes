@@ -62,7 +62,7 @@ export interface SectionDef {
   id: string;
   label: string;
   filter?: { type?: NoteType };
-  builtin?: "notes" | "todos" | "map" | "images";
+  builtin?: "notes" | "todos" | "map" | "graph" | "images";
   order: number;
   hidden?: boolean;
 }
