@@ -177,25 +177,25 @@ export function CaptureDialog() {
       <DialogContent
         hideOverlay
         onInteractOutside={(e) => e.preventDefault()}
-        className="left-auto right-0 top-0 h-dvh w-full max-w-none translate-x-0 translate-y-0 gap-3 overflow-y-auto rounded-none border-l p-4 sm:w-[32rem] lg:w-[34rem] sm:rounded-none sm:p-6"
+        className="z-30 left-auto right-0 top-14 h-[calc(100dvh-3.5rem)] w-full max-w-none translate-x-0 translate-y-0 gap-2 overflow-y-auto rounded-none border-l p-4 sm:w-[20rem] md:w-[24rem] lg:w-[30rem] xl:w-[34rem] sm:rounded-none sm:p-5 flex flex-col"
       >
-        <DialogHeader>
-          <DialogTitle className="font-serif text-xl">
+        <DialogHeader className="shrink-0 space-y-0.5">
+          <DialogTitle className="font-serif text-lg">
             New {mode === "todo" ? "todo" : "note"}
           </DialogTitle>
-          <DialogDescription>
+          <DialogDescription className="text-xs leading-4">
             Fill in the fields below, or type commands like @room, #tag, and !todo.
           </DialogDescription>
         </DialogHeader>
 
-        <Tabs value={mode} onValueChange={(v) => setMode(v as "note" | "todo")}>
-          <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="note">📝 Note</TabsTrigger>
-            <TabsTrigger value="todo">✓ Todo</TabsTrigger>
+        <Tabs className="shrink-0" value={mode} onValueChange={(v) => setMode(v as "note" | "todo")}>
+          <TabsList className="grid h-8 w-full grid-cols-2">
+            <TabsTrigger className="text-xs" value="note">📝 Note</TabsTrigger>
+            <TabsTrigger className="text-xs" value="todo">✓ Todo</TabsTrigger>
           </TabsList>
         </Tabs>
 
-        <div className="space-y-3">
+        <div className="space-y-2.5">
           <div>
             <label className="mb-1 block text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
               Title

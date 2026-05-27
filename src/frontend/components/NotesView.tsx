@@ -85,8 +85,10 @@ export function NotesView({
 
   return (
     <div
-      className={`mx-auto grid max-w-7xl gap-6 px-4 py-6 lg:grid-cols-[220px_1fr] ${
-        captureOpen || notePanelOpen ? "sm:pr-[32rem] lg:pr-[34rem]" : ""
+      className={`mx-auto grid w-full gap-6 px-4 py-6 lg:grid-cols-[220px_1fr] ${
+        captureOpen || notePanelOpen
+          ? "max-w-none sm:pr-[20rem] md:pr-[24rem] lg:pr-[30rem] xl:pr-[34rem]"
+          : "max-w-7xl"
       }`}
     >
       <aside className="space-y-4 lg:sticky lg:top-24 lg:self-start">
@@ -175,7 +177,7 @@ export function NotesView({
         <DialogContent
           hideOverlay
           onInteractOutside={(e) => e.preventDefault()}
-          className="left-auto right-0 top-0 h-dvh w-full max-w-none translate-x-0 translate-y-0 gap-3 overflow-y-auto rounded-none border-l p-4 sm:w-[32rem] lg:w-[34rem] sm:rounded-none sm:p-6 flex flex-col"
+          className="z-30 left-auto right-0 top-14 h-[calc(100dvh-3.5rem)] w-full max-w-none translate-x-0 translate-y-0 gap-3 overflow-y-auto rounded-none border-l p-4 sm:w-[20rem] md:w-[24rem] lg:w-[30rem] xl:w-[34rem] sm:rounded-none sm:p-6 flex flex-col"
         >
           {activeNote && (
             <>

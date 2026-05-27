@@ -19,9 +19,14 @@ export function AppHeader() {
   const search = useStore((s) => s.search);
   const setSearch = useStore((s) => s.setSearch);
   const openCapture = useStore((s) => s.openCapture);
+  const closeCapture = useStore((s) => s.closeCapture);
   const load = useStore((s) => s.load);
   const pathname = useRouterState({ select: (r) => r.location.pathname });
   const fileRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    closeCapture();
+  }, [pathname, closeCapture]);
 
   function hrefFor(s: { id: string; builtin?: string; filter?: { type?: string } }) {
     if (s.builtin === "notes") return "/";
