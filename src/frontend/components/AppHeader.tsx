@@ -91,7 +91,7 @@ export function AppHeader() {
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
               <DropdownMenuItem onClick={() => exportAll().then(() => toast.success("Exported"))}>
-                <Download className="mr-2 h-4 w-4" /> Export all (JSON)
+                <Download className="mr-2 h-4 w-4" /> Export all (ZIP)
               </DropdownMenuItem>
               <DropdownMenuItem onClick={() => fileRef.current?.click()}>
                 <Upload className="mr-2 h-4 w-4" /> Import…
@@ -107,7 +107,7 @@ export function AppHeader() {
           <input
             ref={fileRef}
             type="file"
-            accept="application/json"
+            accept=".zip,application/zip,application/json,.json"
             className="hidden"
             onChange={async (e) => {
               const f = e.target.files?.[0];

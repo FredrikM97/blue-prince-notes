@@ -1,4 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 import { useStore } from "@/frontend/data/store";
 import { INPUT_BASE_CLASS, TEXTAREA_BASE_CLASS } from "@/frontend/components/common/formClasses";
 import { buttonClass } from "@/frontend/components/common/buttonClasses";
@@ -51,6 +53,7 @@ export function CaptureDialog() {
   const [tagsInput, setTagsInput] = useState("");
   const [priority, setPriority] = useState<Priority>("med");
   const [body, setBody] = useState("");
+  const [showDetailsPreview, setShowDetailsPreview] = useState(false);
   const [pendingImages, setPendingImages] = useState<Blob[]>([]);
   const [showHelp, setShowHelp] = useState(false);
   const [cursorPos, setCursorPos] = useState(0);
@@ -118,6 +121,7 @@ export function CaptureDialog() {
       setTagsInput("");
       setPriority("med");
       setBody("");
+      setShowDetailsPreview(false);
       setPendingImages([]);
       setCursorPos(prefill.length);
       setTimeout(() => inputRef.current?.focus(), 50);
@@ -169,8 +173,12 @@ export function CaptureDialog() {
   }
 
   return (
-    <Dialog open={open} onOpenChange={(o) => (o ? openCap() : close())}>
-      <DialogContent className="max-w-lg">
+    <Dialog modal={false} open={open} onOpenChange={(o) => (o ? openCap() : close())}>
+      <DialogContent
+        hideOverlay
+        onInteractOutside={(e) => e.preventDefault()}
+        className="left-auto right-0 top-0 h-dvh w-full max-w-none translate-x-0 translate-y-0 gap-3 overflow-y-auto rounded-none border-l p-4 sm:w-[32rem] lg:w-[34rem] sm:rounded-none sm:p-6"
+      >
         <DialogHeader>
           <DialogTitle className="font-serif text-xl">
             New {mode === "todo" ? "todo" : "note"}
@@ -328,16 +336,44 @@ export function CaptureDialog() {
           </div>
 
           <div>
-            <label className="mb-1 block text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
-              Details {mode === "todo" ? "(optional)" : "(optional)"}
-            </label>
+            <div className="mb-1 flex items-center justify-between gap-2">
+              <label className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
+                Details {mode === "todo" ? "(optional)" : "(optional)"}
+              </label>
+              {mode === "note" && (
+                <button
+                  type="button"
+                  onClick={() => setShowDetailsPreview((v) => !v)}
+                  className="text-[11px] text-muted-foreground hover:text-foreground"
+                >
+                  {showDetailsPreview ? "Hide preview" : "Open preview"}
+                </button>
+              )}
+            </div>
             <textarea
               value={body}
               onChange={(e) => setBody(e.target.value)}
               placeholder="Longer note, paste evidence here, or details about the todo…"
-              rows={3}
+              rows={6}
               className={TEXTAREA_BASE_CLASS}
             />
+
+            {mode === "note" && showDetailsPreview && (
+              <div className="mt-3 rounded-md border border-border bg-card/60 p-3">
+                <div className="mb-2 text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
+                  Details preview
+                </div>
+                <div className="min-h-[8.8rem] text-sm leading-relaxed text-foreground [&_h1]:mb-2 [&_h1]:text-xl [&_h1]:font-semibold [&_h2]:mb-2 [&_h2]:text-lg [&_h2]:font-semibold [&_h3]:mb-2 [&_h3]:text-base [&_h3]:font-semibold [&_p]:mb-2 [&_ul]:mb-2 [&_ul]:list-disc [&_ul]:pl-5 [&_ol]:mb-2 [&_ol]:list-decimal [&_ol]:pl-5 [&_li]:mb-1 [&_code]:rounded [&_code]:bg-secondary [&_code]:px-1 [&_code]:py-0.5 [&_pre]:mb-2 [&_pre]:overflow-x-auto [&_pre]:rounded [&_pre]:bg-secondary [&_pre]:p-2 [&_pre_code]:bg-transparent [&_pre_code]:p-0">
+                  {body.trim().length > 0 ? (
+                    <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                      {body}
+                    </ReactMarkdown>
+                  ) : (
+                    <p className="text-muted-foreground">Nothing to preview yet.</p>
+                  )}
+                </div>
+              </div>
+            )}
           </div>
 
           <div className="flex items-center justify-between">

@@ -1,4 +1,6 @@
 import { useMemo, useState, type ReactNode } from "react";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 import { useStore } from "@/frontend/data/store";
 import {
   ROOMS_BY_CATEGORY,
@@ -168,7 +170,7 @@ export function MapPage() {
 
                 <div>
                   <label className="mb-1 block text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
-                    Cell comment
+                    Cell details
                   </label>
                   <textarea
                     value={commentDraft}
@@ -181,9 +183,25 @@ export function MapPage() {
                       })
                     }
                     placeholder="Quick note about this cell — door direction, gem cost, danger..."
-                    rows={3}
+                    rows={6}
                     className={TEXTAREA_BASE_CLASS}
                   />
+                  <p className="mt-1 text-[11px] text-muted-foreground">
+                    Markdown supported: headings, lists, checkboxes, bold, italic, code.
+                  </p>
+
+                  {commentDraft.trim().length > 0 && (
+                    <div className="mt-2 rounded-md border border-border bg-card/60 p-3">
+                      <div className="mb-2 text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
+                        Preview
+                      </div>
+                      <div className="text-sm leading-relaxed text-foreground [&_h1]:mb-2 [&_h1]:text-xl [&_h1]:font-semibold [&_h2]:mb-2 [&_h2]:text-lg [&_h2]:font-semibold [&_h3]:mb-2 [&_h3]:text-base [&_h3]:font-semibold [&_p]:mb-2 [&_ul]:mb-2 [&_ul]:list-disc [&_ul]:pl-5 [&_ol]:mb-2 [&_ol]:list-decimal [&_ol]:pl-5 [&_li]:mb-1 [&_code]:rounded [&_code]:bg-secondary [&_code]:px-1 [&_code]:py-0.5 [&_pre]:mb-2 [&_pre]:overflow-x-auto [&_pre]:rounded [&_pre]:bg-secondary [&_pre]:p-2 [&_pre_code]:bg-transparent [&_pre_code]:p-0">
+                        <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                          {commentDraft}
+                        </ReactMarkdown>
+                      </div>
+                    </div>
+                  )}
                 </div>
 
                 <div className="flex gap-2">

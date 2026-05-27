@@ -26,7 +26,7 @@ export function SettingsPage() {
         <h2 className="font-serif text-lg">Data</h2>
         <div className="flex flex-wrap gap-2">
           <button className={buttonClass({})} onClick={() => exportAll().then(() => toast.success("Exported"))}>
-            Export JSON
+            Export ZIP
           </button>
           <button className={buttonClass({ variant: "outline" })} onClick={() => fileRef.current?.click()}>
             Import (merge)...
@@ -46,7 +46,7 @@ export function SettingsPage() {
         <input
           ref={fileRef}
           type="file"
-          accept="application/json"
+          accept=".zip,application/zip,application/json,.json"
           className="hidden"
           onChange={async (e) => {
             const f = e.target.files?.[0];

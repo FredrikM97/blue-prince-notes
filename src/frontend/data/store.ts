@@ -50,10 +50,22 @@ interface State {
   captureDefault: "note" | "todo";
   capturePrefill: string;
   capturePrefillRoom?: string;
+  capturePrefillBody: string;
+  capturePrefillTags: string;
+  capturePrefillType?: NoteType;
+  capturePrefillPriority?: Priority;
+  captureEditNoteId?: string;
+  captureEditTodoId?: string;
 
   load: () => Promise<void>;
   setSearch: (q: string) => void;
-  openCapture: (opts?: { kind?: "note" | "todo"; prefill?: string; room?: string }) => void;
+  openCapture: (opts?: {
+    kind?: "note" | "todo";
+    prefill?: string;
+    room?: string;
+    note?: Note;
+    todo?: Todo;
+  }) => void;
   closeCapture: () => void;
 
   createFromCapture: (
@@ -166,6 +178,12 @@ export const useStore = create<State>((set, get) => ({
   captureDefault: "note",
   capturePrefill: "",
   capturePrefillRoom: undefined,
+  capturePrefillBody: "",
+  capturePrefillTags: "",
+  capturePrefillType: undefined,
+  capturePrefillPriority: undefined,
+  captureEditNoteId: undefined,
+  captureEditTodoId: undefined,
 
   async load() {
     if (!isBrowser()) return;
@@ -193,14 +211,66 @@ export const useStore = create<State>((set, get) => ({
   },
 
   setSearch: (q) => set({ search: q }),
-  openCapture: (opts) =>
+  openCapture: (opts) => {
+    const note = opts?.note;
+    const todo = opts?.todo;
+
+    if (note) {
+      set({
+        captureOpen: true,
+        captureDefault: "note",
+        capturePrefill: note.title,
+        capturePrefillRoom: note.room,
+        capturePrefillBody: note.body,
+        capturePrefillTags: note.tags.join(", "),
+        capturePrefillType: note.type,
+        capturePrefillPriority: undefined,
+        captureEditNoteId: note.id,
+        captureEditTodoId: undefined,
+      });
+      return;
+    }
+
+    if (todo) {
+      set({
+        captureOpen: true,
+        captureDefault: "todo",
+        capturePrefill: todo.title,
+        capturePrefillRoom: todo.room,
+        capturePrefillBody: todo.notes ?? "",
+        capturePrefillTags: todo.tags.join(", "),
+        capturePrefillType: undefined,
+        capturePrefillPriority: todo.priority,
+        captureEditNoteId: undefined,
+        captureEditTodoId: todo.id,
+      });
+      return;
+    }
+
     set({
       captureOpen: true,
       captureDefault: opts?.kind ?? "note",
       capturePrefill: opts?.prefill ?? "",
       capturePrefillRoom: opts?.room,
-    }),
-  closeCapture: () => set({ captureOpen: false, capturePrefill: "", capturePrefillRoom: undefined }),
+      capturePrefillBody: "",
+      capturePrefillTags: "",
+      capturePrefillType: undefined,
+      capturePrefillPriority: undefined,
+      captureEditNoteId: undefined,
+      captureEditTodoId: undefined,
+    });
+  },
+  closeCapture: () => set({
+    captureOpen: false,
+    capturePrefill: "",
+    capturePrefillRoom: undefined,
+    capturePrefillBody: "",
+    capturePrefillTags: "",
+    capturePrefillType: undefined,
+    capturePrefillPriority: undefined,
+    captureEditNoteId: undefined,
+    captureEditTodoId: undefined,
+  }),
 
   async createFromCapture(raw, opts) {
     const parsed = parseCapture(raw);

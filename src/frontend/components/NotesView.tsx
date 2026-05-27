@@ -1,8 +1,17 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useStore } from "@/frontend/data/store";
-import type { NoteType } from "@/lib/types";
+import type { Note, NoteType } from "@/lib/types";
 import { NoteRow } from "./NoteRow";
 import { buttonClass } from "@/frontend/components/common/buttonClasses";
+import { NoteRowEditor } from "@/frontend/components/note-row/NoteRowEditor";
+import { NoteRowDetails } from "@/frontend/components/note-row/NoteRowDetails";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/frontend/components/ui/dialog";
 
 const TYPE_OPTIONS: { value: NoteType; label: string }[] = [
   { value: "observation", label: "Observations" },
@@ -24,10 +33,16 @@ export function NotesView({
   const notes = useStore((s) => s.notes);
   const search = useStore((s) => s.search);
   const openCapture = useStore((s) => s.openCapture);
+  const captureOpen = useStore((s) => s.captureOpen);
+  const saveNote = useStore((s) => s.saveNote);
+  const removeNote = useStore((s) => s.removeNote);
   const [typeFilter, setTypeFilter] = useState<NoteType | null>(null);
   const [roomFilter, setRoomFilter] = useState<string | null>(null);
   const [tagFilter, setTagFilter] = useState<string | null>(null);
   const [statusFilter, setStatusFilter] = useState<"open" | "solved" | null>(null);
+  const [activeNoteId, setActiveNoteId] = useState<string | null>(null);
+  const [panelMode, setPanelMode] = useState<"edit" | "preview">("edit");
+  const [draft, setDraft] = useState<Note | null>(null);
 
   const effectiveType = filterType ?? typeFilter;
 
@@ -57,8 +72,23 @@ export function NotesView({
     });
   }, [notes, effectiveType, roomFilter, tagFilter, statusFilter, search]);
 
+  const activeNote = useMemo(
+    () => notes.find((n) => n.id === activeNoteId) ?? null,
+    [notes, activeNoteId],
+  );
+
+  useEffect(() => {
+    if (activeNote) setDraft(activeNote);
+  }, [activeNote]);
+
+  const notePanelOpen = !!activeNote;
+
   return (
-    <div className="mx-auto grid max-w-7xl gap-6 px-4 py-6 lg:grid-cols-[220px_1fr]">
+    <div
+      className={`mx-auto grid max-w-7xl gap-6 px-4 py-6 lg:grid-cols-[220px_1fr] ${
+        captureOpen || notePanelOpen ? "sm:pr-[32rem] lg:pr-[34rem]" : ""
+      }`}
+    >
       <aside className="space-y-4 lg:sticky lg:top-24 lg:self-start">
         {!filterType && (
           <FilterGroup
@@ -117,11 +147,84 @@ export function NotesView({
         ) : (
           <div className="overflow-hidden rounded-lg border border-border bg-card">
             {filtered.map((n) => (
-              <NoteRow key={n.id} note={n} />
+              <NoteRow
+                key={n.id}
+                note={n}
+                onOpenEdit={() => {
+                  setPanelMode("edit");
+                  setActiveNoteId(n.id);
+                  setDraft(n);
+                }}
+                onDelete={async () => {
+                  if (!confirm("Delete this note?")) return;
+                  await removeNote(n.id);
+                  if (activeNoteId === n.id) setActiveNoteId(null);
+                }}
+                onOpenPreview={() => {
+                  setPanelMode("preview");
+                  setActiveNoteId(n.id);
+                  setDraft(n);
+                }}
+              />
             ))}
           </div>
         )}
       </section>
+
+      <Dialog modal={false} open={notePanelOpen} onOpenChange={(o) => !o && setActiveNoteId(null)}>
+        <DialogContent
+          hideOverlay
+          onInteractOutside={(e) => e.preventDefault()}
+          className="left-auto right-0 top-0 h-dvh w-full max-w-none translate-x-0 translate-y-0 gap-3 overflow-y-auto rounded-none border-l p-4 sm:w-[32rem] lg:w-[34rem] sm:rounded-none sm:p-6 flex flex-col"
+        >
+          {activeNote && (
+            <>
+              <DialogHeader className="shrink-0 space-y-0">
+                {panelMode === "edit" ? (
+                  <DialogTitle className="font-serif text-lg">Edit note</DialogTitle>
+                ) : (
+                  <>
+                    <DialogTitle className="font-serif text-xl">{activeNote.title}</DialogTitle>
+                    <DialogDescription>Note preview</DialogDescription>
+                  </>
+                )}
+              </DialogHeader>
+
+              <div className="min-h-0">
+                {panelMode === "edit" ? (
+                  <NoteRowEditor
+                    draft={draft ?? activeNote}
+                    setDraft={setDraft}
+                    onSave={async () => {
+                      if (!draft && !activeNote) return;
+                      await saveNote(draft ?? activeNote);
+                      setPanelMode("preview");
+                    }}
+                    onCancel={() => {
+                      if (activeNote) setDraft(activeNote);
+                      setActiveNoteId(null);
+                    }}
+                  />
+                ) : (
+                  <div className="flex min-h-[24rem] flex-col">
+                    <div className="min-h-[18rem] flex-1 overflow-y-auto pr-1">
+                      <NoteRowDetails note={activeNote} />
+                    </div>
+                    <div className="mt-3 flex justify-start border-t border-border pt-2">
+                      <button
+                        className={buttonClass({ size: "sm", variant: "ghost" })}
+                        onClick={() => setActiveNoteId(null)}
+                      >
+                        Close
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
