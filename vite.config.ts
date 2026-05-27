@@ -13,7 +13,10 @@ export default defineConfig({
     base,
   },
   tanstackStart: {
-    // Use the server runtime entry in src.
+    spa: {
+      enabled: true,
+    },
+    // Keep the server runtime entry for prerendering the SPA shell at build time.
     server: { entry: "server" },
   },
 });
