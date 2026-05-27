@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useMemo, useState, type ReactNode } from "react";
 import { useStore } from "@/frontend/data/store";
 import {
   ROOMS_BY_CATEGORY,
@@ -87,7 +87,7 @@ export function MapPage() {
         className="mx-auto grid gap-2"
         style={{
           gridTemplateColumns: `repeat(${GRID_COLS}, minmax(0, 1fr))`,
-          maxWidth: 720,
+          width: `min(100%, clamp(28rem, calc((100dvh - 8rem) * ${GRID_COLS} / ${GRID_ROWS}), 36rem))`,
         }}
       >
         {Array.from({ length: GRID_ROWS }).flatMap((_, row) =>
@@ -302,7 +302,7 @@ export function MapPage() {
   );
 }
 
-function Legend({ color, children }: { color: string; children: React.ReactNode }) {
+function Legend({ color, children }: { color: string; children: ReactNode }) {
   return (
     <span className="flex items-center gap-1">
       <span className={`h-3 w-3 rounded border ${color}`} />
