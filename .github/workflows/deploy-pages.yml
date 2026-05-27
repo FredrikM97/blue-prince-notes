@@ -49,68 +49,7 @@ jobs:
       - name: Prepare static artifact
         env:
           BASE_PATH: ${{ steps.base_path.outputs.base_path }}
-        run: |
-          rm -rf pages-dist
-          mkdir -p pages-dist
-
-          if [[ -f dist/client/index.html ]]; then
-            SRC_DIR="dist/client"
-          elif [[ -f dist/index.html ]]; then
-            SRC_DIR="dist"
-          elif [[ -f .output/public/index.html ]]; then
-            SRC_DIR=".output/public"
-          else
-            if [[ -d dist/client/assets ]]; then
-              SRC_DIR="dist/client"
-            else
-              echo "Could not find static output directory."
-              echo "Checked: dist/client, dist, .output/public"
-              ls -la
-              [[ -d dist ]] && find dist -maxdepth 3 -type f | head -n 50 || true
-              [[ -d .output ]] && find .output -maxdepth 4 -type f | head -n 50 || true
-              exit 1
-            fi
-          fi
-
-          cp -R "$SRC_DIR"/. pages-dist/
-
-          if [[ ! -f pages-dist/index.html ]]; then
-            ENTRY_JS=$(find pages-dist/assets -maxdepth 1 -type f -name 'index-*.js' | head -n 1 || true)
-            ENTRY_CSS=$(find pages-dist/assets -maxdepth 1 -type f -name 'styles-*.css' | head -n 1 || true)
-
-            if [[ -z "$ENTRY_JS" ]]; then
-              echo "index.html missing and no index-*.js entry found under pages-dist/assets"
-              find pages-dist -maxdepth 3 -type f | head -n 100 || true
-              exit 1
-            fi
-
-            ENTRY_JS_BASENAME=$(basename "$ENTRY_JS")
-            ENTRY_CSS_BASENAME=$(basename "$ENTRY_CSS")
-
-            if [[ -n "$ENTRY_CSS" ]]; then
-              CSS_TAG="<link rel=\"stylesheet\" href=\"${BASE_PATH}assets/${ENTRY_CSS_BASENAME}\">"
-            else
-              CSS_TAG=""
-            fi
-
-            {
-              printf '%s\n' '<!doctype html>'
-              printf '%s\n' '<html lang="en">'
-              printf '%s\n' '  <head>'
-              printf '%s\n' '    <meta charset="UTF-8" />'
-              printf '%s\n' '    <meta name="viewport" content="width=device-width, initial-scale=1.0" />'
-              printf '%s\n' "    ${CSS_TAG}"
-              printf '%s\n' '  </head>'
-              printf '%s\n' '  <body>'
-              printf '%s\n' '    <div id="root"></div>'
-              printf '%s\n' "    <script type=\"module\" src=\"${BASE_PATH}assets/${ENTRY_JS_BASENAME}\"></script>"
-              printf '%s\n' '  </body>'
-              printf '%s\n' '</html>'
-            } > pages-dist/index.html
-          fi
-
-          cp pages-dist/index.html pages-dist/404.html
-          touch pages-dist/.nojekyll
+        run: node scripts/prepare-pages-dist.mjs
 
       - name: Setup Pages
         uses: actions/configure-pages@v5
@@ -118,7 +57,7 @@ jobs:
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: pages-dist
+          path: dist
 
   deploy:
     runs-on: ubuntu-latest

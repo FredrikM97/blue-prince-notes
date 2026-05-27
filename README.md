@@ -7,7 +7,10 @@ A client-first notes and todo tracker for Blue Prince.
 This repo is already configured for GitHub Pages via:
 
 - Workflow: `.github/workflows/deploy-pages.yml`
-- Build output: `dist/client`
+- Build assets: `dist/client/assets`
+- HTML entry: SSR-rendered from `dist/server/server.js` when `dist/client/index.html` is not present
+- Artifact prep script: `scripts/prepare-pages-dist.mjs`
+- Upload artifact: `dist`
 - SPA fallback: `404.html` is generated from `index.html`
 - Base path: computed automatically per repository name
 
