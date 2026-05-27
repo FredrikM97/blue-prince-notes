@@ -93,20 +93,20 @@ jobs:
               CSS_TAG=""
             fi
 
-            cat > pages-dist/index.html <<EOF
-<!doctype html>
-<html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    ${CSS_TAG}
-  </head>
-  <body>
-    <div id="root"></div>
-    <script type="module" src="${BASE_PATH}assets/${ENTRY_JS_BASENAME}"></script>
-  </body>
-</html>
-EOF
+            {
+              printf '%s\n' '<!doctype html>'
+              printf '%s\n' '<html lang="en">'
+              printf '%s\n' '  <head>'
+              printf '%s\n' '    <meta charset="UTF-8" />'
+              printf '%s\n' '    <meta name="viewport" content="width=device-width, initial-scale=1.0" />'
+              printf '%s\n' "    ${CSS_TAG}"
+              printf '%s\n' '  </head>'
+              printf '%s\n' '  <body>'
+              printf '%s\n' '    <div id="root"></div>'
+              printf '%s\n' "    <script type=\"module\" src=\"${BASE_PATH}assets/${ENTRY_JS_BASENAME}\"></script>"
+              printf '%s\n' '  </body>'
+              printf '%s\n' '</html>'
+            } > pages-dist/index.html
           fi
 
           cp pages-dist/index.html pages-dist/404.html
