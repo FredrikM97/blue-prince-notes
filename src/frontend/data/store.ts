@@ -2,6 +2,7 @@ import { create } from "zustand";
 import { nanoid } from "nanoid";
 import {
   isBrowser,
+  clearAllData,
   listNotes,
   listTodos,
   listImages,
@@ -34,8 +35,9 @@ import type {
   RunScope,
   Priority,
 } from "@/lib/types";
-import { cellId } from "./rooms";
+import { cellId, clearCustomRooms } from "./rooms";
 import { parseCapture } from "./parse";
+import { disconnectSyncFolder, scheduleSyncWrite } from "./sync";
 
 interface State {
   loaded: boolean;
@@ -57,7 +59,11 @@ interface State {
   captureEditNoteId?: string;
   captureEditTodoId?: string;
 
+  syncFolderName: string | null;
+  setSyncFolderName: (name: string | null) => void;
+
   load: () => Promise<void>;
+  startFresh: () => Promise<void>;
   setSearch: (q: string) => void;
   openCapture: (opts?: {
     kind?: "note" | "todo";
@@ -176,6 +182,7 @@ export const useStore = create<State>((set, get) => ({
   sections: [],
   gridCells: [],
   search: "",
+  syncFolderName: null,
   captureOpen: false,
   captureDefault: "note",
   capturePrefill: "",
@@ -210,6 +217,25 @@ export const useStore = create<State>((set, get) => ({
       gridCells: seededGridCells,
       loaded: true,
     });
+  },
+
+  setSyncFolderName: (name) => set({ syncFolderName: name }),
+
+  async startFresh() {
+    if (!isBrowser()) return;
+    await disconnectSyncFolder();
+    set({
+      notes: [],
+      todos: [],
+      images: [],
+      rooms: [],
+      sections: [],
+      gridCells: [],
+      syncFolderName: null,
+    });
+    await clearAllData();
+    clearCustomRooms();
+    await get().load();
   },
 
   setSearch: (q) => set({ search: q }),
@@ -304,6 +330,7 @@ export const useStore = create<State>((set, get) => ({
       };
       await putTodo(todo);
       set((s) => ({ todos: [todo, ...s.todos] }));
+      scheduleSyncWrite();
       return { todoId: todo.id };
     }
     const note: Note = {
@@ -322,6 +349,7 @@ export const useStore = create<State>((set, get) => ({
     };
     await putNote(note);
     set((s) => ({ notes: [note, ...s.notes] }));
+    scheduleSyncWrite();
     return { noteId: note.id };
   },
 
@@ -329,19 +357,23 @@ export const useStore = create<State>((set, get) => ({
     const updated = { ...n, updatedAt: Date.now() };
     await putNote(updated);
     set((s) => ({ notes: [updated, ...s.notes.filter((x) => x.id !== n.id)] }));
+    scheduleSyncWrite();
   },
   async saveTodo(t) {
     const updated = { ...t, updatedAt: Date.now() };
     await putTodo(updated);
     set((s) => ({ todos: [updated, ...s.todos.filter((x) => x.id !== t.id)] }));
+    scheduleSyncWrite();
   },
   async removeNote(id) {
     await dbDeleteNote(id);
     set((s) => ({ notes: s.notes.filter((n) => n.id !== id) }));
+    scheduleSyncWrite();
   },
   async removeTodo(id) {
     await dbDeleteTodo(id);
     set((s) => ({ todos: s.todos.filter((t) => t.id !== id) }));
+    scheduleSyncWrite();
   },
   async toggleTodoStatus(id, status) {
     const t = get().todos.find((x) => x.id === id);
@@ -354,6 +386,7 @@ export const useStore = create<State>((set, get) => ({
     };
     await putTodo(next);
     set((s) => ({ todos: s.todos.map((x) => (x.id === id ? next : x)) }));
+    scheduleSyncWrite();
   },
 
   async addImage(blob, name, caption) {
@@ -368,15 +401,18 @@ export const useStore = create<State>((set, get) => ({
     };
     await putImage(img);
     set((s) => ({ images: [img, ...s.images] }));
+    scheduleSyncWrite();
     return img;
   },
   async updateImage(img) {
     await putImage(img);
     set((s) => ({ images: s.images.map((x) => (x.id === img.id ? img : x)) }));
+    scheduleSyncWrite();
   },
   async removeImage(id) {
     await dbDeleteImage(id);
     set((s) => ({ images: s.images.filter((i) => i.id !== id) }));
+    scheduleSyncWrite();
   },
 
   async setRoomStatus(name, status) {
@@ -387,6 +423,7 @@ export const useStore = create<State>((set, get) => ({
         ? s.rooms.map((x) => (x.name === name ? r : x))
         : [...s.rooms, r],
     }));
+    scheduleSyncWrite();
   },
 
   async addSection(label) {
@@ -394,10 +431,12 @@ export const useStore = create<State>((set, get) => ({
     const s: SectionDef = { id: nanoid(), label, order: sections.length };
     await putSection(s);
     set((st) => ({ sections: [...st.sections, s].sort((a, b) => a.order - b.order) }));
+    scheduleSyncWrite();
   },
   async removeSection(id) {
     await dbDeleteSection(id);
     set((s) => ({ sections: s.sections.filter((x) => x.id !== id) }));
+    scheduleSyncWrite();
   },
 
   async upsertCell(patch) {
@@ -418,10 +457,12 @@ export const useStore = create<State>((set, get) => ({
         ? s.gridCells.map((c) => (c.id === id ? next : c))
         : [...s.gridCells, next],
     }));
+    scheduleSyncWrite();
   },
   async clearCell(row, col) {
     const id = cellId(row, col);
     await deleteGridCell(id);
     set((s) => ({ gridCells: s.gridCells.filter((c) => c.id !== id) }));
+    scheduleSyncWrite();
   },
 }));

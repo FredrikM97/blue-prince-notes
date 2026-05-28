@@ -2,8 +2,8 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { HeadContent, Link, Outlet, Scripts, useRouter } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { AppHeader } from "@/frontend/components/AppHeader";
-import { Button } from "@/frontend/components/common/button";
 import { Toaster } from "@/frontend/components/common/sonner";
+import { WelcomeScreen } from "@/frontend/components/WelcomeScreen";
 import { NotesPage } from "@/frontend/components/notes/NotesPage";
 import { SettingsPage } from "@/frontend/components/settings/SettingsPage";
 import { TodosPage } from "@/frontend/components/todos/TodosPage";
@@ -11,6 +11,12 @@ import { MapPage } from "@/frontend/components/map/MapPage";
 import { ImagesPage } from "@/frontend/components/images/ImagesPage";
 import { GraphPage } from "@/frontend/components/graph/GraphPage";
 import { useStore } from "@/frontend/data/store";
+import {
+  restoreSyncHandle,
+  readFromSyncFolder,
+  importSyncManifest,
+  getActiveSyncFolderName,
+} from "@/frontend/data/sync";
 
 export function RootShellView({ children }: { children: React.ReactNode }) {
   const themeScript =
@@ -33,47 +39,116 @@ export function RootShellView({ children }: { children: React.ReactNode }) {
 function AppFrame({ children }: { children: React.ReactNode }) {
   const load = useStore((s) => s.load);
   const loaded = useStore((s) => s.loaded);
-  const [showBackupNotice, setShowBackupNotice] = useState(false);
+  const notes = useStore((s) => s.notes);
+  const todos = useStore((s) => s.todos);
+  const setSyncFolderName = useStore((s) => s.setSyncFolderName);
+
+  // Three-state: "checking" while async init runs, then "welcome" or "ready"
+  const [initState, setInitState] = useState<"checking" | "welcome" | "ready">("checking");
+  const [welcomeSource, setWelcomeSource] = useState<"auto" | "manual" | null>(null);
 
   useEffect(() => {
-    if (!loaded) void load();
-  }, [load, loaded]);
+    async function init() {
+      // 1. Load IndexedDB data
+      await load();
 
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-    try {
-      const dismissed = window.localStorage.getItem("bp-backup-notice-dismissed") === "1";
-      if (!dismissed) setShowBackupNotice(true);
-    } catch {
-      setShowBackupNotice(true);
+      // 2. Try to restore a previously chosen sync folder
+      const handle = await restoreSyncHandle();
+      if (handle) {
+        setSyncFolderName(handle.name);
+        // If IndexedDB is empty, import from the folder
+        const state = useStore.getState();
+        if (state.notes.length === 0 && state.todos.length === 0) {
+          const manifest = await readFromSyncFolder(handle);
+          if (manifest) {
+            await importSyncManifest(manifest);
+            await load();
+          }
+        }
+      }
+
+      // 3. Decide whether to show the welcome screen
+      const welcomed = localStorage.getItem("bp-welcomed") === "1";
+      const state = useStore.getState();
+      const hasData = state.notes.length > 0 || state.todos.length > 0;
+      const hasSyncFolder = Boolean(getActiveSyncFolderName());
+
+      if (!welcomed && !hasData && !hasSyncFolder) {
+        setWelcomeSource("auto");
+        setInitState("welcome");
+      } else {
+        localStorage.setItem("bp-welcomed", "1");
+        setWelcomeSource(null);
+        setInitState("ready");
+      }
     }
+
+    void init();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  function dismissBackupNotice() {
-    setShowBackupNotice(false);
-    try {
-      window.localStorage.setItem("bp-backup-notice-dismissed", "1");
-    } catch {
-      // Ignore localStorage failures and only dismiss for the current session.
+  useEffect(() => {
+    function showWelcome() {
+      setWelcomeSource("manual");
+      setInitState("welcome");
     }
+    window.addEventListener("bp:show-welcome", showWelcome);
+    return () => window.removeEventListener("bp:show-welcome", showWelcome);
+  }, []);
+
+  // Also mark ready whenever data appears (e.g. user creates first note)
+  useEffect(() => {
+    if (
+      initState === "welcome" &&
+      welcomeSource === "auto" &&
+      (notes.length > 0 || todos.length > 0)
+    ) {
+      localStorage.setItem("bp-welcomed", "1");
+      setWelcomeSource(null);
+      setInitState("ready");
+    }
+  }, [notes.length, todos.length, initState, welcomeSource]);
+
+  if (!loaded && initState === "checking") {
+    // Silent loading — no spinner to avoid flash
+    return (
+      <div className="flex h-dvh flex-col overflow-hidden bg-background text-foreground">
+        <AppHeader />
+        <Toaster />
+      </div>
+    );
+  }
+
+  if (initState === "welcome") {
+    const hasExistingConfiguration =
+      notes.length > 0 || todos.length > 0 || Boolean(getActiveSyncFolderName());
+
+    return (
+      <div className="flex h-dvh flex-col overflow-hidden bg-background text-foreground">
+        <AppHeader />
+        <div className="min-h-0 flex-1 overflow-auto">
+          <WelcomeScreen
+            showContinueSuggestion={hasExistingConfiguration}
+            onContinue={() => {
+              setWelcomeSource(null);
+              setInitState("ready");
+            }}
+            onDone={(folderName) => {
+              if (folderName) setSyncFolderName(folderName);
+              localStorage.setItem("bp-welcomed", "1");
+              setWelcomeSource(null);
+              setInitState("ready");
+            }}
+          />
+        </div>
+        <Toaster />
+      </div>
+    );
   }
 
   return (
     <div className="flex h-dvh flex-col overflow-hidden bg-background text-foreground">
       <AppHeader />
-      {showBackupNotice && (
-        <div className="border-b border-brass/40 bg-brass/15">
-          <div className="mx-auto flex w-full max-w-7xl flex-wrap items-center justify-between gap-2 px-3 py-2 text-sm sm:px-4">
-            <p className="text-foreground">
-              Local-only storage: manually use Export all (ZIP) regularly. There is currently no
-              cloud backup.
-            </p>
-            <Button variant="outline" size="sm" onClick={dismissBackupNotice}>
-              Dismiss
-            </Button>
-          </div>
-        </div>
-      )}
       <div className="min-h-0 flex-1 overflow-hidden pb-20 sm:pb-32">{children}</div>
       <Toaster />
     </div>

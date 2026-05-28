@@ -216,9 +216,6 @@ function NotesCreateHeader({ mode }: { mode: "note" | "todo" }) {
   return (
     <div className="capture-header">
       <h2 className="font-serif text-lg">New {mode === "todo" ? "todo" : "note"}</h2>
-      <p className="text-xs leading-4 text-muted-foreground">
-        Fill in the fields below, or type commands like @room, #tag, and !todo.
-      </p>
     </div>
   );
 }

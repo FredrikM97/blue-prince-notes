@@ -240,6 +240,10 @@ export function removeCustomRoom(name: string) {
   return next;
 }
 
+export function clearCustomRooms() {
+  writeCustomRooms([]);
+}
+
 export function getRoomCatalog() {
   return [...DEFAULT_ROOMS, ...listCustomRooms()];
 }

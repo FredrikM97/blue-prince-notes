@@ -1,5 +1,13 @@
 import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
-import { Search, Plus, Settings as SettingsIcon, Download, Upload } from "lucide-react";
+import {
+  Search,
+  Plus,
+  Settings as SettingsIcon,
+  Download,
+  Upload,
+  FolderSync,
+  Coffee,
+} from "lucide-react";
 import { useEffect, useMemo, useRef } from "react";
 import { useStore } from "@/frontend/data/store";
 import { exportAll, importAll } from "@/frontend/data/io";
@@ -16,12 +24,14 @@ import {
 } from "@/frontend/components/common/DropdownMenu";
 
 export function AppHeader() {
+  const buyMeACoffeeUrl = "https://buymeacoffee.com/fredrikm97";
   const sections = useStore((s) => s.sections);
   const search = useStore((s) => s.search);
   const setSearch = useStore((s) => s.setSearch);
   const openCapture = useStore((s) => s.openCapture);
   const captureOpen = useStore((s) => s.captureOpen);
   const load = useStore((s) => s.load);
+  const syncFolderName = useStore((s) => s.syncFolderName);
   const pathname = useRouterState({ select: (r) => r.location.pathname });
   const navigate = useNavigate();
   const fileRef = useRef<HTMLInputElement>(null);
@@ -67,10 +77,14 @@ export function AppHeader() {
     return `/section/${s.id}`;
   }
 
+  function openWelcomeScreen() {
+    window.dispatchEvent(new CustomEvent("bp:show-welcome"));
+  }
+
   return (
     <header className="app-header">
       <div className="app-header-inner">
-        <Link to="/" className="app-brand-link">
+        <Link to="/" className="app-brand-link" onClick={openWelcomeScreen}>
           <span className="app-brand-badge">B</span>
           <span className="app-brand-title">Blue Prince Notes</span>
         </Link>
@@ -94,6 +108,16 @@ export function AppHeader() {
         </nav>
 
         <div className="app-header-controls">
+          {syncFolderName && (
+            <Link
+              to="/settings"
+              title={`Syncing to "${syncFolderName}"`}
+              className="hidden items-center gap-1.5 text-xs text-green-500 sm:flex"
+            >
+              <FolderSync className="h-3.5 w-3.5" />
+              <span className="max-w-[10rem] truncate">{syncFolderName}</span>
+            </Link>
+          )}
           <ThemeToggle />
           <div className="app-search-wrap">
             <Search className="app-search-icon" />
@@ -133,6 +157,11 @@ export function AppHeader() {
                 <Upload className="app-menu-icon" /> Import…
               </DropdownMenuItem>
               <DropdownMenuSeparator />
+              <DropdownMenuItem asChild>
+                <a href={buyMeACoffeeUrl} target="_blank" rel="noreferrer">
+                  <Coffee className="app-menu-icon" /> Buy me a coffee
+                </a>
+              </DropdownMenuItem>
               <DropdownMenuItem asChild>
                 <Link to="/settings">
                   <SettingsIcon className="app-menu-icon" /> Settings

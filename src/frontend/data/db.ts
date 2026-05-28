@@ -137,3 +137,32 @@ export async function deleteGridCell(id: string) {
   const db = await getDB();
   await db.delete("grid", id);
 }
+
+// Meta key/value store (used for sync handle persistence etc.)
+export async function getMeta<T>(key: string): Promise<T | undefined> {
+  const db = await getDB();
+  return db.get("meta", key) as Promise<T | undefined>;
+}
+export async function setMeta(key: string, value: unknown): Promise<void> {
+  const db = await getDB();
+  await db.put("meta", value, key);
+}
+export async function deleteMeta(key: string): Promise<void> {
+  const db = await getDB();
+  await db.delete("meta", key);
+}
+
+// Clears persisted user content while keeping meta/config entries intact.
+export async function clearAllData(): Promise<void> {
+  const db = await getDB();
+  const tx = db.transaction(["notes", "todos", "images", "rooms", "sections", "grid"], "readwrite");
+  await Promise.all([
+    tx.objectStore("notes").clear(),
+    tx.objectStore("todos").clear(),
+    tx.objectStore("images").clear(),
+    tx.objectStore("rooms").clear(),
+    tx.objectStore("sections").clear(),
+    tx.objectStore("grid").clear(),
+  ]);
+  await tx.done;
+}

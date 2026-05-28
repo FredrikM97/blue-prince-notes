@@ -108,7 +108,7 @@
   }
 
   .note-editor-footer {
-    @apply flex justify-end gap-2 border-t border-border pt-2;
+    @apply mt-3 flex justify-end gap-2 border-t border-border pt-2;
   }
 
   .note-editor-images-card {

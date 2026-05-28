@@ -111,7 +111,7 @@
   }
 
   .capture-footer {
-    @apply flex flex-col-reverse gap-2 sm:flex-row sm:justify-between;
+    @apply mt-3 flex flex-col-reverse gap-2 sm:flex-row sm:justify-between;
   }
 
   .capture-footer-hint {
