@@ -1,25 +1,25 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { useStore } from "@/frontend/data/store";
-import { INPUT_BASE_CLASS } from "@/frontend/components/common/formClasses";
-import { GhostButton, BrassButton, IconButton } from "@/frontend/components/common/button";
-import { RoomDropdown } from "@/frontend/components/common/RoomDropdown";
-import { Tabs, TabsList, TabsTrigger } from "@/frontend/components/common/tabs";
+import { useStore } from "@/data/store";
+import { INPUT_BASE_CLASS } from "@/components/common/formClasses";
+import { GhostButton, BrassButton, IconButton } from "@/components/common/button";
+import { RoomDropdown } from "@/components/common/RoomDropdown";
+import { Tabs, TabsList, TabsTrigger } from "@/components/common/tabs";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/frontend/components/common/select";
+} from "@/components/common/select";
 import { toast } from "sonner";
 import { ImagePlus, HelpCircle } from "lucide-react";
 import type { NoteType, Priority } from "@/lib/types";
-import { getRoomCatalog } from "@/frontend/data/rooms";
-import { NOTE_TYPES } from "@/frontend/components/notes/constants";
-import { NotesShortcutHelp } from "@/frontend/components/notes/NotesShortcutHelp";
-import { PendingImageList } from "@/frontend/components/notes/PendingImageList";
-import { MarkdownEditor } from "@/frontend/components/common/MarkdownEditor";
-import { formatAllMarkdownTables } from "@/frontend/components/common/markdown-table";
+import { getRoomCatalog } from "@/data/rooms";
+import { NOTE_TYPES } from "@/components/notes/constants";
+import { NotesShortcutHelp } from "@/components/notes/NotesShortcutHelp";
+import { PendingImageList } from "@/components/notes/PendingImageList";
+import { MarkdownEditor } from "@/components/common/MarkdownEditor";
+import { formatAllMarkdownTables } from "@/components/common/markdown-table";
 
 interface NotesSuggestion {
   value: string;

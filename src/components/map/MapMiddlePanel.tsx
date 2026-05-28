@@ -1,4 +1,4 @@
-import { GRID_COLS, GRID_ROWS, cellId } from "@/frontend/data/rooms";
+import { GRID_COLS, GRID_ROWS, cellId } from "@/data/rooms";
 import type { GridCell } from "@/lib/types";
 
 interface MapMiddlePanelProps {

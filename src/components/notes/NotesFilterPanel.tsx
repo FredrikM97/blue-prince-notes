@@ -1,5 +1,5 @@
 import type { NoteType } from "@/lib/types";
-import { SelectButton } from "@/frontend/components/common/button";
+import { SelectButton } from "@/components/common/button";
 
 const TYPE_OPTIONS: { value: NoteType; label: string }[] = [
   { value: "observation", label: "Observations" },

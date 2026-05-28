@@ -1,11 +1,11 @@
 import { useEffect, useMemo, useRef, useState, type MouseEvent, type WheelEvent } from "react";
-import { Button } from "@/frontend/components/common/button";
-import { Chip } from "@/frontend/components/common/Chip";
-import { EmptyState } from "@/frontend/components/common/EmptyState";
-import { PageLayout } from "@/frontend/components/common/PageLayout";
-import { MarkdownPreview } from "@/frontend/components/common/MarkdownPreview";
+import { Button } from "@/components/common/button";
+import { Chip } from "@/components/common/Chip";
+import { EmptyState } from "@/components/common/EmptyState";
+import { PageLayout } from "@/components/common/PageLayout";
+import { MarkdownPreview } from "@/components/common/MarkdownPreview";
 import { BookOpen, Eye, Key, Lightbulb, ListTodo, Sparkles } from "lucide-react";
-import { useStore } from "@/frontend/data/store";
+import { useStore } from "@/data/store";
 import type { Note } from "@/lib/types";
 
 const GRAPH_VIEWBOX = "0 0 1000 680";

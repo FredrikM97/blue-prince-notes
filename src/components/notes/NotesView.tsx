@@ -1,6 +1,6 @@
 import type { Note } from "@/lib/types";
-import { BrassButton } from "@/frontend/components/common/button";
-import { IconButton } from "@/frontend/components/common/button";
+import { BrassButton } from "@/components/common/button";
+import { IconButton } from "@/components/common/button";
 import { NotesListItemSummary } from "./NotesListItemSummary";
 import { ChevronRight, Pencil, Trash2 } from "lucide-react";
 

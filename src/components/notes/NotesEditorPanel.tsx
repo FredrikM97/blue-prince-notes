@@ -1,15 +1,15 @@
 import { useState } from "react";
 import type { Note } from "@/lib/types";
-import { INPUT_BASE_CLASS } from "@/frontend/components/common/formClasses";
-import { BrassButton, GhostButton, IconButton } from "@/frontend/components/common/button";
-import { RoomDropdown } from "@/frontend/components/common/RoomDropdown";
-import { StoredImageView } from "@/frontend/components/StoredImageView";
-import { useStore } from "@/frontend/data/store";
+import { INPUT_BASE_CLASS } from "@/components/common/formClasses";
+import { BrassButton, GhostButton, IconButton } from "@/components/common/button";
+import { RoomDropdown } from "@/components/common/RoomDropdown";
+import { StoredImageView } from "@/components/StoredImageView";
+import { useStore } from "@/data/store";
 import { ImagePlus, X, HelpCircle } from "lucide-react";
 import { TYPE_LABEL } from "./constants";
-import { MarkdownEditor } from "@/frontend/components/common/MarkdownEditor";
-import { NotesShortcutHelp } from "@/frontend/components/notes/NotesShortcutHelp";
-import { formatAllMarkdownTables } from "@/frontend/components/common/markdown-table";
+import { MarkdownEditor } from "@/components/common/MarkdownEditor";
+import { NotesShortcutHelp } from "@/components/notes/NotesShortcutHelp";
+import { formatAllMarkdownTables } from "@/components/common/markdown-table";
 
 export function NotesEditorPanel({
   draft,

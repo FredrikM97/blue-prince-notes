@@ -1,7 +1,7 @@
 import { useState } from "react";
 import type { Todo, TodoStatus } from "@/lib/types";
-import { Chip } from "@/frontend/components/common/Chip";
-import { INPUT_BASE_CLASS } from "@/frontend/components/common/formClasses";
+import { Chip } from "@/components/common/Chip";
+import { INPUT_BASE_CLASS } from "@/components/common/formClasses";
 import { Trash2 } from "lucide-react";
 import { todoPriorityClass } from "./constants";
 

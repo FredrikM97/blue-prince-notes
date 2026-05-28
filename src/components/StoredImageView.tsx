@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { getImage } from "@/frontend/data/db";
+import { getImage } from "@/data/db";
 
 export function StoredImageView({
   id,

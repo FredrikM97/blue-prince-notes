@@ -1,22 +1,22 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { HeadContent, Link, Outlet, Scripts, useRouter } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
-import { AppHeader } from "@/frontend/components/AppHeader";
-import { Toaster } from "@/frontend/components/common/sonner";
-import { WelcomeScreen } from "@/frontend/components/WelcomeScreen";
-import { NotesPage } from "@/frontend/components/notes/NotesPage";
-import { SettingsPage } from "@/frontend/components/settings/SettingsPage";
-import { TodosPage } from "@/frontend/components/todos/TodosPage";
-import { MapPage } from "@/frontend/components/map/MapPage";
-import { ImagesPage } from "@/frontend/components/images/ImagesPage";
-import { GraphPage } from "@/frontend/components/graph/GraphPage";
-import { useStore } from "@/frontend/data/store";
+import { AppHeader } from "@/components/AppHeader";
+import { Toaster } from "@/components/common/sonner";
+import { WelcomeScreen } from "@/components/WelcomeScreen";
+import { NotesPage } from "@/components/notes/NotesPage";
+import { SettingsPage } from "@/components/settings/SettingsPage";
+import { TodosPage } from "@/components/todos/TodosPage";
+import { MapPage } from "@/components/map/MapPage";
+import { ImagesPage } from "@/components/images/ImagesPage";
+import { GraphPage } from "@/components/graph/GraphPage";
+import { useStore } from "@/data/store";
 import {
   restoreSyncHandle,
   readFromSyncFolder,
   importSyncManifest,
   getActiveSyncFolderName,
-} from "@/frontend/data/sync";
+} from "@/data/sync";
 
 export function RootShellView({ children }: { children: React.ReactNode }) {
   const themeScript =

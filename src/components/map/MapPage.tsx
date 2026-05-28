@@ -1,10 +1,10 @@
 import { useMemo, useState } from "react";
-import { PageLayout } from "@/frontend/components/common/PageLayout";
+import { PageLayout } from "@/components/common/PageLayout";
 import { MapLeftPanel } from "./MapLeftPanel";
 import { MapMiddlePanel } from "./MapMiddlePanel";
 import { MapRightPanel } from "./MapRightPanel";
-import { GRID_COLS, GRID_ROWS, cellId } from "@/frontend/data/rooms";
-import { useStore } from "@/frontend/data/store";
+import { GRID_COLS, GRID_ROWS, cellId } from "@/data/rooms";
+import { useStore } from "@/data/store";
 import type { GridCell } from "@/lib/types";
 
 const COL_LABELS = ["A", "B", "C", "D", "E"] as const;

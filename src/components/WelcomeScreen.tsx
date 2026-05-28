@@ -1,8 +1,8 @@
 import { useRef, useState } from "react";
 import { FolderOpen, Sparkles, Upload, Waypoints } from "lucide-react";
-import { importAll } from "@/frontend/data/io";
-import { pickSyncFolder, readFromSyncFolder, importSyncManifest } from "@/frontend/data/sync";
-import { useStore } from "@/frontend/data/store";
+import { importAll } from "@/data/io";
+import { pickSyncFolder, readFromSyncFolder, importSyncManifest } from "@/data/sync";
+import { useStore } from "@/data/store";
 import { toast } from "sonner";
 
 function WelcomeCard({

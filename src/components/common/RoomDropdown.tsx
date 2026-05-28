@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { ChevronDown } from "lucide-react";
-import { Button } from "@/frontend/components/common/button";
+import { Button } from "@/components/common/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -9,8 +9,8 @@ import {
   DropdownMenuSubContent,
   DropdownMenuSubTrigger,
   DropdownMenuTrigger,
-} from "@/frontend/components/common/DropdownMenu";
-import { getGroupedRoomCatalog, ROOM_GROUPS, type RoomCategory } from "@/frontend/data/rooms";
+} from "@/components/common/DropdownMenu";
+import { getGroupedRoomCatalog, ROOM_GROUPS, type RoomCategory } from "@/data/rooms";
 
 export function RoomDropdown({
   value,

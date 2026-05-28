@@ -2,12 +2,9 @@ import { useRef, useState } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { Bold, Italic, Table, List, ListOrdered, Eye, EyeOff, WandSparkles } from "lucide-react";
-import { TEXTAREA_BASE_CLASS } from "@/frontend/components/common/formClasses";
-import { IconButton } from "@/frontend/components/common/button";
-import {
-  findTableBlockAtCursor,
-  formatTableMarkdown,
-} from "@/frontend/components/common/markdown-table";
+import { TEXTAREA_BASE_CLASS } from "@/components/common/formClasses";
+import { IconButton } from "@/components/common/button";
+import { findTableBlockAtCursor, formatTableMarkdown } from "@/components/common/markdown-table";
 
 // ── toolbar actions ───────────────────────────────────────────────
 type WrapMode = "inline" | "block-line";

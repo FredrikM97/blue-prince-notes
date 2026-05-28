@@ -1,13 +1,8 @@
 import { useState } from "react";
 import type { Note } from "@/lib/types";
-import { StoredImageView } from "@/frontend/components/StoredImageView";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/frontend/components/common/dialog";
-import { MarkdownPreview } from "@/frontend/components/common/MarkdownPreview";
+import { StoredImageView } from "@/components/StoredImageView";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/common/dialog";
+import { MarkdownPreview } from "@/components/common/MarkdownPreview";
 
 export function NotesPreviewPanel({ note }: { note: Note }) {
   const [zoomedImageId, setZoomedImageId] = useState<string | null>(null);

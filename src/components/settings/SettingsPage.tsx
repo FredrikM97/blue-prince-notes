@@ -1,25 +1,25 @@
 import { useMemo, useRef, useState } from "react";
 import type { ReactNode } from "react";
 import { FolderOpen, FolderSync, Unlink } from "lucide-react";
-import { useStore } from "@/frontend/data/store";
-import { Button, BrassButton } from "@/frontend/components/common/button";
-import { KeyboardKey } from "@/frontend/components/common/KeyboardKey";
-import { PageLayout } from "@/frontend/components/common/PageLayout";
+import { useStore } from "@/data/store";
+import { Button, BrassButton } from "@/components/common/button";
+import { KeyboardKey } from "@/components/common/KeyboardKey";
+import { PageLayout } from "@/components/common/PageLayout";
 import {
   addCustomRoom,
   listCustomRooms,
   removeCustomRoom,
   ROOM_GROUPS,
   type RoomCategory,
-} from "@/frontend/data/rooms";
+} from "@/data/rooms";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/frontend/components/common/select";
-import { exportAll, importAll } from "@/frontend/data/io";
+} from "@/components/common/select";
+import { exportAll, importAll } from "@/data/io";
 import {
   pickSyncFolder,
   disconnectSyncFolder,
@@ -27,7 +27,7 @@ import {
   importSyncManifest,
   writeToSyncFolder,
   getActiveSyncHandle,
-} from "@/frontend/data/sync";
+} from "@/data/sync";
 import { toast } from "sonner";
 
 function SettingsSection({ title, children }: { title: string; children: ReactNode }) {

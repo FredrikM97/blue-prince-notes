@@ -1,16 +1,11 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { EmptyState } from "@/frontend/components/common/EmptyState";
-import { useStore } from "@/frontend/data/store";
-import { Button, GhostButton } from "@/frontend/components/common/button";
-import { PageLayout } from "@/frontend/components/common/PageLayout";
-import { MarkdownPreview } from "@/frontend/components/common/MarkdownPreview";
-import { StoredImageView } from "@/frontend/components/StoredImageView";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/frontend/components/common/dialog";
+import { EmptyState } from "@/components/common/EmptyState";
+import { useStore } from "@/data/store";
+import { Button, GhostButton } from "@/components/common/button";
+import { PageLayout } from "@/components/common/PageLayout";
+import { MarkdownPreview } from "@/components/common/MarkdownPreview";
+import { StoredImageView } from "@/components/StoredImageView";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/common/dialog";
 import { Trash2, ChevronLeft, ChevronRight, Expand } from "lucide-react";
 import type { Note, StoredImage } from "@/lib/types";
 

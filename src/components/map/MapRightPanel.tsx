@@ -1,8 +1,8 @@
-import { BrassButton, Button, GhostButton, IconButton } from "@/frontend/components/common/button";
-import { Chip } from "@/frontend/components/common/Chip";
-import { MarkdownPreview } from "@/frontend/components/common/MarkdownPreview";
-import { RoomDropdown } from "@/frontend/components/common/RoomDropdown";
-import { TEXTAREA_BASE_CLASS } from "@/frontend/components/common/formClasses";
+import { BrassButton, Button, GhostButton, IconButton } from "@/components/common/button";
+import { Chip } from "@/components/common/Chip";
+import { MarkdownPreview } from "@/components/common/MarkdownPreview";
+import { RoomDropdown } from "@/components/common/RoomDropdown";
+import { TEXTAREA_BASE_CLASS } from "@/components/common/formClasses";
 import { Eraser, Trash2, X } from "lucide-react";
 import type { GridCell, Note, Todo } from "@/lib/types";
 

@@ -1,15 +1,15 @@
 import { useEffect, useMemo, useState } from "react";
-import { useStore } from "@/frontend/data/store";
+import { useStore } from "@/data/store";
 import type { Note, NoteType } from "@/lib/types";
-import { PageLayout } from "@/frontend/components/common/PageLayout";
-import { Button, GhostButton } from "@/frontend/components/common/button";
+import { PageLayout } from "@/components/common/PageLayout";
+import { Button, GhostButton } from "@/components/common/button";
 import {
   Dialog,
   DialogContent,
   DialogDescription,
   DialogHeader,
   DialogTitle,
-} from "@/frontend/components/common/dialog";
+} from "@/components/common/dialog";
 import { NotesCreatePanel } from "./NotesCreatePanel";
 import { NotesEditorPanel } from "./NotesEditorPanel";
 import { NotesFilterPanel } from "./NotesFilterPanel";

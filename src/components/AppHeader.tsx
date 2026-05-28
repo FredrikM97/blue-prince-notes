@@ -9,11 +9,11 @@ import {
   Coffee,
 } from "lucide-react";
 import { useEffect, useMemo, useRef } from "react";
-import { useStore } from "@/frontend/data/store";
-import { exportAll, importAll } from "@/frontend/data/io";
-import { INPUT_BASE_CLASS } from "@/frontend/components/common/formClasses";
-import { Button, IconButton } from "@/frontend/components/common/button";
-import { ThemeToggle } from "@/frontend/components/common/ThemeToggle";
+import { useStore } from "@/data/store";
+import { exportAll, importAll } from "@/data/io";
+import { INPUT_BASE_CLASS } from "@/components/common/formClasses";
+import { Button, IconButton } from "@/components/common/button";
+import { ThemeToggle } from "@/components/common/ThemeToggle";
 import { toast } from "sonner";
 import {
   DropdownMenu,
@@ -21,7 +21,7 @@ import {
   DropdownMenuItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "@/frontend/components/common/DropdownMenu";
+} from "@/components/common/DropdownMenu";
 
 export function AppHeader() {
   const buyMeACoffeeUrl = "https://buymeacoffee.com/fredrikm97";

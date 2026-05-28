@@ -8,8 +8,8 @@ import {
   RootLayoutView,
   RootShellView,
   SectionView,
-} from "@/frontend/router-views";
-import { SettingsPage } from "@/frontend/components/settings/SettingsPage";
+} from "@/router-views";
+import { SettingsPage } from "@/components/settings/SettingsPage";
 
 type RouterContext = {
   queryClient: QueryClient;

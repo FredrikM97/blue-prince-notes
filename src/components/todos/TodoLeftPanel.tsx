@@ -1,6 +1,6 @@
 import type { Todo } from "@/lib/types";
 import { TodoScopeFilter } from "./TodoScopeFilter";
-import { Chip } from "@/frontend/components/common/Chip";
+import { Chip } from "@/components/common/Chip";
 
 interface TodoLeftPanelProps {
   total: number;
