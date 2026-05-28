@@ -38,6 +38,7 @@ import type {
 import { cellId, clearCustomRooms } from "./rooms";
 import { parseCapture } from "./parse";
 import { disconnectSyncFolder, scheduleSyncWrite } from "./sync";
+import { buildUniqueFileName } from "./imageNames";
 
 interface State {
   loaded: boolean;
@@ -171,24 +172,6 @@ async function ensureGridSeed(existing: GridCell[]) {
       updatedAt: now,
     });
   }
-}
-
-function buildUniqueImageName(existingNames: string[], candidate?: string, mime?: string) {
-  const extFromMime = mime?.startsWith("image/") ? mime.split("/")[1] : "png";
-  const raw = (candidate?.trim() || `image-${Date.now()}.${extFromMime}`).replace(/[/\\]/g, "-");
-  const dotIndex = raw.lastIndexOf(".");
-  const hasExt = dotIndex > 0 && dotIndex < raw.length - 1;
-  const base = hasExt ? raw.slice(0, dotIndex) : raw;
-  const ext = hasExt ? raw.slice(dotIndex) : "";
-
-  const used = new Set(existingNames.map((name) => name.toLowerCase()));
-  let next = raw;
-  let i = 2;
-  while (used.has(next.toLowerCase())) {
-    next = `${base} (${i})${ext}`;
-    i += 1;
-  }
-  return next;
 }
 
 export const useStore = create<State>((set, get) => ({
@@ -409,10 +392,12 @@ export const useStore = create<State>((set, get) => ({
 
   async addImage(blob, name, caption) {
     const sourceName = name ?? (blob instanceof File ? blob.name : undefined);
-    const uniqueName = buildUniqueImageName(
+    const mimeExt = blob.type?.startsWith("image/") ? blob.type.split("/")[1] : "png";
+    const uniqueName = buildUniqueFileName(
       get().images.map((i) => i.name),
       sourceName,
-      blob.type,
+      "image",
+      mimeExt,
     );
     const img: StoredImage = {
       id: nanoid(),

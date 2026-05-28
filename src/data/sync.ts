@@ -26,6 +26,7 @@ import {
 } from "./db";
 import type { Note, Todo, StoredImage, RoomState, SectionDef, GridCell } from "@/lib/types";
 import { listCustomRooms, replaceCustomRooms, type RoomCategory } from "./rooms";
+import { buildUniqueFileName } from "./imageNames";
 
 // ---------------------------------------------------------------------------
 // Minimal local typings for File System Access API
@@ -228,27 +229,11 @@ export async function writeToSyncFolder(handle: DirHandle): Promise<void> {
   const customRooms = listCustomRooms().map((r) => ({ name: r.name, category: r.category }));
   const imagesDir = await handle.getDirectoryHandle(SYNC_IMAGES_DIR_NAME, { create: true });
   const imageManifest = [] as Array<Omit<StoredImage, "blob"> & { fileName: string }>;
-  const usedFileNames = new Set<string>();
-
-  function buildUniqueSyncImageFileName(candidate: string, fallbackId: string): string {
-    const baseRaw = candidate.trim().replace(/[/\\]/g, "-") || `${fallbackId}.png`;
-    const dot = baseRaw.lastIndexOf(".");
-    const hasExt = dot > 0 && dot < baseRaw.length - 1;
-    const base = hasExt ? baseRaw.slice(0, dot) : baseRaw;
-    const ext = hasExt ? baseRaw.slice(dot) : "";
-
-    let next = baseRaw;
-    let i = 2;
-    while (usedFileNames.has(next.toLowerCase())) {
-      next = `${base} (${i})${ext}`;
-      i += 1;
-    }
-    usedFileNames.add(next.toLowerCase());
-    return next;
-  }
+  const usedFileNames: string[] = [];
 
   for (const image of images) {
-    const fileName = buildUniqueSyncImageFileName(image.name, image.id);
+    const fileName = buildUniqueFileName(usedFileNames, image.name, image.id, "png");
+    usedFileNames.push(fileName);
     const imageFile = await imagesDir.getFileHandle(fileName, { create: true });
     const writable = await imageFile.createWritable();
     await writable.write(image.blob);
