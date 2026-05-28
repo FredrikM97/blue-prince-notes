@@ -149,7 +149,7 @@ function AppFrame({ children }: { children: React.ReactNode }) {
   return (
     <div className="flex h-dvh flex-col overflow-hidden bg-background text-foreground">
       <AppHeader />
-      <div className="min-h-0 flex-1 overflow-hidden pb-20 sm:pb-32">{children}</div>
+      <div className="min-h-0 flex-1 overflow-hidden">{children}</div>
       <Toaster />
     </div>
   );

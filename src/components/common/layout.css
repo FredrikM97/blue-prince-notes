@@ -1,20 +1,23 @@
 @layer components {
   /* Outer wrapper — centers content, limits max width */
   .page-layout {
-    @apply mx-auto h-full w-full max-w-7xl px-3 py-3 sm:px-4 sm:py-6;
+    @apply mx-auto h-full min-h-0 w-full max-w-7xl px-3 py-3 sm:px-4 sm:py-6;
   }
 
   /* Layout variants */
   .page-layout-three-column {
     @apply grid items-start gap-3 sm:gap-6 lg:grid-cols-[240px_minmax(0,1fr)_420px];
+    min-height: 100%;
   }
 
   .page-layout-two-column-left {
     @apply grid items-start gap-3 sm:gap-6 lg:grid-cols-[240px_minmax(0,1fr)];
+    min-height: 100%;
   }
 
   .page-layout-two-column-right {
     @apply grid items-start gap-3 sm:gap-6 lg:grid-cols-[minmax(0,1fr)_420px];
+    min-height: 100%;
   }
 
   /* Left sticky sidebar column */
@@ -26,6 +29,7 @@
   /* Main content area ("middle") */
   .page-layout-content {
     min-width: 0;
+    min-height: 0;
   }
 
   .page-layout-panel {
@@ -57,8 +61,17 @@
     align-items: stretch;
   }
 
+  .page-layout-single-column-scroll {
+    @apply flex flex-col;
+  }
+
+  .page-layout-single-column-scroll .page-layout-content {
+    flex: 1 1 auto;
+  }
+
   .page-layout-middle-scroll-priority .page-layout-content {
     min-height: 0;
+    height: 100%;
     overflow-y: auto;
     overscroll-behavior: contain;
   }

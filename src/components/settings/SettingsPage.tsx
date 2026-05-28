@@ -42,7 +42,10 @@ import { toast } from "sonner";
 function SettingsSection({ title, children }: { title: string; children: ReactNode }) {
   return (
     <section className="space-y-5">
-      <h2 className="font-serif text-xl leading-tight">{title}</h2>
+      <h2 className="flex items-center gap-3 font-serif text-xl leading-tight">
+        <span aria-hidden className="h-5 w-px bg-border/80" />
+        {title}
+      </h2>
       {children}
     </section>
   );
@@ -80,154 +83,162 @@ export function SettingsPage() {
   }
 
   return (
-    <PageLayout className="max-w-2xl space-y-12" prioritizeMiddleScroll>
-      <header>
-        <h1 className="font-serif text-3xl">Settings</h1>
-        <p className="text-sm text-muted-foreground">
-          All data lives in your browser. Export regularly to keep a backup.
-        </p>
-      </header>
+    <PageLayout
+      className="h-full max-w-none px-0 py-0 sm:px-0 sm:py-0"
+      prioritizeMiddleScroll
+      middle={
+        <div className="mx-auto w-full max-w-2xl space-y-12 px-3 py-3 pb-6 sm:px-4 sm:py-6 sm:pb-8">
+          <header>
+            <h1 className="font-serif text-3xl">Settings</h1>
+            <p className="text-sm text-muted-foreground">
+              All data lives in your browser. Export regularly to keep a backup.
+            </p>
+          </header>
 
-      <div className="space-y-12">
-        <SettingsSection title="Data">
-          <div className="flex flex-wrap gap-2">
-            <BrassButton onClick={() => exportAll().then(() => toast.success("Exported"))}>
-              Export ZIP
-            </BrassButton>
-            <Button variant="outline" onClick={() => fileRef.current?.click()}>
-              Import (merge)...
-            </Button>
-            <Button
-              variant="outline"
-              onClick={async () => {
-                const f = fileRef.current;
-                if (!f) return;
-                f.dataset.mode = "replace";
-                f.click();
-              }}
-            >
-              Import (replace)...
-            </Button>
-          </div>
-          <input
-            ref={fileRef}
-            type="file"
-            accept=".zip,application/zip,application/json,.json"
-            className="hidden"
-            onChange={async (e) => {
-              const f = e.target.files?.[0];
-              if (!f) return;
-              const mode = (e.target.dataset.mode as "merge" | "replace") || "merge";
-              try {
-                await importAll(f, mode);
-                await load();
-                toast.success("Imported");
-              } catch (err) {
-                toast.error((err as Error).message);
-              }
-              e.target.value = "";
-              e.target.dataset.mode = "merge";
-            }}
-          />
-
-          <div className="space-y-3 border-t border-border/70 pt-4">
-            <h3 className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
-              Sync folder
-            </h3>
-            <SyncFolderSection />
-          </div>
-
-          <div className="space-y-3 border-t border-border/70 pt-4">
-            <h3 className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
-              Steam screenshots import (optional)
-            </h3>
-            <SteamImportSection />
-          </div>
-        </SettingsSection>
-
-        <SettingsSection title="Rooms">
-          <p className="text-xs text-muted-foreground">
-            Add custom rooms under any group. They appear in Map, New Note, and Edit Note room
-            dropdowns.
-          </p>
-
-          <div className="grid gap-2 sm:grid-cols-[minmax(0,1fr)_14rem_auto]">
+          <SettingsSection title="Data">
+            <div className="flex flex-wrap gap-2">
+              <BrassButton onClick={() => exportAll().then(() => toast.success("Exported"))}>
+                Export ZIP
+              </BrassButton>
+              <Button variant="outline" onClick={() => fileRef.current?.click()}>
+                Import (merge)...
+              </Button>
+              <Button
+                variant="outline"
+                onClick={async () => {
+                  const f = fileRef.current;
+                  if (!f) return;
+                  f.dataset.mode = "replace";
+                  f.click();
+                }}
+              >
+                Import (replace)...
+              </Button>
+            </div>
             <input
-              value={newRoomName}
-              onChange={(e) => setNewRoomName(e.target.value)}
-              placeholder="New room name"
-              className="h-9 rounded-md border border-input bg-card/65 px-3 text-sm"
+              ref={fileRef}
+              type="file"
+              accept=".zip,application/zip,application/json,.json"
+              className="hidden"
+              onChange={async (e) => {
+                const f = e.target.files?.[0];
+                if (!f) return;
+                const mode = (e.target.dataset.mode as "merge" | "replace") || "merge";
+                try {
+                  await importAll(f, mode);
+                  await load();
+                  toast.success("Imported");
+                } catch (err) {
+                  toast.error((err as Error).message);
+                }
+                e.target.value = "";
+                e.target.dataset.mode = "merge";
+              }}
             />
 
-            <Select
-              value={newRoomCategory}
-              onValueChange={(value) => setNewRoomCategory(value as RoomCategory)}
-            >
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {ROOM_GROUPS.map((group) => (
-                  <SelectItem key={group} value={group}>
-                    {group}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <div className="space-y-3 border-t border-border/70 pt-4">
+              <h3 className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+                Sync folder
+              </h3>
+              <SyncFolderSection />
+            </div>
 
-            <Button variant="outline" onClick={addRoom}>
-              Add room
-            </Button>
-          </div>
+            <div className="space-y-3 border-t border-border/70 pt-4">
+              <h3 className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+                Steam screenshots import (optional)
+              </h3>
+              <SteamImportSection />
+            </div>
+          </SettingsSection>
 
-          <div className="space-y-3 rounded-md border border-border p-3">
-            {ROOM_GROUPS.map((group) => {
-              const rooms = customRoomsByCategory.get(group) ?? [];
-              if (rooms.length === 0) return null;
+          <div className="border-t border-border/70 pt-6">
+            <SettingsSection title="Rooms">
+              <p className="text-xs text-muted-foreground">
+                Add custom rooms under any group. They appear in Map, New Note, and Edit Note room
+                dropdowns.
+              </p>
 
-              return (
-                <div key={group} className="space-y-2">
-                  <h3 className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
-                    {group}
-                  </h3>
-                  <div className="flex flex-wrap gap-1.5">
-                    {rooms.map((name) => (
-                      <button
-                        key={`${group}-${name}`}
-                        type="button"
-                        onClick={() => removeRoom(name)}
-                        className="rounded border border-border bg-secondary px-2 py-1 text-xs text-foreground hover:border-destructive hover:text-destructive"
-                        title="Remove room"
-                      >
-                        {name}
-                      </button>
+              <div className="grid gap-2 sm:grid-cols-[minmax(0,1fr)_14rem_auto]">
+                <input
+                  value={newRoomName}
+                  onChange={(e) => setNewRoomName(e.target.value)}
+                  placeholder="New room name"
+                  className="h-9 rounded-md border border-input bg-card/65 px-3 text-sm"
+                />
+
+                <Select
+                  value={newRoomCategory}
+                  onValueChange={(value) => setNewRoomCategory(value as RoomCategory)}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {ROOM_GROUPS.map((group) => (
+                      <SelectItem key={group} value={group}>
+                        {group}
+                      </SelectItem>
                     ))}
-                  </div>
-                </div>
-              );
-            })}
-            {customRooms.length === 0 && (
-              <p className="text-xs text-muted-foreground">No custom rooms yet.</p>
-            )}
-          </div>
-        </SettingsSection>
+                  </SelectContent>
+                </Select>
 
-        <SettingsSection title="Keyboard">
-          <ul className="space-y-1 text-sm text-muted-foreground">
-            <li>
-              <KeyboardKey>N</KeyboardKey> - open quick capture
-            </li>
-            <li>
-              <KeyboardKey>Esc</KeyboardKey> - close capture
-            </li>
-            <li>
-              <KeyboardKey>Ctrl+Enter</KeyboardKey> - save ·{" "}
-              <KeyboardKey>Ctrl+Shift+Enter</KeyboardKey> - save &amp; keep open
-            </li>
-          </ul>
-        </SettingsSection>
-      </div>
-    </PageLayout>
+                <Button variant="outline" onClick={addRoom}>
+                  Add room
+                </Button>
+              </div>
+
+              <div className="space-y-3 rounded-md border border-border p-3">
+                {ROOM_GROUPS.map((group) => {
+                  const rooms = customRoomsByCategory.get(group) ?? [];
+                  if (rooms.length === 0) return null;
+
+                  return (
+                    <div key={group} className="space-y-2">
+                      <h3 className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+                        {group}
+                      </h3>
+                      <div className="flex flex-wrap gap-1.5">
+                        {rooms.map((name) => (
+                          <button
+                            key={`${group}-${name}`}
+                            type="button"
+                            onClick={() => removeRoom(name)}
+                            className="rounded border border-border bg-secondary px-2 py-1 text-xs text-foreground hover:border-destructive hover:text-destructive"
+                            title="Remove room"
+                          >
+                            {name}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  );
+                })}
+                {customRooms.length === 0 && (
+                  <p className="text-xs text-muted-foreground">No custom rooms yet.</p>
+                )}
+              </div>
+            </SettingsSection>
+          </div>
+
+          <div className="border-t border-border/70 pt-6">
+            <SettingsSection title="Keyboard">
+              <ul className="space-y-1 text-sm text-muted-foreground">
+                <li>
+                  <KeyboardKey>N</KeyboardKey> - open quick capture
+                </li>
+                <li>
+                  <KeyboardKey>Esc</KeyboardKey> - close capture
+                </li>
+                <li>
+                  <KeyboardKey>Ctrl+Enter</KeyboardKey> - save ·{" "}
+                  <KeyboardKey>Ctrl+Shift+Enter</KeyboardKey> - save &amp; keep open
+                </li>
+              </ul>
+            </SettingsSection>
+          </div>
+        </div>
+      }
+    />
   );
 }
 
@@ -357,7 +368,14 @@ function SteamImportSection() {
           Refresh now
         </Button>
         {folderName ? (
-          <Button variant="outline" size="sm" onClick={handleDisconnect} disabled={busy}>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleDisconnect}
+            disabled={busy}
+            className="text-destructive hover:text-destructive"
+          >
+            <Unlink className="mr-1.5 h-3.5 w-3.5" />
             Disconnect
           </Button>
         ) : null}
