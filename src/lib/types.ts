@@ -1,10 +1,4 @@
-export type NoteType =
-  | "clue"
-  | "code"
-  | "observation"
-  | "theory"
-  | "story"
-  | "task";
+export type NoteType = "clue" | "code" | "observation" | "theory" | "story" | "task";
 
 export type NoteStatus = "open" | "solved" | "stale";
 export type RunScope = "this-run" | "cross-run";

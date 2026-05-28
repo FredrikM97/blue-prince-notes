@@ -14,12 +14,15 @@ import {
   putGridCell,
 } from "./db";
 import type { Note, Todo, StoredImage, RoomState, SectionDef, GridCell } from "@/lib/types";
+import { listCustomRooms, replaceCustomRooms, type RoomCategory } from "./rooms";
 
-let jsZipCtorPromise: Promise<typeof import("jszip").default> | null = null;
+type JSZipCtor = typeof import("jszip") extends { default: infer T } ? T : typeof import("jszip");
+
+let jsZipCtorPromise: Promise<JSZipCtor> | null = null;
 
 async function getJSZipCtor() {
   if (!jsZipCtorPromise) {
-    jsZipCtorPromise = import("jszip").then((m) => m.default);
+    jsZipCtorPromise = import("jszip").then((m) => ("default" in m ? m.default : m) as JSZipCtor);
   }
   return jsZipCtorPromise;
 }
@@ -42,7 +45,7 @@ interface ZipExportImageMeta extends Omit<StoredImage, "blob"> {
 
 interface ZipExportManifest {
   app: "blue-prince-notes";
-  version: 3;
+  version: 4;
   exportedAt: number;
   notes: Note[];
   todos: Todo[];
@@ -50,6 +53,7 @@ interface ZipExportManifest {
   rooms: RoomState[];
   sections: SectionDef[];
   gridCells?: GridCell[];
+  customRooms?: Array<{ name: string; category: RoomCategory }>;
 }
 
 async function dataUrlToBlob(url: string): Promise<Blob> {
@@ -67,6 +71,10 @@ export async function exportAll(): Promise<void> {
     listSections(),
     listGridCells(),
   ]);
+  const customRooms = listCustomRooms().map((room) => ({
+    name: room.name,
+    category: room.category,
+  }));
 
   const zip = new JSZip();
   const manifestImages: ZipExportImageMeta[] = [];
@@ -86,7 +94,7 @@ export async function exportAll(): Promise<void> {
 
   const manifest: ZipExportManifest = {
     app: "blue-prince-notes",
-    version: 3,
+    version: 4,
     exportedAt: Date.now(),
     notes,
     todos,
@@ -94,6 +102,7 @@ export async function exportAll(): Promise<void> {
     rooms,
     sections,
     gridCells,
+    customRooms,
   };
 
   zip.file("manifest.json", JSON.stringify(manifest, null, 2));
@@ -164,6 +173,15 @@ async function importFromZip(file: File, mode: "merge" | "replace") {
 
   if (mode === "replace") {
     await clearForReplaceMode();
+  }
+
+  if (data.customRooms) {
+    if (mode === "replace") {
+      replaceCustomRooms(data.customRooms);
+    } else {
+      const merged = [...listCustomRooms(), ...data.customRooms];
+      replaceCustomRooms(merged);
+    }
   }
 
   for (const n of data.notes ?? []) await putNote(n);

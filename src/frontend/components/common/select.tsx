@@ -8,8 +8,6 @@ function joinClasses(...values: Array<string | undefined | false>) {
 
 const Select = SelectPrimitive.Root;
 
-const SelectGroup = SelectPrimitive.Group;
-
 const SelectValue = SelectPrimitive.Value;
 
 const SelectTrigger = React.forwardRef<
@@ -98,19 +96,6 @@ const SelectContent = React.forwardRef<
   );
 });
 
-const SelectLabel = React.forwardRef<
-  React.ComponentRef<typeof SelectPrimitive.Label>,
-  React.ComponentPropsWithoutRef<typeof SelectPrimitive.Label>
->(({ className, ...props }, ref) => {
-  return (
-    <SelectPrimitive.Label
-      ref={ref}
-      className={joinClasses("px-2 py-1.5 text-sm font-semibold", className)}
-      {...props}
-    />
-  );
-});
-
 const SelectItem = React.forwardRef<
   React.ComponentRef<typeof SelectPrimitive.Item>,
   React.ComponentPropsWithoutRef<typeof SelectPrimitive.Item>
@@ -147,4 +132,4 @@ const SelectSeparator = React.forwardRef<
   );
 });
 
-export { Select, SelectGroup, SelectValue, SelectTrigger, SelectContent, SelectLabel, SelectItem };
+export { Select, SelectValue, SelectTrigger, SelectContent, SelectItem };

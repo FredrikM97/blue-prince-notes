@@ -2,6 +2,7 @@ import { useState } from "react";
 import type { Note } from "@/lib/types";
 import { INPUT_BASE_CLASS } from "@/frontend/components/common/formClasses";
 import { BrassButton, GhostButton, IconButton } from "@/frontend/components/common/button";
+import { RoomDropdown } from "@/frontend/components/common/RoomDropdown";
 import { StoredImageView } from "@/frontend/components/StoredImageView";
 import { useStore } from "@/frontend/data/store";
 import { ImagePlus, X, HelpCircle } from "lucide-react";
@@ -75,11 +76,10 @@ export function NotesEditorPanel({
       <div className="note-editor-grid-2">
         <div>
           <label className="capture-label">Room</label>
-          <input
+          <RoomDropdown
             value={draft.room ?? ""}
-            onChange={(e) => setDraft({ ...draft, room: e.target.value || undefined })}
-            placeholder="No room"
-            className={INPUT_BASE_CLASS}
+            onValueChange={(next) => setDraft({ ...draft, room: next || undefined })}
+            clearLabel="No room"
           />
         </div>
         <div>

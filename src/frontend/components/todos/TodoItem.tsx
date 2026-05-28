@@ -57,7 +57,9 @@ export function TodoItem({
           </button>
         )}
         <div className="mt-1 flex flex-wrap items-center gap-1">
-          <Chip className={`border-transparent ${todoPriorityClass(todo.priority)}`}>{todo.priority}</Chip>
+          <Chip className={`border-transparent ${todoPriorityClass(todo.priority)}`}>
+            {todo.priority}
+          </Chip>
           <Chip className="border-border text-foreground">{todo.scope}</Chip>
           {todo.room && <Chip className="border-brass/40 text-brass">@{todo.room}</Chip>}
           {todo.tags.map((tag) => (

@@ -44,7 +44,12 @@ export function PendingImageList({
   return (
     <div className="flex flex-wrap gap-2">
       {images.map((blob, index) => (
-        <PendingImageItem key={`${blob.size}-${index}`} blob={blob} index={index} onRemove={onRemove} />
+        <PendingImageItem
+          key={`${blob.size}-${index}`}
+          blob={blob}
+          index={index}
+          onRemove={onRemove}
+        />
       ))}
     </div>
   );

@@ -1,7 +1,7 @@
 import { useRef, useState } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
-import { Bold, Italic, Table, List, ListOrdered, Eye, EyeOff } from "lucide-react";
+import { Bold, Italic, Table, List, ListOrdered, Eye, EyeOff, WandSparkles } from "lucide-react";
 import { TEXTAREA_BASE_CLASS } from "@/frontend/components/common/formClasses";
 import { IconButton } from "@/frontend/components/common/button";
 import {
@@ -61,7 +61,8 @@ function applyAction(
       }
 
       if (!selected.trim()) {
-        const template = "\n| Column 1 | Column 2 |\n| --- | --- |\n| Cell | Cell |\n";
+        const template =
+          "\n| Column 1 | Column 2 |\n| -------- | -------- |\n| Cell     | Cell     |\n";
         next = value.slice(0, start) + template + value.slice(end);
         newStart = start + template.length;
         newEnd = newStart;
@@ -221,7 +222,7 @@ export function MarkdownEditor({
               className="h-7 w-7"
               onClick={onFormatTables}
             >
-              <Table className="h-3.5 w-3.5" />
+              <WandSparkles className="h-3.5 w-3.5" />
             </IconButton>
           </>
         )}

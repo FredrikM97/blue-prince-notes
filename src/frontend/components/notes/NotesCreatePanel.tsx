@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useStore } from "@/frontend/data/store";
 import { INPUT_BASE_CLASS } from "@/frontend/components/common/formClasses";
 import { GhostButton, BrassButton, IconButton } from "@/frontend/components/common/button";
+import { RoomDropdown } from "@/frontend/components/common/RoomDropdown";
 import { Tabs, TabsList, TabsTrigger } from "@/frontend/components/common/tabs";
 import {
   Select,
@@ -13,7 +14,7 @@ import {
 import { toast } from "sonner";
 import { ImagePlus, HelpCircle } from "lucide-react";
 import type { NoteType, Priority } from "@/lib/types";
-import { DEFAULT_ROOMS } from "@/frontend/data/rooms";
+import { getRoomCatalog } from "@/frontend/data/rooms";
 import { NOTE_TYPES } from "@/frontend/components/notes/constants";
 import { NotesShortcutHelp } from "@/frontend/components/notes/NotesShortcutHelp";
 import { PendingImageList } from "@/frontend/components/notes/PendingImageList";
@@ -63,7 +64,6 @@ function useNotesFormState({
   const [type, setType] = useState<NoteType>("observation");
   const [room, setRoom] = useState<string>("");
   const [dateInput, setDateInput] = useState("");
-  const [roomFocused, setRoomFocused] = useState(false);
   const [tagsInput, setTagsInput] = useState("");
   const [priority, setPriority] = useState<Priority>("med");
   const [body, setBody] = useState("");
@@ -107,8 +107,6 @@ function useNotesFormState({
     setRoom,
     dateInput,
     setDateInput,
-    roomFocused,
-    setRoomFocused,
     tagsInput,
     setTagsInput,
     priority,
@@ -202,47 +200,14 @@ function NotesTitleField({
 function NotesRoomField({
   room,
   setRoom,
-  roomFocused,
-  setRoomFocused,
-  roomFieldSuggestions,
 }: {
   room: string;
   setRoom: React.Dispatch<React.SetStateAction<string>>;
-  roomFocused: boolean;
-  setRoomFocused: React.Dispatch<React.SetStateAction<boolean>>;
-  roomFieldSuggestions: string[];
 }) {
   return (
     <div>
       <label className="capture-label">Room</label>
-      <div className="relative">
-        <input
-          value={room}
-          onChange={(e) => setRoom(e.target.value)}
-          onFocus={() => setRoomFocused(true)}
-          onBlur={() => setTimeout(() => setRoomFocused(false), 100)}
-          placeholder="No room"
-          className={INPUT_BASE_CLASS}
-        />
-        {roomFocused && roomFieldSuggestions.length > 0 && (
-          <div className="capture-room-popover">
-            {roomFieldSuggestions.map((suggestion) => (
-              <button
-                key={suggestion}
-                type="button"
-                onMouseDown={(e) => {
-                  e.preventDefault();
-                  setRoom(suggestion);
-                  setRoomFocused(false);
-                }}
-                className="block w-full rounded-sm px-2 py-1.5 text-left text-sm outline-none hover:bg-accent hover:text-accent-foreground"
-              >
-                {suggestion}
-              </button>
-            ))}
-          </div>
-        )}
-      </div>
+      <RoomDropdown value={room} onValueChange={setRoom} />
     </div>
   );
 }
@@ -267,11 +232,11 @@ function NotesModeTabs({
 }) {
   return (
     <Tabs className="shrink-0" value={mode} onValueChange={(v) => setMode(v as "note" | "todo")}>
-      <TabsList className="grid h-8 w-full grid-cols-2">
-        <TabsTrigger className="text-xs" value="note">
+      <TabsList className="grid h-9 w-full grid-cols-2 rounded-md border border-input bg-muted/30 p-0.5">
+        <TabsTrigger className="h-7 w-full rounded-sm text-xs" value="note">
           📝 Note
         </TabsTrigger>
-        <TabsTrigger className="text-xs" value="todo">
+        <TabsTrigger className="h-7 w-full rounded-sm text-xs" value="todo">
           ✓ Todo
         </TabsTrigger>
       </TabsList>
@@ -289,9 +254,6 @@ function NotesMetaFields({
   setRoom,
   dateInput,
   setDateInput,
-  roomFocused,
-  setRoomFocused,
-  roomFieldSuggestions,
 }: {
   mode: "note" | "todo";
   type: NoteType;
@@ -302,9 +264,6 @@ function NotesMetaFields({
   setRoom: React.Dispatch<React.SetStateAction<string>>;
   dateInput: string;
   setDateInput: React.Dispatch<React.SetStateAction<string>>;
-  roomFocused: boolean;
-  setRoomFocused: React.Dispatch<React.SetStateAction<boolean>>;
-  roomFieldSuggestions: string[];
 }) {
   return (
     <>
@@ -341,13 +300,7 @@ function NotesMetaFields({
           </div>
         )}
 
-        <NotesRoomField
-          room={room}
-          setRoom={setRoom}
-          roomFocused={roomFocused}
-          setRoomFocused={setRoomFocused}
-          roomFieldSuggestions={roomFieldSuggestions}
-        />
+        <NotesRoomField room={room} setRoom={setRoom} />
       </div>
 
       {mode === "note" && (
@@ -356,7 +309,6 @@ function NotesMetaFields({
           <input
             value={dateInput}
             onChange={(e) => setDateInput(e.target.value)}
-            placeholder="Free text (e.g. Day 3, after library puzzle)"
             className={INPUT_BASE_CLASS}
           />
         </div>
@@ -473,18 +425,16 @@ function useNotesDerivedData({
   todos,
   title,
   cursorPos,
-  room,
 }: {
   gridCells: NotesStoreSlice["gridCells"];
   notes: NotesStoreSlice["notes"];
   todos: NotesStoreSlice["todos"];
   title: string;
   cursorPos: number;
-  room: string;
 }) {
-  // All room names known to the app, merged from map cells, notes, todos, and defaults.
+  // All room names known to the app, merged from catalog, map cells, notes, and todos.
   const roomOptions = useMemo(() => {
-    const all = new Set<string>(DEFAULT_ROOMS.map((r) => r.name));
+    const all = new Set<string>(getRoomCatalog().map((r) => r.name));
     gridCells.forEach((c) => c.roomName && all.add(c.roomName));
     notes.forEach((n) => n.room?.trim() && all.add(n.room.trim()));
     todos.forEach((t) => t.room?.trim() && all.add(t.room.trim()));
@@ -502,20 +452,13 @@ function useNotesDerivedData({
   // The word being typed at the cursor — used for inline command suggestions.
   const activeToken = useMemo(() => getActiveToken(title, cursorPos), [title, cursorPos]);
 
-  // Room dropdown: filtered by what the user has typed so far.
-  const roomFieldSuggestions = useMemo(() => {
-    const q = room.trim().toLowerCase();
-    if (!q) return roomOptions.slice(0, 8);
-    return roomOptions.filter((r) => r.toLowerCase().includes(q)).slice(0, 8);
-  }, [room, roomOptions]);
-
   // Inline title suggestions (e.g. @room, #tag autocomplete).
   const suggestions = useMemo(
     () => buildSuggestions(activeToken, roomOptions, tagSuggestions),
     [activeToken, roomOptions, tagSuggestions],
   );
 
-  return { roomFieldSuggestions, activeToken, suggestions };
+  return { activeToken, suggestions };
 }
 
 function useNotesGlobalEffects({
@@ -616,7 +559,6 @@ export function NotesCreatePanel({ defaultNoteType }: { defaultNoteType?: NoteTy
     todos: store.todos,
     title: form.title,
     cursorPos: form.cursorPos,
-    room: form.room,
   });
 
   useNotesGlobalEffects({
@@ -675,9 +617,6 @@ export function NotesCreatePanel({ defaultNoteType }: { defaultNoteType?: NoteTy
           setRoom={form.setRoom}
           dateInput={form.dateInput}
           setDateInput={form.setDateInput}
-          roomFocused={form.roomFocused}
-          setRoomFocused={form.setRoomFocused}
-          roomFieldSuggestions={derived.roomFieldSuggestions}
         />
 
         <NotesTagsField tagsInput={form.tagsInput} setTagsInput={form.setTagsInput} />

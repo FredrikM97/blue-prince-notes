@@ -5,7 +5,6 @@ description: Describe when these instructions should be loaded by the agent base
 
 <!-- Tip: Use /create-instructions in chat to generate content with agent assistance -->
 
-
 # Working Rules
 
 - Prioritize clean, simplified code over backward compatibility by default.
@@ -19,6 +18,13 @@ description: Describe when these instructions should be loaded by the agent base
 - If diagnostics include Prettier import/object/JSX reflow suggestions (for example: `Replace ... prettier/prettier`), apply those formatting fixes before finalizing.
 - Prefer running ESLint with fix for touched frontend files when formatting diagnostics are present.
 - After edits, re-check diagnostics for all changed files and resolve remaining actionable issues.
+- Do not add blanket file-level disables such as `/* eslint-disable ... */` unless there is no viable structural fix.
+- If a lint disable is truly unavoidable, keep it scoped to the smallest possible line/block and add a short reason.
+
+## Type Safety
+
+- Keep `noImplicitAny` behavior enforced and avoid introducing implicit `any` values.
+- Prefer typed callback params and typed state/action payloads over inference that degrades to `any`.
 
 ## Theme Token Structure
 
@@ -120,6 +126,7 @@ src/
 ## Three-Zone Page Layout
 
 Pages use a consistent three-zone structure managed by `PageLayout` (in `common/`):
+
 - **Left** — `page-layout-sidebar`: sticky filter/navigation column. Provided via the `sidebar` prop.
 - **Middle / content** — `page-layout-content`: main content area. Receives `children`.
   - CSS class `page-layout-content-offset` adds right padding when a SidebarPanel is open (`panelOpen` prop).
@@ -132,6 +139,7 @@ Use `<PageLayout className="max-w-2xl">` etc. to override the default `max-w-7xl
 ## Per-Feature CSS Co-location
 
 Each feature folder owns its own CSS file (e.g. `map/map.css`, `notes/notes.css`).
+
 - Each file contains a single `@layer components { ... }` block.
 - All feature CSS files are `@import`-ed by `src/frontend/styles.css`.
 - `styles.css` contains only: @imports, @custom-variant, @theme tokens, `:root` variables, and global `html {}` styles.
@@ -140,6 +148,7 @@ Each feature folder owns its own CSS file (e.g. `map/map.css`, `notes/notes.css`
 ## lib/ Purpose
 
 The `src/lib/` folder is the **server-and-frontend shared boundary**:
+
 - `types.ts` — domain types (`Note`, `Todo`, `GridCell`, etc.) used by both frontend and server/db layers.
 - `utils.ts` — the `cn()` helper (clsx + tailwind-merge). Imported widely by component files.
 - `error-page.ts` — renders the HTML fallback error page; used by `src/start.ts` (server only).
