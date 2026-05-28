@@ -6,13 +6,20 @@ import { PageLayout } from "@/components/common/PageLayout";
 import { MarkdownPreview } from "@/components/common/MarkdownPreview";
 import { StoredImageView } from "@/components/StoredImageView";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/common/dialog";
+import { INPUT_BASE_CLASS } from "@/components/common/formClasses";
 import { Trash2, ChevronLeft, ChevronRight, Expand } from "lucide-react";
 import type { Note, StoredImage } from "@/lib/types";
+import { toast } from "sonner";
+
+function getImageLabel(img: StoredImage): string {
+  return img.caption?.trim() || img.name;
+}
 
 export function ImagesPage() {
   const images = useStore((s) => s.images);
   const notes = useStore((s) => s.notes);
   const removeImage = useStore((s) => s.removeImage);
+  const updateImage = useStore((s) => s.updateImage);
   const search = useStore((s) => s.search);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [previewOpen, setPreviewOpen] = useState(false);
@@ -20,7 +27,7 @@ export function ImagesPage() {
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
     if (!q) return images;
-    return images.filter((i) => `${i.name}`.toLowerCase().includes(q));
+    return images.filter((i) => `${i.name} ${getImageLabel(i)}`.toLowerCase().includes(q));
   }, [images, search]);
 
   const selectedIndex = useMemo(
@@ -118,6 +125,13 @@ export function ImagesPage() {
             }
             selectByOffset(1);
           }}
+          onSaveLabel={async (label) => {
+            if (!selected) return;
+            const next = label.trim() || selected.name;
+            if (next === getImageLabel(selected)) return;
+            await updateImage({ ...selected, caption: next });
+            toast.success("Image label updated");
+          }}
         />
       }
     >
@@ -155,7 +169,7 @@ function ImageThumb({
     >
       <StoredImageView id={img.id} alt={img.name} className="images-thumb-image" />
       <div className="images-thumb-overlay">
-        <div className="images-thumb-name">{img.name}</div>
+        <div className="images-thumb-name">{getImageLabel(img)}</div>
       </div>
     </button>
   );
@@ -169,6 +183,7 @@ function ImagesRightPanel({
   onPrev,
   onNext,
   onDelete,
+  onSaveLabel,
 }: {
   img: StoredImage | null;
   relatedNotes: Note[];
@@ -177,6 +192,7 @@ function ImagesRightPanel({
   onPrev: () => void;
   onNext: () => void;
   onDelete: () => void;
+  onSaveLabel: (label: string) => Promise<void>;
 }) {
   if (!img) {
     return (
@@ -195,6 +211,7 @@ function ImagesRightPanel({
       onPrev={onPrev}
       onNext={onNext}
       onDelete={onDelete}
+      onSaveLabel={onSaveLabel}
     />
   );
 }
@@ -207,6 +224,7 @@ function ImagesInspectorPanel({
   onPrev,
   onNext,
   onDelete,
+  onSaveLabel,
 }: {
   img: StoredImage;
   relatedNotes: Note[];
@@ -215,17 +233,28 @@ function ImagesInspectorPanel({
   onPrev: () => void;
   onNext: () => void;
   onDelete: () => void;
+  onSaveLabel: (label: string) => Promise<void>;
 }) {
+  const [labelInput, setLabelInput] = useState(getImageLabel(img));
+  const [savingLabel, setSavingLabel] = useState(false);
+
   useEffect(() => {
     setPreviewOpen(false);
   }, [img, setPreviewOpen]);
+
+  useEffect(() => {
+    setLabelInput(getImageLabel(img));
+  }, [img.id, img.name, img.caption]);
 
   return (
     <>
       <div className="page-layout-panel images-right-panel">
         <div className="images-inspector-preview">
           <div className="images-right-header">
-            <h2 className="images-detail-title">{img.name}</h2>
+            <div className="min-w-0">
+              <h2 className="images-detail-title truncate">{getImageLabel(img)}</h2>
+              <p className="text-xs text-muted-foreground">File: {img.name}</p>
+            </div>
             <div className="images-nav-buttons">
               <Button variant="outline" size="icon" onClick={onPrev} aria-label="Previous image">
                 <ChevronLeft />
@@ -242,6 +271,35 @@ function ImagesInspectorPanel({
         </div>
 
         <div className="images-inspector-meta">
+          <div className="space-y-2">
+            <label className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+              Label
+            </label>
+            <div className="flex items-center gap-2">
+              <input
+                value={labelInput}
+                onChange={(e) => setLabelInput(e.target.value)}
+                className={`${INPUT_BASE_CLASS} h-8 flex-1`}
+                placeholder={img.name}
+              />
+              <Button
+                variant="outline"
+                size="sm"
+                disabled={savingLabel || labelInput.trim() === getImageLabel(img)}
+                onClick={async () => {
+                  setSavingLabel(true);
+                  try {
+                    await onSaveLabel(labelInput);
+                  } finally {
+                    setSavingLabel(false);
+                  }
+                }}
+              >
+                Save
+              </Button>
+            </div>
+          </div>
+
           <h3 className="images-linked-notes-title">Details from notes</h3>
           <div className="images-linked-notes-list">
             {relatedNotes.length > 0 ? (

@@ -1,7 +1,7 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import type { Note } from "@/lib/types";
 import { INPUT_BASE_CLASS } from "@/components/common/formClasses";
-import { BrassButton, GhostButton, IconButton } from "@/components/common/button";
+import { BrassButton, Button, GhostButton, IconButton } from "@/components/common/button";
 import { RoomDropdown } from "@/components/common/RoomDropdown";
 import { StoredImageView } from "@/components/StoredImageView";
 import { useStore } from "@/data/store";
@@ -11,12 +11,19 @@ import { MarkdownEditor } from "@/components/common/MarkdownEditor";
 import { NotesShortcutHelp } from "@/components/notes/NotesShortcutHelp";
 import { formatAllMarkdownTables } from "@/components/common/markdown-table";
 import { toast } from "sonner";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/common/dialog";
+
+type ImageSort = "newest" | "oldest" | "name-asc" | "name-desc";
 
 function parseTagsInput(value: string) {
   return value
     .split(/[\s,]+/)
     .map((token) => token.replace(/^#/, "").trim().toLowerCase())
     .filter(Boolean);
+}
+
+function getImageLabel(img: { name: string; caption?: string }) {
+  return img.caption?.trim() || img.name;
 }
 
 export function NotesEditorPanel({
@@ -31,9 +38,12 @@ export function NotesEditorPanel({
   onCancel: () => void;
 }) {
   const addImage = useStore((s) => s.addImage);
+  const images = useStore((s) => s.images);
   const [showHelp, setShowHelp] = useState(false);
   const [tagsInput, setTagsInput] = useState(draft.tags.join(", "));
   const [isTagsFocused, setIsTagsFocused] = useState(false);
+  const [imagePickerOpen, setImagePickerOpen] = useState(false);
+  const imageById = useMemo(() => new Map(images.map((img) => [img.id, img])), [images]);
 
   useEffect(() => {
     if (isTagsFocused) return;
@@ -191,28 +201,38 @@ export function NotesEditorPanel({
       <div className="note-editor-images-card">
         <div className="note-editor-images-header">
           <span className="note-editor-images-label">Attached images</span>
-          <label className="note-editor-attach-label">
-            <span className="inline-flex items-center gap-1">
-              <ImagePlus className="h-3.5 w-3.5" /> Attach image
-            </span>
-            <input
-              type="file"
-              accept="image/*"
-              multiple
-              className="hidden"
-              onChange={async (e) => {
-                const files = Array.from(e.target.files ?? []);
-                if (!files.length) return;
-                const created = await Promise.all(files.map((f) => addImage(f, f.name)));
-                const newIds = created.map((img) => img.id);
-                setDraft((prev) => ({
-                  ...prev,
-                  imageIds: Array.from(new Set([...prev.imageIds, ...newIds])),
-                }));
-                e.target.value = "";
-              }}
-            />
-          </label>
+          <div className="flex items-center gap-2">
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => setImagePickerOpen(true)}
+            >
+              Use existing
+            </Button>
+            <label className="note-editor-attach-label">
+              <span className="inline-flex items-center gap-1">
+                <ImagePlus className="h-3.5 w-3.5" /> Attach image
+              </span>
+              <input
+                type="file"
+                accept="image/*"
+                multiple
+                className="hidden"
+                onChange={async (e) => {
+                  const files = Array.from(e.target.files ?? []);
+                  if (!files.length) return;
+                  const created = await Promise.all(files.map((f) => addImage(f, f.name)));
+                  const newIds = created.map((img) => img.id);
+                  setDraft((prev) => ({
+                    ...prev,
+                    imageIds: Array.from(new Set([...prev.imageIds, ...newIds])),
+                  }));
+                  e.target.value = "";
+                }}
+              />
+            </label>
+          </div>
         </div>
 
         {draft.imageIds.length > 0 ? (
@@ -223,6 +243,9 @@ export function NotesEditorPanel({
                   id={id}
                   className="h-16 w-16 rounded border border-border object-cover"
                 />
+                <p className="mt-1 max-w-16 truncate text-[10px] text-muted-foreground" title={id}>
+                  {getImageLabel(imageById.get(id) ?? { name: "Image" })}
+                </p>
                 <button
                   type="button"
                   onClick={() =>
@@ -244,6 +267,14 @@ export function NotesEditorPanel({
         )}
       </div>
 
+      <SelectExistingImagesDialog
+        open={imagePickerOpen}
+        onOpenChange={setImagePickerOpen}
+        images={images}
+        selectedImageIds={draft.imageIds}
+        setDraft={setDraft}
+      />
+
       <div className="note-editor-footer">
         <GhostButton onClick={onCancel}>Cancel</GhostButton>
         <BrassButton size="sm" onClick={onSave}>
@@ -251,5 +282,120 @@ export function NotesEditorPanel({
         </BrassButton>
       </div>
     </div>
+  );
+}
+
+function SelectExistingImagesDialog({
+  open,
+  onOpenChange,
+  images,
+  selectedImageIds,
+  setDraft,
+}: {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  images: Array<{ id: string; name: string; caption?: string; createdAt: number }>;
+  selectedImageIds: string[];
+  setDraft: React.Dispatch<React.SetStateAction<Note>>;
+}) {
+  const [imageSort, setImageSort] = useState<ImageSort>("newest");
+
+  const selectedSet = useMemo(() => new Set(selectedImageIds), [selectedImageIds]);
+  const sortedImages = useMemo(() => {
+    if (!open) return [];
+    const next = [...images];
+    next.sort((a, b) => {
+      if (imageSort === "newest") return b.createdAt - a.createdAt;
+      if (imageSort === "oldest") return a.createdAt - b.createdAt;
+      if (imageSort === "name-asc") return a.name.localeCompare(b.name);
+      return b.name.localeCompare(a.name);
+    });
+    return next;
+  }, [open, images, imageSort]);
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-h-[80vh] max-w-2xl overflow-hidden p-0 [&>button]:hidden">
+        <DialogHeader className="border-b border-border px-6 py-4">
+          <div className="flex items-center justify-between gap-3">
+            <DialogTitle>Attach existing image</DialogTitle>
+            <div className="flex items-center gap-2">
+              <select
+                className="note-editor-select h-8 rounded-md border border-input bg-background px-2 text-xs"
+                value={imageSort}
+                onChange={(e) => setImageSort(e.target.value as ImageSort)}
+              >
+                <option value="newest">Newest first</option>
+                <option value="oldest">Oldest first</option>
+                <option value="name-asc">Name A-Z</option>
+                <option value="name-desc">Name Z-A</option>
+              </select>
+              <Button
+                type="button"
+                variant="secondary"
+                size="sm"
+                className="shrink-0 border border-input"
+                onClick={() => onOpenChange(false)}
+              >
+                <X className="h-3.5 w-3.5" />
+                Close
+              </Button>
+            </div>
+          </div>
+          <p className="text-xs text-muted-foreground">
+            Selected: {selectedImageIds.length} image{selectedImageIds.length === 1 ? "" : "s"}
+          </p>
+        </DialogHeader>
+
+        {sortedImages.length > 0 ? (
+          <div className="grid max-h-[60vh] grid-cols-2 gap-3 overflow-y-auto p-4 sm:grid-cols-3">
+            {sortedImages.map((img) => {
+              const selected = selectedSet.has(img.id);
+              return (
+                <button
+                  key={img.id}
+                  type="button"
+                  className={`rounded-md border p-2 text-left transition-colors hover:border-brass/60 hover:bg-muted/40 ${
+                    selected ? "border-brass bg-brass/10" : "border-border"
+                  }`}
+                  onClick={() => {
+                    setDraft((prev) => {
+                      const nextIds = selected
+                        ? prev.imageIds.filter((id) => id !== img.id)
+                        : Array.from(new Set([...prev.imageIds, img.id]));
+                      return { ...prev, imageIds: nextIds };
+                    });
+                    toast.success(selected ? "Image detached" : "Image attached");
+                  }}
+                >
+                  <StoredImageView
+                    id={img.id}
+                    alt={img.name}
+                    className="h-20 w-full rounded border border-border object-cover"
+                  />
+                  <div className="mt-2 flex items-center justify-between gap-2">
+                    <p
+                      className="min-w-0 flex-1 truncate text-xs text-muted-foreground"
+                      title={`${getImageLabel(img)} (${img.name})`}
+                    >
+                      {getImageLabel(img)}
+                    </p>
+                    {selected ? (
+                      <span className="rounded bg-brass px-1.5 py-0.5 text-[10px] font-medium text-brass-foreground">
+                        Selected
+                      </span>
+                    ) : null}
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+        ) : (
+          <p className="px-6 py-8 text-sm text-muted-foreground">
+            No available images to attach. Upload or paste a new image first.
+          </p>
+        )}
+      </DialogContent>
+    </Dialog>
   );
 }

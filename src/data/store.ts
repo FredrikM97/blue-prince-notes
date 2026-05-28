@@ -173,6 +173,24 @@ async function ensureGridSeed(existing: GridCell[]) {
   }
 }
 
+function buildUniqueImageName(existingNames: string[], candidate?: string, mime?: string) {
+  const extFromMime = mime?.startsWith("image/") ? mime.split("/")[1] : "png";
+  const raw = (candidate?.trim() || `image-${Date.now()}.${extFromMime}`).replace(/[/\\]/g, "-");
+  const dotIndex = raw.lastIndexOf(".");
+  const hasExt = dotIndex > 0 && dotIndex < raw.length - 1;
+  const base = hasExt ? raw.slice(0, dotIndex) : raw;
+  const ext = hasExt ? raw.slice(dotIndex) : "";
+
+  const used = new Set(existingNames.map((name) => name.toLowerCase()));
+  let next = raw;
+  let i = 2;
+  while (used.has(next.toLowerCase())) {
+    next = `${base} (${i})${ext}`;
+    i += 1;
+  }
+  return next;
+}
+
 export const useStore = create<State>((set, get) => ({
   loaded: false,
   notes: [],
@@ -390,10 +408,16 @@ export const useStore = create<State>((set, get) => ({
   },
 
   async addImage(blob, name, caption) {
+    const sourceName = name ?? (blob instanceof File ? blob.name : undefined);
+    const uniqueName = buildUniqueImageName(
+      get().images.map((i) => i.name),
+      sourceName,
+      blob.type,
+    );
     const img: StoredImage = {
       id: nanoid(),
-      name: name ?? `image-${Date.now()}`,
-      caption,
+      name: uniqueName,
+      caption: caption?.trim() || uniqueName,
       tags: [],
       mime: blob.type || "image/png",
       blob,
