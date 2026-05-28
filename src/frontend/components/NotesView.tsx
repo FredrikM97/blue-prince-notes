@@ -84,13 +84,7 @@ export function NotesView({
   const notePanelOpen = !!activeNote;
 
   return (
-    <div
-      className={`mx-auto grid w-full gap-6 px-4 py-6 lg:grid-cols-[220px_1fr] ${
-        captureOpen || notePanelOpen
-          ? "max-w-none sm:pr-[20rem] md:pr-[24rem] lg:pr-[30rem] xl:pr-[34rem]"
-          : "max-w-7xl"
-      }`}
-    >
+    <div className="mx-auto grid w-full max-w-7xl gap-6 px-4 py-6 lg:grid-cols-[220px_1fr]">
       <aside className="space-y-4 lg:sticky lg:top-24 lg:self-start">
         {!filterType && (
           <FilterGroup
@@ -127,7 +121,13 @@ export function NotesView({
         )}
       </aside>
 
-      <section>
+      <section
+        className={
+          captureOpen || notePanelOpen
+            ? "min-w-0 transition-[padding-right] duration-200 ease-out [--notes-panel:20rem] md:[--notes-panel:24rem] lg:[--notes-panel:30rem] xl:[--notes-panel:34rem] [padding-right:clamp(1rem,calc(var(--notes-panel)-(100vw-80rem)/2),var(--notes-panel))]"
+            : "min-w-0"
+        }
+      >
         <div className="mb-3 flex items-baseline justify-between">
           <h1 className="font-serif text-2xl">{title}</h1>
           <span className="text-sm text-muted-foreground">
