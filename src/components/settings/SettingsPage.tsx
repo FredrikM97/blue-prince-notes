@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import type { ReactNode } from "react";
 import { FolderOpen, FolderSync, Unlink } from "lucide-react";
 import { useStore } from "@/data/store";
@@ -29,9 +29,14 @@ import {
   getActiveSyncHandle,
   getActiveSyncFolderName,
   openSyncFolderInPicker,
-  getActiveSyncManifestFileName,
-  setActiveSyncManifestFileName,
 } from "@/data/sync";
+import {
+  disconnectSteamImportFolder,
+  loadSteamImportState,
+  pickSteamImportFolder,
+  refreshSteamFolderImages,
+  setSteamImportEnabled,
+} from "@/data/steamImport";
 import { toast } from "sonner";
 
 function SettingsSection({ title, children }: { title: string; children: ReactNode }) {
@@ -75,7 +80,7 @@ export function SettingsPage() {
   }
 
   return (
-    <PageLayout className="max-w-2xl space-y-12">
+    <PageLayout className="max-w-2xl space-y-12" prioritizeMiddleScroll>
       <header>
         <h1 className="font-serif text-3xl">Settings</h1>
         <p className="text-sm text-muted-foreground">
@@ -130,6 +135,13 @@ export function SettingsPage() {
               Sync folder
             </h3>
             <SyncFolderSection />
+          </div>
+
+          <div className="space-y-3 border-t border-border/70 pt-4">
+            <h3 className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+              Steam screenshots import (optional)
+            </h3>
+            <SteamImportSection />
           </div>
         </SettingsSection>
 
@@ -219,12 +231,158 @@ export function SettingsPage() {
   );
 }
 
+function SteamImportSection() {
+  const addImage = useStore((s) => s.addImage);
+  const [enabled, setEnabled] = useState(false);
+  const [folderName, setFolderName] = useState<string | null>(null);
+  const [lastRefreshAt, setLastRefreshAt] = useState<number | null>(null);
+  const [lastImported, setLastImported] = useState(0);
+  const [lastSkipped, setLastSkipped] = useState(0);
+  const [busy, setBusy] = useState(false);
+  const isSupported = typeof window !== "undefined" && "showDirectoryPicker" in window;
+
+  useEffect(() => {
+    if (!isSupported) return;
+    void (async () => {
+      const state = await loadSteamImportState();
+      setEnabled(state.enabled);
+      setFolderName(state.folderName);
+      setLastRefreshAt(state.lastRefreshAt);
+      setLastImported(state.lastImported);
+      setLastSkipped(state.lastSkipped);
+    })();
+  }, [isSupported]);
+
+  async function handleToggle(next: boolean) {
+    setBusy(true);
+    try {
+      await setSteamImportEnabled(next);
+      setEnabled(next);
+      toast.success(next ? "Steam import enabled" : "Steam import disabled");
+    } catch {
+      toast.error("Could not update Steam import setting");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function handlePickFolder() {
+    setBusy(true);
+    try {
+      const nextName = await pickSteamImportFolder();
+      if (!nextName) return;
+      setFolderName(nextName);
+      toast.success(`Steam screenshots folder connected: ${nextName}`);
+    } catch {
+      toast.error("Could not connect Steam screenshots folder");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function handleDisconnect() {
+    setBusy(true);
+    try {
+      await disconnectSteamImportFolder();
+      setFolderName(null);
+      toast.success("Steam screenshots folder disconnected");
+    } catch {
+      toast.error("Could not disconnect Steam screenshots folder");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function handleRefresh() {
+    if (!enabled) {
+      toast.error("Enable Steam import first");
+      return;
+    }
+    if (!folderName) {
+      toast.error("Connect a Steam screenshots folder first");
+      return;
+    }
+
+    setBusy(true);
+    try {
+      const result = await refreshSteamFolderImages(addImage);
+      setLastRefreshAt(Date.now());
+      setLastImported(result.imported);
+      setLastSkipped(result.skipped);
+      if (result.imported > 0) {
+        toast.success(`Imported ${result.imported} screenshot${result.imported === 1 ? "" : "s"}`);
+      } else {
+        toast.success("No new screenshots found");
+      }
+    } catch {
+      toast.error("Could not refresh Steam screenshots");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  if (!isSupported) {
+    return (
+      <p className="text-sm text-muted-foreground">
+        Your browser does not support folder access. Steam import requires Chrome or Edge.
+      </p>
+    );
+  }
+
+  return (
+    <div className="space-y-3">
+      <label className="flex items-center gap-2 text-sm">
+        <input
+          type="checkbox"
+          checked={enabled}
+          onChange={(e) => void handleToggle(e.target.checked)}
+          disabled={busy}
+        />
+        Enable Steam screenshots import
+      </label>
+
+      {folderName ? (
+        <p className="text-xs text-muted-foreground">
+          Connected folder: <strong>{folderName}</strong>
+        </p>
+      ) : (
+        <p className="text-xs text-muted-foreground">No Steam screenshots folder connected yet.</p>
+      )}
+
+      <div className="flex flex-wrap gap-2">
+        <Button variant="outline" size="sm" onClick={handlePickFolder} disabled={busy}>
+          {folderName ? "Change folder" : "Connect folder"}
+        </Button>
+        <Button variant="outline" size="sm" onClick={handleRefresh} disabled={busy || !enabled}>
+          Refresh now
+        </Button>
+        {folderName ? (
+          <Button variant="outline" size="sm" onClick={handleDisconnect} disabled={busy}>
+            Disconnect
+          </Button>
+        ) : null}
+      </div>
+
+      <p className="text-xs text-muted-foreground">
+        Manual only: no periodic scanning. Press <code>Refresh now</code> when you want to import
+        new screenshots.
+      </p>
+
+      <p className="text-xs text-muted-foreground">
+        Last refresh:{" "}
+        {lastRefreshAt
+          ? `${new Date(lastRefreshAt).toLocaleString()} • imported ${lastImported}, skipped ${lastSkipped}`
+          : "Never"}
+      </p>
+    </div>
+  );
+}
+
 function SyncFolderSection() {
   const syncFolderName = useStore((s) => s.syncFolderName);
   const setSyncFolderName = useStore((s) => s.setSyncFolderName);
   const load = useStore((s) => s.load);
   const [busy, setBusy] = useState(false);
-  const [manifestFileName, setManifestFileName] = useState(() => getActiveSyncManifestFileName());
 
   const isSupported = typeof window !== "undefined" && "showDirectoryPicker" in window;
 
@@ -289,24 +447,6 @@ function SyncFolderSection() {
     }
   }
 
-  async function handleSaveManifestFileName() {
-    setBusy(true);
-    try {
-      const next = await setActiveSyncManifestFileName(manifestFileName);
-      setManifestFileName(next);
-      const handle = getActiveSyncHandle();
-      if (handle) {
-        setSyncFolderName(getActiveSyncFolderName() ?? handle.name);
-        await writeToSyncFolder(handle);
-      }
-      toast.success("Manifest file name updated");
-    } catch {
-      toast.error("Could not update manifest file name");
-    } finally {
-      setBusy(false);
-    }
-  }
-
   if (!isSupported) {
     return (
       <p className="text-sm text-muted-foreground">
@@ -318,36 +458,14 @@ function SyncFolderSection() {
   if (syncFolderName) {
     return (
       <div className="space-y-3">
-        <div className="space-y-1.5">
-          <label htmlFor="sync-manifest-file-name" className="text-xs text-muted-foreground">
-            Manifest file name
-          </label>
-          <div className="flex flex-wrap gap-2">
-            <input
-              id="sync-manifest-file-name"
-              value={manifestFileName}
-              onChange={(e) => setManifestFileName(e.target.value)}
-              placeholder="manifest.json"
-              className="h-9 min-w-0 flex-1 rounded-md border border-input bg-card/65 px-3 text-sm"
-            />
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handleSaveManifestFileName}
-              disabled={busy}
-            >
-              Save name
-            </Button>
-          </div>
-        </div>
         <div className="flex items-center gap-2 rounded-lg border border-border bg-card/40 px-3 py-2.5 text-sm">
           <FolderSync className="h-4 w-4 shrink-0 text-green-500" />
           <span className="min-w-0 flex-1 truncate font-medium">{syncFolderName}</span>
           <span className="shrink-0 text-xs text-muted-foreground">auto-syncing</span>
         </div>
         <p className="text-xs text-muted-foreground">
-          Sync writes <code>{manifestFileName}</code> plus image files in <code>images/</code>.
-          Place this folder inside Dropbox, OneDrive, or iCloud Drive to sync across devices.
+          Sync writes manifest.json plus image files in images/. Place this folder inside Dropbox,
+          OneDrive, or iCloud Drive to sync across devices.
         </p>
         <div className="flex flex-wrap gap-2">
           <Button variant="outline" size="sm" onClick={handleSyncNow} disabled={busy}>
@@ -372,25 +490,8 @@ function SyncFolderSection() {
 
   return (
     <div className="space-y-3">
-      <div className="space-y-1.5">
-        <label htmlFor="sync-manifest-file-name" className="text-xs text-muted-foreground">
-          Manifest file name
-        </label>
-        <div className="flex flex-wrap gap-2">
-          <input
-            id="sync-manifest-file-name"
-            value={manifestFileName}
-            onChange={(e) => setManifestFileName(e.target.value)}
-            placeholder="manifest.json"
-            className="h-9 min-w-0 flex-1 rounded-md border border-input bg-card/65 px-3 text-sm"
-          />
-          <Button variant="outline" size="sm" onClick={handleSaveManifestFileName} disabled={busy}>
-            Save name
-          </Button>
-        </div>
-      </div>
       <p className="text-sm text-muted-foreground">
-        Connect a local folder and the app will keep <code>{manifestFileName}</code> and an{" "}
+        Connect a local folder and the app will keep <code>manifest.json</code> and an{" "}
         <code>images/</code> folder up to date after every change.
       </p>
       <BrassButton onClick={handleConnect} disabled={busy}>

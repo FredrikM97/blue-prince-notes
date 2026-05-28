@@ -10,19 +10,58 @@ import { INPUT_BASE_CLASS } from "@/components/common/formClasses";
 import { Trash2, ChevronLeft, ChevronRight, Expand } from "lucide-react";
 import type { Note, StoredImage } from "@/lib/types";
 import { toast } from "sonner";
+import { loadSteamImportState, refreshSteamFolderImages } from "@/data/steamImport";
 
 function getImageLabel(img: StoredImage): string {
   return img.caption?.trim() || img.name;
 }
 
+function formatLastRefreshTime(lastRefreshAt: number | null): string {
+  if (!lastRefreshAt) return "Never";
+  return new Date(lastRefreshAt).toLocaleTimeString([], {
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+  });
+}
+
 export function ImagesPage() {
   const images = useStore((s) => s.images);
   const notes = useStore((s) => s.notes);
+  const addImage = useStore((s) => s.addImage);
   const removeImage = useStore((s) => s.removeImage);
   const updateImage = useStore((s) => s.updateImage);
   const search = useStore((s) => s.search);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [previewOpen, setPreviewOpen] = useState(false);
+  const [steamImportActive, setSteamImportActive] = useState(false);
+  const [steamLastRefreshAt, setSteamLastRefreshAt] = useState<number | null>(null);
+  const [refreshBusy, setRefreshBusy] = useState(false);
+
+  useEffect(() => {
+    void (async () => {
+      const state = await loadSteamImportState();
+      setSteamImportActive(state.enabled && Boolean(state.folderName));
+      setSteamLastRefreshAt(state.lastRefreshAt);
+    })();
+  }, []);
+
+  async function handleRefreshSteamImages() {
+    setRefreshBusy(true);
+    try {
+      const result = await refreshSteamFolderImages(addImage);
+      setSteamLastRefreshAt(Date.now());
+      if (result.imported > 0) {
+        toast.success(`Imported ${result.imported} screenshot${result.imported === 1 ? "" : "s"}`);
+      } else {
+        toast.success("No new Steam screenshots found");
+      }
+    } catch {
+      toast.error("Could not refresh Steam screenshots");
+    } finally {
+      setRefreshBusy(false);
+    }
+  }
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
@@ -89,7 +128,15 @@ export function ImagesPage() {
 
   return (
     <PageLayout
-      leftSidebar={<ImagesLeftPanel total={filtered.length} />}
+      leftSidebar={
+        <ImagesLeftPanel
+          total={filtered.length}
+          steamImportActive={steamImportActive}
+          steamLastRefreshAt={steamLastRefreshAt}
+          refreshBusy={refreshBusy}
+          onRefreshSteam={handleRefreshSteamImages}
+        />
+      }
       middle={
         filtered.length === 0 ? (
           <EmptyState>
@@ -140,15 +187,51 @@ export function ImagesPage() {
   );
 }
 
-function ImagesLeftPanel({ total }: { total: number }) {
+function ImagesLeftPanel({
+  total,
+  steamImportActive,
+  steamLastRefreshAt,
+  refreshBusy,
+  onRefreshSteam,
+}: {
+  total: number;
+  steamImportActive: boolean;
+  steamLastRefreshAt: number | null;
+  refreshBusy: boolean;
+  onRefreshSteam: () => Promise<void>;
+}) {
+  const refreshTime = formatLastRefreshTime(steamLastRefreshAt);
+
   return (
     <div className="page-layout-panel">
       <h1 className="font-serif text-2xl">Images</h1>
       <p className="mt-1 text-xs text-muted-foreground">{total} stored images</p>
-      <p className="mt-3 text-xs text-muted-foreground">
+      <p className="mt-2 text-xs text-muted-foreground">
         Click an image to open details in the right panel. Use the preview button there for full
         size.
       </p>
+
+      {steamImportActive ? (
+        <div className="mt-2 space-y-1.5">
+          <h2 className="font-serif text-base">Steam Images</h2>
+          <div className="flex items-center justify-between gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => void onRefreshSteam()}
+              disabled={refreshBusy}
+            >
+              Refresh
+            </Button>
+            <span
+              className="text-xs text-muted-foreground"
+              title={steamLastRefreshAt ? new Date(steamLastRefreshAt).toLocaleString() : "Never"}
+            >
+              Last refresh: {refreshTime}
+            </span>
+          </div>
+        </div>
+      ) : null}
     </div>
   );
 }

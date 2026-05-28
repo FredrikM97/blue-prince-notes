@@ -2,8 +2,7 @@
  * File System Access API sync utilities.
  *
  * Writes a sync snapshot folder to a user-chosen local directory after every
- * mutation. Data is stored in a configurable manifest file (default
- * `manifest.json`) and image blobs in `images/`.
+ * mutation. Data is stored in `manifest.json` and image blobs in `images/`.
  * If the directory is inside Dropbox / OneDrive / iCloud Drive, the OS cloud
  * client syncs it automatically — zero extra infrastructure.
  */
@@ -76,8 +75,7 @@ export interface SyncManifest {
 }
 
 const SYNC_DIR_HANDLE_META_KEY = "sync-dir-handle";
-const DEFAULT_SYNC_MANIFEST_FILE_NAME = "manifest.json";
-const SYNC_MANIFEST_FILE_NAME_META_KEY = "sync-manifest-file-name";
+const SYNC_MANIFEST_FILE_NAME = "manifest.json";
 const SYNC_IMAGES_DIR_NAME = "images";
 
 export interface SyncFolderPayload {
@@ -90,7 +88,6 @@ export interface SyncFolderPayload {
 // ---------------------------------------------------------------------------
 
 let _handle: DirHandle | null = null;
-let _manifestFileName = DEFAULT_SYNC_MANIFEST_FILE_NAME;
 
 export function getActiveSyncHandle(): DirHandle | null {
   return _handle;
@@ -98,17 +95,6 @@ export function getActiveSyncHandle(): DirHandle | null {
 
 export function getActiveSyncFolderName(): string | null {
   return _handle?.name ?? null;
-}
-
-export function getActiveSyncManifestFileName(): string {
-  return _manifestFileName;
-}
-
-export async function setActiveSyncManifestFileName(name: string): Promise<string> {
-  const normalized = name.trim().replace(/[\\/]/g, "-") || DEFAULT_SYNC_MANIFEST_FILE_NAME;
-  _manifestFileName = normalized;
-  await setMeta(SYNC_MANIFEST_FILE_NAME_META_KEY, normalized);
-  return normalized;
 }
 
 export async function openSyncFolderInPicker(): Promise<boolean> {
@@ -132,9 +118,6 @@ export async function openSyncFolderInPicker(): Promise<boolean> {
  *  handle if permission was granted, null otherwise. */
 export async function restoreSyncHandle(): Promise<DirHandle | null> {
   try {
-    _manifestFileName =
-      (await getMeta<string>(SYNC_MANIFEST_FILE_NAME_META_KEY))?.trim() ||
-      DEFAULT_SYNC_MANIFEST_FILE_NAME;
     const handle = await getMeta<DirHandle>(SYNC_DIR_HANDLE_META_KEY);
     if (!handle) return null;
     const perm = await handle.queryPermission({ mode: "readwrite" });
@@ -177,7 +160,7 @@ export async function disconnectSyncFolder(): Promise<void> {
 
 export async function readFromSyncFolder(handle: DirHandle): Promise<SyncFolderPayload | null> {
   try {
-    const fh = await handle.getFileHandle(_manifestFileName, { create: false });
+    const fh = await handle.getFileHandle(SYNC_MANIFEST_FILE_NAME, { create: false });
     const file = await fh.getFile();
     const text = await file.text();
     const manifest = JSON.parse(text) as SyncManifest;
@@ -263,7 +246,7 @@ export async function writeToSyncFolder(handle: DirHandle): Promise<void> {
     customRooms,
   };
 
-  const fh = await handle.getFileHandle(_manifestFileName, { create: true });
+  const fh = await handle.getFileHandle(SYNC_MANIFEST_FILE_NAME, { create: true });
   const writable = await fh.createWritable();
   await writable.write(JSON.stringify(manifest, null, 2));
   await writable.close();

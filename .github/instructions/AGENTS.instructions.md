@@ -94,6 +94,11 @@ description: Describe when these instructions should be loaded by the agent base
 - Avoid wrapping a single child in a structural div that adds no layout behavior — remove it and apply the class directly.
 - Regularly review components for redundant container elements after refactors.
 
+## Panel Visual Rules
+
+- Avoid adding decorative inner borders inside existing panel containers (for example inside `page-layout-panel`).
+- Prefer spacing, typography, and subtle background contrast over nested bordered boxes within panels.
+
 ## Instruction Maintenance
 
 - Continuously update this instructions file when the user provides new project-wide preferences that should persist.
