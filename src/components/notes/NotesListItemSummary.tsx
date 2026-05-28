@@ -1,3 +1,4 @@
+import { memo } from "react";
 import type { Note } from "@/lib/types";
 import { Lightbulb } from "lucide-react";
 import { TYPE_ICON, TYPE_LABEL, relTime } from "./constants";
@@ -15,7 +16,7 @@ function Pill({ children, className }: { children: React.ReactNode; className?: 
   return <span className={`note-pill ${className ?? ""}`}>{children}</span>;
 }
 
-export function NotesListItemSummary({ note }: { note: Note }) {
+export const NotesListItemSummary = memo(function NotesListItemSummary({ note }: { note: Note }) {
   const Icon = TYPE_ICON[note.type] ?? Lightbulb;
 
   return (
@@ -52,4 +53,4 @@ export function NotesListItemSummary({ note }: { note: Note }) {
       </div>
     </div>
   );
-}
+});

@@ -19,18 +19,14 @@ function applyTheme(theme: Theme) {
 /** Self-contained theme toggle. Manages its own state, reads/writes localStorage,
  *  and applies the `dark` class to <html>. No external state needed. */
 export function ThemeToggle() {
-  const [theme, setTheme] = useState<Theme>("dark");
+  const [theme, setTheme] = useState<Theme>(() => resolveInitialTheme());
 
   useEffect(() => {
-    const initial = resolveInitialTheme();
-    applyTheme(initial);
-    setTheme(initial);
-  }, []);
+    applyTheme(theme);
+  }, [theme]);
 
   function toggle() {
-    const next: Theme = theme === "dark" ? "light" : "dark";
-    applyTheme(next);
-    setTheme(next);
+    setTheme((current) => (current === "dark" ? "light" : "dark"));
   }
 
   return (

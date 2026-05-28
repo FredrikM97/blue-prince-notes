@@ -57,14 +57,12 @@ function useNotesStoreSlice() {
 }
 
 function useNotesFormState({
-  open,
   kind,
   prefill,
   prefillRoom,
   prefillType,
   defaultNoteType,
 }: {
-  open: boolean;
   kind: "note" | "todo";
   prefill: string;
   prefillRoom?: string;
@@ -72,31 +70,20 @@ function useNotesFormState({
   defaultNoteType?: NoteType;
 }) {
   const [mode, setMode] = useState<"note" | "todo">(kind);
-  const [title, setTitle] = useState("");
-  const [type, setType] = useState<NoteType>("observation");
-  const [room, setRoom] = useState<string>("");
+  const [title, setTitle] = useState(prefill);
+  const [type, setType] = useState<NoteType>(prefillType ?? defaultNoteType ?? "observation");
+  const [room, setRoom] = useState<string>(prefillRoom ?? "");
   const [dateInput, setDateInput] = useState("");
   const [tagsInput, setTagsInput] = useState("");
   const [priority, setPriority] = useState<Priority>("med");
   const [body, setBody] = useState("");
   const [pendingImages, setPendingImages] = useState<Blob[]>([]);
-  const [cursorPos, setCursorPos] = useState(0);
+  const [cursorPos, setCursorPos] = useState(prefill.length);
   const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    if (!open) return;
-    setMode(kind);
-    setTitle(prefill);
-    setType(prefillType ?? defaultNoteType ?? "observation");
-    setRoom(prefillRoom ?? "");
-    setDateInput("");
-    setTagsInput("");
-    setPriority("med");
-    setBody("");
-    setPendingImages([]);
-    setCursorPos(prefill.length);
     setTimeout(() => inputRef.current?.focus(), 50);
-  }, [open, kind, prefill, prefillRoom, prefillType, defaultNoteType]);
+  }, []);
 
   function resetAfterSubmit() {
     setTitle("");
@@ -506,7 +493,6 @@ export function NotesCreatePanel({ defaultNoteType }: { defaultNoteType?: NoteTy
   const navigate = useNavigate();
   const store = useNotesStoreSlice();
   const form = useNotesFormState({
-    open: store.open,
     kind: store.kind,
     prefill: store.prefill,
     prefillRoom: store.prefillRoom,

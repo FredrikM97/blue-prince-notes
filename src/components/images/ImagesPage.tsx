@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useDeferredValue, useEffect, useMemo, useState } from "react";
 import { EmptyState } from "@/components/common/EmptyState";
 import { useStore } from "@/data/store";
 import { Button, GhostButton } from "@/components/common/button";
@@ -32,6 +32,7 @@ export function ImagesPage() {
   const removeImage = useStore((s) => s.removeImage);
   const updateImage = useStore((s) => s.updateImage);
   const search = useStore((s) => s.search);
+  const deferredSearch = useDeferredValue(search);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [previewOpen, setPreviewOpen] = useState(false);
   const [steamImportActive, setSteamImportActive] = useState(false);
@@ -64,29 +65,24 @@ export function ImagesPage() {
   }
 
   const filtered = useMemo(() => {
-    const q = search.trim().toLowerCase();
+    const q = deferredSearch.trim().toLowerCase();
     if (!q) return images;
     return images.filter((i) => `${i.name} ${getImageLabel(i)}`.toLowerCase().includes(q));
-  }, [images, search]);
+  }, [images, deferredSearch]);
 
   const selectedIndex = useMemo(
     () => filtered.findIndex((img) => img.id === selectedId),
     [filtered, selectedId],
   );
-  const selected = selectedIndex >= 0 ? filtered[selectedIndex] : null;
+  const selected = useMemo(() => {
+    if (selectedIndex >= 0) return filtered[selectedIndex];
+    return filtered[0] ?? null;
+  }, [filtered, selectedIndex]);
 
   const relatedNotes = useMemo(
     () => (selected ? notes.filter((note) => note.imageIds.includes(selected.id)) : []),
     [notes, selected],
   );
-
-  useEffect(() => {
-    if (!selectedId) return;
-    if (!filtered.some((img) => img.id === selectedId)) {
-      setSelectedId(filtered[0]?.id ?? null);
-      setPreviewOpen(false);
-    }
-  }, [filtered, selectedId]);
 
   const selectByOffset = useCallback(
     (offset: number) => {
@@ -287,6 +283,7 @@ function ImagesRightPanel({
 
   return (
     <ImagesInspectorPanel
+      key={img.id}
       img={img}
       relatedNotes={relatedNotes}
       previewOpen={previewOpen}
@@ -323,19 +320,11 @@ function ImagesInspectorPanel({
   const [noteIndex, setNoteIndex] = useState(0);
 
   const activeRelatedNote =
-    relatedNotes.length > 0 ? relatedNotes[((noteIndex % relatedNotes.length) + relatedNotes.length) % relatedNotes.length] : null;
-
-  useEffect(() => {
-    setPreviewOpen(false);
-  }, [img, setPreviewOpen]);
-
-  useEffect(() => {
-    setLabelInput(getImageLabel(img));
-  }, [img.id, img.name, img.caption]);
-
-  useEffect(() => {
-    setNoteIndex(0);
-  }, [img.id, relatedNotes.length]);
+    relatedNotes.length > 0
+      ? relatedNotes[
+          ((noteIndex % relatedNotes.length) + relatedNotes.length) % relatedNotes.length
+        ]
+      : null;
 
   function cycleRelatedNote(offset: number) {
     if (relatedNotes.length <= 1) return;

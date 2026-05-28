@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo } from "react";
 import { X } from "lucide-react";
 
 function PendingImageItem({
@@ -10,13 +10,11 @@ function PendingImageItem({
   index: number;
   onRemove: (index: number) => void;
 }) {
-  const [url, setUrl] = useState<string>();
+  const url = useMemo(() => URL.createObjectURL(blob), [blob]);
 
   useEffect(() => {
-    const nextUrl = URL.createObjectURL(blob);
-    setUrl(nextUrl);
-    return () => URL.revokeObjectURL(nextUrl);
-  }, [blob]);
+    return () => URL.revokeObjectURL(url);
+  }, [url]);
 
   return (
     <div className="relative h-14 w-14 overflow-hidden rounded border border-border">

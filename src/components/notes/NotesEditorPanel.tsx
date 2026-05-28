@@ -37,15 +37,11 @@ export function NotesEditorPanel({
 }) {
   const addImage = useStore((s) => s.addImage);
   const images = useStore((s) => s.images);
-  const [tagsInput, setTagsInput] = useState(draft.tags.join(", "));
+  const [tagsInputDraft, setTagsInputDraft] = useState(draft.tags.join(", "));
   const [isTagsFocused, setIsTagsFocused] = useState(false);
   const [imagePickerOpen, setImagePickerOpen] = useState(false);
   const imageById = useMemo(() => new Map(images.map((img) => [img.id, img])), [images]);
-
-  useEffect(() => {
-    if (isTagsFocused) return;
-    setTagsInput(draft.tags.join(", "));
-  }, [draft.id, draft.tags, isTagsFocused]);
+  const tagsInput = isTagsFocused ? tagsInputDraft : draft.tags.join(", ");
 
   useEffect(() => {
     function onPaste(e: ClipboardEvent) {
@@ -117,11 +113,14 @@ export function NotesEditorPanel({
           <label className="capture-label">Tags</label>
           <input
             value={tagsInput}
-            onFocus={() => setIsTagsFocused(true)}
+            onFocus={() => {
+              setTagsInputDraft(draft.tags.join(", "));
+              setIsTagsFocused(true);
+            }}
             onBlur={() => setIsTagsFocused(false)}
             onChange={(e) => {
               const next = e.target.value;
-              setTagsInput(next);
+              setTagsInputDraft(next);
               setDraft({ ...draft, tags: parseTagsInput(next) });
             }}
             placeholder="safe, gem, puzzle"

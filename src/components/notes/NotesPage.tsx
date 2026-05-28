@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useDeferredValue, useMemo, useState } from "react";
 import { useStore } from "@/data/store";
 import type { Note, NoteType, Todo } from "@/lib/types";
 import { PageLayout } from "@/components/common/PageLayout";
@@ -34,6 +34,7 @@ export function NotesPage({
   const saveNote = useStore((s) => s.saveNote);
   const removeNote = useStore((s) => s.removeNote);
   const removeTodo = useStore((s) => s.removeTodo);
+  const deferredSearch = useDeferredValue(search);
   const [typeFilter, setTypeFilter] = useState<NoteType | null>(null);
   const [roomFilter, setRoomFilter] = useState<string | null>(null);
   const [tagFilter, setTagFilter] = useState<string | null>(null);
@@ -84,7 +85,7 @@ export function NotesPage({
   }, [noteListItems]);
 
   const filtered = useMemo(() => {
-    const q = search.trim().toLowerCase();
+    const q = deferredSearch.trim().toLowerCase();
     return noteListItems.filter((n) => {
       if (effectiveType && n.type !== effectiveType) return false;
       if (roomFilter && n.room !== roomFilter) return false;
@@ -96,16 +97,18 @@ export function NotesPage({
       }
       return true;
     });
-  }, [noteListItems, effectiveType, roomFilter, tagFilter, statusFilter, search]);
+  }, [noteListItems, effectiveType, roomFilter, tagFilter, statusFilter, deferredSearch]);
 
   const activeNote = useMemo(
     () => notes.find((n) => n.id === activeNoteId) ?? null,
     [notes, activeNoteId],
   );
 
-  useEffect(() => {
-    if (activeNote) setDraft(activeNote);
-  }, [activeNote]);
+  const currentDraft = useMemo(() => {
+    if (!activeNote) return null;
+    if (draft && draft.id === activeNote.id) return draft;
+    return activeNote;
+  }, [activeNote, draft]);
 
   const setEditorDraft: React.Dispatch<React.SetStateAction<Note>> = (next) => {
     setDraft((prev) => {
@@ -144,16 +147,16 @@ export function NotesPage({
             ) : (
               <NotesRightPanel
                 activeNote={activeNote}
-                draft={draft}
+                draft={currentDraft}
                 panelMode={panelMode}
                 setDraft={setEditorDraft}
                 onSave={async () => {
-                  if (!draft && !activeNote) return;
-                  await saveNote(draft ?? activeNote!);
+                  if (!currentDraft) return;
+                  await saveNote(currentDraft);
                   setPanelMode("preview");
                 }}
                 onClose={() => {
-                  if (activeNote) setDraft(activeNote);
+                  setDraft(null);
                   setActiveNoteId(null);
                   closeCapture();
                 }}

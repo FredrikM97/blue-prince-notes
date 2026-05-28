@@ -96,20 +96,17 @@ function AppFrame({ children }: { children: React.ReactNode }) {
     return () => window.removeEventListener("bp:show-welcome", showWelcome);
   }, []);
 
-  // Also mark ready whenever data appears (e.g. user creates first note)
-  useEffect(() => {
-    if (
-      initState === "welcome" &&
-      welcomeSource === "auto" &&
-      (notes.length > 0 || todos.length > 0)
-    ) {
-      localStorage.setItem("bp-welcomed", "1");
-      setWelcomeSource(null);
-      setInitState("ready");
-    }
-  }, [notes.length, todos.length, initState, welcomeSource]);
+  const shouldAutoDismissWelcome =
+    initState === "welcome" && welcomeSource === "auto" && (notes.length > 0 || todos.length > 0);
 
-  if (!loaded && initState === "checking") {
+  useEffect(() => {
+    if (!shouldAutoDismissWelcome) return;
+    localStorage.setItem("bp-welcomed", "1");
+  }, [shouldAutoDismissWelcome]);
+
+  const effectiveInitState = shouldAutoDismissWelcome ? "ready" : initState;
+
+  if (!loaded && effectiveInitState === "checking") {
     // Silent loading — no spinner to avoid flash
     return (
       <div className="flex h-dvh flex-col overflow-hidden bg-background text-foreground">
@@ -119,7 +116,7 @@ function AppFrame({ children }: { children: React.ReactNode }) {
     );
   }
 
-  if (initState === "welcome") {
+  if (effectiveInitState === "welcome") {
     const hasExistingConfiguration =
       notes.length > 0 || todos.length > 0 || Boolean(getActiveSyncFolderName());
 

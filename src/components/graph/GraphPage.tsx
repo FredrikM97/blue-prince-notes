@@ -477,21 +477,50 @@ function buildEdges(
 ): GraphEdge[] {
   const edges: GraphEdge[] = [];
 
-  for (let i = 0; i < notes.length; i += 1) {
-    const source = notes[i];
+  const idsByRoom = new Map<string, string[]>();
+  const idsByTag = new Map<string, string[]>();
+
+  owners.forEach((owner, ownerId) => {
+    if (owner.room) {
+      const roomOwners = idsByRoom.get(owner.room);
+      if (roomOwners) roomOwners.push(ownerId);
+      else idsByRoom.set(owner.room, [ownerId]);
+    }
+
+    owner.tags.forEach((tag) => {
+      const tagOwners = idsByTag.get(tag);
+      if (tagOwners) tagOwners.push(ownerId);
+      else idsByTag.set(tag, [ownerId]);
+    });
+  });
+
+  for (const source of notes) {
     const sourceRefs = refs.get(source.id);
     if (!sourceRefs) continue;
 
-    for (let j = 0; j < notes.length; j += 1) {
-      if (i === j) continue;
+    const candidateTargetIds = new Set<string>();
 
-      const target = notes[j];
-      const targetOwner = owners.get(target.id);
-      if (!targetOwner) continue;
+    sourceRefs.rooms.forEach((room) => {
+      const roomOwners = idsByRoom.get(room);
+      if (!roomOwners) return;
+      roomOwners.forEach((targetId) => candidateTargetIds.add(targetId));
+    });
 
-      const edge = buildDirectedEdge(source.id, target.id, sourceRefs, targetOwner);
+    sourceRefs.tags.forEach((tag) => {
+      const tagOwners = idsByTag.get(tag);
+      if (!tagOwners) return;
+      tagOwners.forEach((targetId) => candidateTargetIds.add(targetId));
+    });
+
+    candidateTargetIds.delete(source.id);
+
+    candidateTargetIds.forEach((targetId) => {
+      const targetOwner = owners.get(targetId);
+      if (!targetOwner) return;
+
+      const edge = buildDirectedEdge(source.id, targetId, sourceRefs, targetOwner);
       if (edge) edges.push(edge);
-    }
+    });
   }
 
   return edges;
