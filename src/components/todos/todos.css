@@ -1,0 +1,75 @@
+@layer components {
+  .todos-sidebar-label {
+    @apply mb-1.5 text-[11px] font-medium uppercase tracking-wider text-muted-foreground;
+  }
+
+  .todos-page-header {
+    @apply mb-4 flex flex-wrap items-baseline justify-between gap-2;
+  }
+
+  .todos-page-title {
+    @apply font-serif text-2xl;
+  }
+
+  .todos-page-header-actions {
+    @apply flex items-center gap-2;
+  }
+
+  .todos-add-button {
+    @apply bg-brass text-brass-foreground hover:bg-brass/90;
+  }
+
+  /* "This run" quick-view card */
+  .todos-run-open-card {
+    @apply mb-6 rounded-lg border border-brass/40 bg-brass/5 p-3;
+  }
+
+  .todos-run-open-title {
+    @apply mb-2 text-[11px] font-medium uppercase tracking-wider text-brass;
+  }
+
+  .todos-run-open-list {
+    @apply space-y-1;
+  }
+
+  .todos-run-open-item {
+    @apply flex items-center gap-2 text-sm;
+  }
+
+  .todos-run-open-checkbox {
+    @apply h-4 w-4 cursor-pointer rounded border-input;
+  }
+
+  .todos-run-open-chip {
+    @apply border-brass/40 text-brass;
+  }
+
+  /* Kanban columns */
+  .todos-columns-grid {
+    @apply grid gap-4 md:grid-cols-3;
+  }
+
+  .todos-column {
+    @apply rounded-lg border border-border bg-card;
+  }
+
+  .todos-column-header {
+    @apply flex items-center justify-between border-b border-border px-3 py-2;
+  }
+
+  .todos-column-title {
+    @apply font-serif text-sm uppercase tracking-wider text-muted-foreground;
+  }
+
+  .todos-column-count {
+    @apply text-xs text-muted-foreground;
+  }
+
+  .todos-column-list {
+    @apply divide-y divide-border;
+  }
+
+  .todos-column-empty {
+    @apply px-3 py-6 text-center text-xs text-muted-foreground;
+  }
+}

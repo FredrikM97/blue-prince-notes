@@ -1,0 +1,151 @@
+@layer components {
+  /* Notes list view */
+  .notes-view-filters-panel {
+    @apply space-y-4 rounded-lg border border-border bg-card/40 p-3;
+  }
+
+  .notes-view-header {
+    @apply mb-3 flex items-baseline justify-between;
+  }
+
+  .notes-view-empty {
+    @apply rounded-lg border border-dashed border-border p-10 text-center;
+  }
+
+  .notes-view-list {
+    @apply space-y-2;
+  }
+
+  .notes-view-panel {
+    @apply gap-3 sm:p-6;
+  }
+
+  .notes-right-panel-shell {
+    @apply rounded-lg;
+    max-height: calc(100dvh - 7rem);
+    overflow: hidden;
+  }
+
+  @media (min-width: 64rem) {
+    .notes-right-panel-shell {
+      height: calc(100dvh - 7rem);
+      overflow: hidden;
+    }
+  }
+
+  .notes-filter-label {
+    @apply mb-1.5 text-[11px] font-medium uppercase tracking-wider text-muted-foreground;
+  }
+
+  .notes-filter-wrap {
+    @apply flex flex-wrap gap-1;
+  }
+
+  /* Capture/notes panel */
+  .capture-panel {
+    @apply gap-2;
+  }
+
+  .capture-header {
+    @apply shrink-0 space-y-0.5;
+  }
+
+  .capture-form-stack {
+    @apply space-y-2.5;
+  }
+
+  .capture-label {
+    @apply mb-1 block text-[11px] font-medium uppercase tracking-wider text-muted-foreground;
+  }
+
+  .capture-label-row {
+    @apply mb-1 flex items-center justify-between gap-2;
+  }
+
+  .capture-suggestions {
+    @apply mt-1 rounded-md border border-border bg-card p-1;
+  }
+
+  .capture-suggestions-title {
+    @apply mb-1 px-1 text-[10px] uppercase tracking-wider text-muted-foreground;
+  }
+
+  .capture-suggestions-wrap {
+    @apply flex flex-wrap gap-1;
+  }
+
+  .capture-suggestion-btn {
+    @apply rounded border border-border bg-secondary px-2 py-0.5 text-xs text-foreground hover:border-brass;
+  }
+
+  .capture-two-col {
+    @apply grid grid-cols-2 gap-3;
+  }
+
+  .capture-room-popover {
+    @apply absolute z-50 mt-1 max-h-40 w-full overflow-y-auto rounded-md border bg-popover p-1 text-popover-foreground shadow-md [scrollbar-width:none] [&::-webkit-scrollbar]:hidden;
+  }
+
+  .capture-preview-card {
+    @apply mt-3 rounded-md border border-border bg-card/60 p-3;
+  }
+
+  .capture-preview-title {
+    @apply mb-2 text-[11px] font-medium uppercase tracking-wider text-muted-foreground;
+  }
+
+  .capture-preview-markdown {
+    @apply min-h-[8.8rem] text-sm leading-relaxed text-foreground [&_h1]:mb-2 [&_h1]:text-xl [&_h1]:font-semibold [&_h2]:mb-2 [&_h2]:text-lg [&_h2]:font-semibold [&_h3]:mb-2 [&_h3]:text-base [&_h3]:font-semibold [&_p]:mb-2 [&_ul]:mb-2 [&_ul]:list-disc [&_ul]:pl-5 [&_ol]:mb-2 [&_ol]:list-decimal [&_ol]:pl-5 [&_li]:mb-1 [&_code]:rounded [&_code]:bg-secondary [&_code]:px-1 [&_code]:py-0.5 [&_pre]:mb-2 [&_pre]:overflow-x-auto [&_pre]:rounded [&_pre]:bg-secondary [&_pre]:p-2 [&_pre_code]:bg-transparent [&_pre_code]:p-0;
+  }
+
+  .capture-actions-row {
+    @apply flex items-center justify-between;
+  }
+
+  .capture-attach-label {
+    @apply cursor-pointer rounded-md border border-input bg-secondary px-2 py-1.5 text-xs text-muted-foreground hover:text-foreground;
+  }
+
+  .capture-help-btn {
+    @apply inline-flex items-center gap-1 text-[11px] text-muted-foreground hover:text-foreground;
+  }
+
+  .capture-footer {
+    @apply mt-3 flex flex-col-reverse gap-2 sm:flex-row sm:justify-between;
+  }
+
+  .capture-footer-hint {
+    @apply text-[11px] text-muted-foreground;
+  }
+
+  /* Preview panel inside notes view */
+  .notes-panel-preview-wrap {
+    @apply flex min-h-[24rem] flex-col;
+  }
+
+  .notes-panel-preview-scroll {
+    @apply min-h-[18rem] flex-1 overflow-y-auto pr-1;
+  }
+
+  .notes-panel-preview-footer {
+    @apply mt-3 flex justify-start border-t border-border pt-2;
+  }
+
+  /* Shared markdown surface styles with stronger table readability */
+  .markdown-preview-surface table {
+    @apply my-3 w-full border-collapse overflow-hidden rounded-md border border-border;
+  }
+
+  .markdown-preview-surface thead {
+    @apply bg-muted/40;
+  }
+
+  .markdown-preview-surface th,
+  .markdown-preview-surface td {
+    @apply border border-border px-2.5 py-1.5 text-left align-top;
+  }
+
+  .markdown-preview-surface tbody tr:nth-child(2n) {
+    @apply bg-muted/20;
+  }
+}

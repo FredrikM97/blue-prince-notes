@@ -1,0 +1,71 @@
+@layer components {
+  /* Outer wrapper — centers content, limits max width */
+  .page-layout {
+    @apply mx-auto h-full w-full max-w-7xl px-3 py-3 sm:px-4 sm:py-6;
+  }
+
+  /* Layout variants */
+  .page-layout-three-column {
+    @apply grid items-start gap-3 sm:gap-6 lg:grid-cols-[240px_minmax(0,1fr)_420px];
+  }
+
+  .page-layout-two-column-left {
+    @apply grid items-start gap-3 sm:gap-6 lg:grid-cols-[240px_minmax(0,1fr)];
+  }
+
+  .page-layout-two-column-right {
+    @apply grid items-start gap-3 sm:gap-6 lg:grid-cols-[minmax(0,1fr)_420px];
+  }
+
+  /* Left sticky sidebar column */
+  .page-layout-sidebar {
+    @apply lg:sticky lg:self-start;
+    top: 0;
+  }
+
+  /* Main content area ("middle") */
+  .page-layout-content {
+    min-width: 0;
+  }
+
+  .page-layout-panel {
+    @apply rounded-lg border border-border bg-card/40 p-2.5 text-sm sm:p-3;
+  }
+
+  /* Right sticky sidebar column */
+  .page-layout-rightbar {
+    @apply lg:sticky lg:self-start;
+    top: 0;
+  }
+
+  /* SidebarPanel — fixed right overlay, slides in from the right edge */
+  .sidebar-panel-content {
+    @apply fixed right-0 top-14 z-50 flex h-[calc(100dvh-3.5rem)] w-full max-w-none flex-col gap-2 overflow-y-auto rounded-none border-l bg-background p-4 shadow-lg duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:slide-out-to-right data-[state=open]:slide-in-from-right sm:p-5;
+  }
+
+  @media (min-width: 40rem) {
+    .sidebar-panel-content {
+      width: var(--sidebar-panel-width);
+    }
+  }
+
+  /* Force the grid row to fill the container height so the middle column
+     has a definite size to scroll within. Sidebars keep top-alignment via
+     their own lg:self-start class, so only the middle column stretches. */
+  .page-layout-middle-scroll-priority {
+    grid-template-rows: 1fr;
+    align-items: stretch;
+  }
+
+  .page-layout-middle-scroll-priority .page-layout-content {
+    min-height: 0;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+  }
+
+  .page-layout-middle-scroll-priority .page-layout-sidebar,
+  .page-layout-middle-scroll-priority .page-layout-rightbar {
+    min-height: 0;
+    overflow: hidden;
+  }
+}

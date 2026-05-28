@@ -1,0 +1,200 @@
+@import "tailwindcss";
+@plugin "@tailwindcss/typography";
+@source "..";
+@import "tw-animate-css";
+
+/* Per-component CSS — co-located with their folders */
+@import "./components/app-header.css";
+@import "./components/common/layout.css";
+@import "./components/notes/notes.css";
+@import "./components/notes/note-row.css";
+@import "./components/images/images.css";
+@import "./components/map/map.css";
+@import "./components/todos/todos.css";
+
+@custom-variant dark (&:is(.dark *));
+
+@theme inline {
+  --font-serif: "Cormorant Garamond", "Iowan Old Style", Georgia, serif;
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --radius-2xl: calc(var(--radius) + 8px);
+  --radius-3xl: calc(var(--radius) + 12px);
+  --radius-4xl: calc(var(--radius) + 16px);
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-ring-offset-background: var(--background);
+  --color-brass: var(--brass);
+  --color-brass-foreground: var(--brass-foreground);
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+}
+
+/* Blue Prince theme tokens.
+   Light mode tokens are the baseline in :root.
+   Dark mode tokens are explicit overrides in :root.dark. */
+:root {
+  /* Shared shape token */
+  --radius: 0.5rem;
+  --sidebar-panel-width: 20rem;
+
+  /* Light mode: core surfaces and text */
+  --background: oklch(0.97 0.008 95);
+  --foreground: oklch(0.3 0.02 250);
+  --card: oklch(0.99 0.004 95);
+  --card-foreground: oklch(0.3 0.02 250);
+  --popover: oklch(0.99 0.004 95);
+  --popover-foreground: oklch(0.3 0.02 250);
+
+  /* Light mode: interactive colors */
+  --primary: oklch(0.76 0.13 80);
+  --primary-foreground: oklch(0.22 0.022 250);
+  --secondary: oklch(0.92 0.012 250);
+  --secondary-foreground: oklch(0.3 0.02 250);
+  --muted: oklch(0.95 0.012 250);
+  --muted-foreground: oklch(0.4 0.02 250);
+  --accent: oklch(0.89 0.02 250);
+  --accent-foreground: oklch(0.3 0.02 250);
+  --destructive: oklch(0.58 0.21 27);
+  --destructive-foreground: oklch(0.98 0.01 80);
+
+  /* Light mode: controls and focus */
+  --border: oklch(0.68 0.02 250 / 40%);
+  --input: oklch(0.68 0.02 250 / 55%);
+  --ring: oklch(0.76 0.13 80);
+
+  /* Light mode: brand and data */
+  --brass: oklch(0.76 0.13 80);
+  --brass-foreground: oklch(0.22 0.022 250);
+  --chart-1: oklch(0.76 0.13 80);
+  --chart-2: oklch(0.62 0.13 200);
+  --chart-3: oklch(0.55 0.18 30);
+  --chart-4: oklch(0.7 0.12 150);
+  --chart-5: oklch(0.55 0.18 320);
+
+  /* Light mode: sidebar */
+  --sidebar: oklch(0.94 0.012 250);
+  --sidebar-foreground: oklch(0.3 0.02 250);
+  --sidebar-primary: oklch(0.76 0.13 80);
+  --sidebar-primary-foreground: oklch(0.22 0.022 250);
+  --sidebar-accent: oklch(0.89 0.02 250);
+  --sidebar-accent-foreground: oklch(0.3 0.02 250);
+  --sidebar-border: oklch(0.68 0.02 250 / 40%);
+  --sidebar-ring: oklch(0.76 0.13 80);
+  color-scheme: light;
+}
+
+/* Dark mode overrides for readability and contrast. */
+:root.dark {
+  /* Dark mode: core surfaces and text */
+  --background: oklch(0.23 0.022 250);
+  --foreground: oklch(0.96 0.012 80);
+  --card: oklch(0.29 0.026 250);
+  --card-foreground: oklch(0.96 0.012 80);
+  --popover: oklch(0.3 0.024 250);
+  --popover-foreground: oklch(0.96 0.012 80);
+
+  /* Dark mode: interactive colors */
+  --primary-foreground: oklch(0.22 0.022 250);
+  --secondary: oklch(0.34 0.03 250);
+  --secondary-foreground: oklch(0.96 0.012 80);
+  --muted: oklch(0.33 0.027 250);
+  --muted-foreground: oklch(0.8 0.02 80);
+  --accent: oklch(0.38 0.034 250);
+  --accent-foreground: oklch(0.96 0.012 80);
+
+  /* Dark mode: controls and focus */
+  --border: oklch(1 0 0 / 18%);
+  --input: oklch(1 0 0 / 26%);
+
+  /* Dark mode: brand and sidebar */
+  --brass-foreground: oklch(0.22 0.022 250);
+  --sidebar: oklch(0.2 0.023 250);
+  --sidebar-foreground: oklch(0.96 0.012 80);
+  --sidebar-primary-foreground: oklch(0.22 0.022 250);
+  --sidebar-accent: oklch(0.32 0.028 250);
+  --sidebar-accent-foreground: oklch(0.96 0.012 80);
+  --sidebar-border: oklch(1 0 0 / 18%);
+  color-scheme: dark;
+}
+
+@media (min-width: 48rem) {
+  :root {
+    --sidebar-panel-width: 24rem;
+  }
+}
+
+@media (min-width: 64rem) {
+  :root {
+    --sidebar-panel-width: 30rem;
+  }
+}
+
+@media (min-width: 80rem) {
+  :root {
+    --sidebar-panel-width: 34rem;
+  }
+}
+
+@layer base {
+  * {
+    border-color: var(--color-border);
+  }
+
+  html {
+    background-color: var(--color-background);
+    color: var(--color-foreground);
+    scrollbar-gutter: stable;
+  }
+
+  body {
+    background-color: var(--color-background);
+    color: var(--color-foreground);
+    font-family:
+      ui-sans-serif,
+      system-ui,
+      -apple-system,
+      "Segoe UI",
+      Roboto,
+      sans-serif;
+    line-height: 1.5;
+  }
+
+  h1,
+  h2,
+  h3,
+  .font-serif {
+    font-family: var(--font-serif);
+    letter-spacing: -0.01em;
+  }
+}

@@ -1,10 +1,4 @@
-export type NoteType =
-  | "clue"
-  | "code"
-  | "observation"
-  | "theory"
-  | "book"
-  | "task";
+export type NoteType = "clue" | "code" | "observation" | "theory" | "story" | "task";
 
 export type NoteStatus = "open" | "solved" | "stale";
 export type RunScope = "this-run" | "cross-run";
@@ -16,6 +10,7 @@ export interface Note {
   body: string;
   room?: string;
   tags: string[];
+  date?: string;
   status: NoteStatus;
   scope: RunScope;
   imageIds: string[];

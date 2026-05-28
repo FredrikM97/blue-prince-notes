@@ -1,0 +1,170 @@
+@layer components {
+  /* Note row list item */
+  .note-row-item {
+    @apply overflow-hidden rounded-lg border border-border bg-card;
+  }
+
+  .note-row-inner {
+    @apply flex items-start gap-3 px-4 py-3 hover:bg-accent/40;
+  }
+
+  .note-row-preview-btn {
+    @apply min-w-0 flex-1 text-left;
+  }
+
+  /* Note summary (row body) */
+  .note-summary-wrap {
+    @apply flex items-start gap-3;
+  }
+
+  .note-summary-icon {
+    @apply mt-0.5 grid h-7 w-7 shrink-0 place-items-center rounded-md bg-brass/15 text-brass transition-colors;
+  }
+
+  .note-summary-icon-clue {
+    @apply bg-amber-500/15 text-amber-400 group-hover:bg-amber-500/25;
+  }
+
+  .note-summary-icon-code {
+    @apply bg-blue-500/15 text-blue-400 group-hover:bg-blue-500/25;
+  }
+
+  .note-summary-icon-observation {
+    @apply bg-emerald-500/15 text-emerald-400 group-hover:bg-emerald-500/25;
+  }
+
+  .note-summary-icon-theory {
+    @apply bg-violet-500/15 text-violet-400 group-hover:bg-violet-500/25;
+  }
+
+  .note-summary-icon-story {
+    @apply bg-rose-500/15 text-rose-400 group-hover:bg-rose-500/25;
+  }
+
+  .note-summary-icon-task {
+    @apply bg-yellow-500/15 text-yellow-400 group-hover:bg-yellow-500/25;
+  }
+
+  .note-summary-icon-svg {
+    @apply h-4 w-4 transition-transform;
+  }
+
+  .note-summary-body {
+    @apply min-w-0 flex-1;
+  }
+
+  .note-summary-title {
+    @apply min-w-0 truncate font-serif text-base font-medium leading-tight;
+  }
+
+  .note-summary-time {
+    @apply shrink-0 whitespace-nowrap text-[10px] text-muted-foreground;
+  }
+
+  .note-summary-pills {
+    @apply flex min-w-0 flex-1 flex-wrap items-center gap-1.5;
+  }
+
+  .note-summary-meta {
+    @apply mt-0.5 flex min-w-0 items-center gap-2;
+  }
+
+  .note-summary-image-count {
+    @apply rounded border border-border/60 px-1 py-0.5 text-[10px] text-muted-foreground transition-colors group-hover:border-brass/40 group-hover:text-brass;
+  }
+
+  /* Note pills (type/room/tag badges) */
+  .note-pill {
+    @apply inline-flex rounded border px-1.5 py-0.5 text-[10px];
+  }
+
+  .note-pill-room {
+    @apply border-brass/40 text-brass;
+  }
+
+  .note-pill-tag {
+    @apply border-border bg-secondary text-foreground;
+  }
+
+  .note-pill-date {
+    @apply mr-0.5 border-blue-500/30 text-blue-400;
+  }
+
+  .note-pill-solved {
+    @apply border-green-700/40 bg-green-700/30 text-green-200;
+  }
+
+  /* Note editor (inline edit form) */
+  .note-editor-wrap {
+    @apply space-y-3;
+  }
+
+  .note-editor-grid-2 {
+    @apply grid grid-cols-2 gap-2;
+  }
+
+  .note-editor-grid-3 {
+    @apply grid grid-cols-3 gap-2;
+  }
+
+  .note-editor-footer {
+    @apply mt-3 flex justify-end gap-2 border-t border-border pt-2;
+  }
+
+  .note-editor-images-card {
+    @apply space-y-2 rounded-md border border-border bg-card/30 p-2;
+  }
+
+  .note-editor-images-header {
+    @apply flex items-center justify-between;
+  }
+
+  .note-editor-images-label {
+    @apply text-[11px] font-medium uppercase tracking-wider text-muted-foreground;
+  }
+
+  .note-editor-attach-label {
+    @apply cursor-pointer rounded-md border border-input bg-secondary px-2 py-1 text-xs text-muted-foreground hover:text-foreground;
+  }
+
+  .note-editor-images-grid {
+    @apply flex flex-wrap gap-2;
+  }
+
+  .note-editor-image-wrap {
+    @apply relative;
+  }
+
+  .note-editor-image-remove {
+    @apply absolute right-0 top-0 rounded-bl bg-black/60 p-0.5 text-white;
+  }
+
+  .note-editor-selects-row {
+    @apply flex items-center gap-2;
+  }
+
+  .note-editor-select {
+    @apply h-9 rounded-md border border-input bg-background px-2 text-sm;
+  }
+
+  /* Note details (read-only preview) */
+  .note-details-images {
+    @apply mt-5 space-y-3 border-t border-border pt-3;
+  }
+
+  .note-details-images-label {
+    @apply text-[11px] font-medium uppercase tracking-wider text-muted-foreground;
+  }
+
+  .note-details-images-grid {
+    @apply grid grid-cols-2 gap-3 sm:grid-cols-3;
+  }
+
+  .note-details-image-btn {
+    @apply overflow-hidden rounded border border-border transition-colors hover:border-brass;
+  }
+
+  .note-details-zoom-preview {
+    @apply max-h-[75vh] overflow-hidden rounded border border-border bg-black/60 p-2;
+  }
+}
