@@ -1,8 +1,6 @@
 name: Deploy To GitHub Pages
 
 on:
-  push:
-    branches: [main]
   workflow_dispatch:
 
 permissions:
@@ -16,6 +14,7 @@ concurrency:
 
 jobs:
   build:
+    if: github.repository == 'FredrikM97/blue-prince-notes' && github.repository_owner == 'FredrikM97' && github.actor == 'FredrikM97'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -60,6 +59,7 @@ jobs:
           path: dist/client
 
   deploy:
+    if: github.repository == 'FredrikM97/blue-prince-notes' && github.repository_owner == 'FredrikM97' && github.actor == 'FredrikM97'
     runs-on: ubuntu-latest
     needs: build
     environment:
