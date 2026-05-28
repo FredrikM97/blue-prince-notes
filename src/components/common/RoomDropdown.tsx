@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { memo, useState } from "react";
 import { ChevronDown } from "lucide-react";
 import { Button } from "@/components/common/button";
 import {
@@ -12,7 +12,7 @@ import {
 } from "@/components/common/DropdownMenu";
 import { getGroupedRoomCatalog, ROOM_GROUPS, type RoomCategory } from "@/data/rooms";
 
-export function RoomDropdown({
+function RoomDropdownComponent({
   value,
   onValueChange,
   placeholder = "Pick a room...",
@@ -23,45 +23,36 @@ export function RoomDropdown({
   placeholder?: string;
   clearLabel?: string;
 }) {
-  const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
-  const groupedRooms = useMemo(() => getGroupedRoomCatalog(), []);
-  const roomCategoryByName = useMemo(() => {
-    const next = new Map<string, RoomCategory>();
-    ROOM_GROUPS.forEach((group) => {
-      groupedRooms[group].forEach((room) => {
-        if (!next.has(room.name)) {
-          next.set(room.name, group);
-        }
-      });
+  const groupedRooms = getGroupedRoomCatalog();
+  const roomCategoryByName = new Map<string, RoomCategory>();
+  ROOM_GROUPS.forEach((group) => {
+    groupedRooms[group].forEach((room) => {
+      if (!roomCategoryByName.has(room.name)) {
+        roomCategoryByName.set(room.name, group);
+      }
     });
-    return next;
-  }, [groupedRooms]);
+  });
 
   const activeRoom = value?.trim() ? value.trim() : "";
   const activeCategory = activeRoom ? (roomCategoryByName.get(activeRoom) ?? null) : null;
   const normalizedQuery = query.trim().toLowerCase();
 
-  const searchResults = useMemo(() => {
-    if (!normalizedQuery) return [];
-
-    const matches: Array<{ name: string; category: RoomCategory }> = [];
+  const searchResults: Array<{ name: string; category: RoomCategory }> = [];
+  if (normalizedQuery) {
     ROOM_GROUPS.forEach((group) => {
       groupedRooms[group].forEach((room) => {
         if (room.name.toLowerCase().includes(normalizedQuery)) {
-          matches.push({ name: room.name, category: group });
+          searchResults.push({ name: room.name, category: group });
         }
       });
     });
-    return matches;
-  }, [groupedRooms, normalizedQuery]);
+  }
 
   return (
     <DropdownMenu
       modal={false}
-      open={open}
       onOpenChange={(nextOpen) => {
-        setOpen(nextOpen);
         if (!nextOpen) setQuery("");
       }}
     >
@@ -143,3 +134,5 @@ export function RoomDropdown({
     </DropdownMenu>
   );
 }
+
+export const RoomDropdown = memo(RoomDropdownComponent);

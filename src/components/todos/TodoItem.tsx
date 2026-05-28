@@ -3,7 +3,14 @@ import type { Todo, TodoStatus } from "@/lib/types";
 import { Chip } from "@/components/common/Chip";
 import { INPUT_BASE_CLASS } from "@/components/common/formClasses";
 import { Trash2 } from "lucide-react";
+import { DropdownSelect } from "@/components/common/DropdownSelect";
 import { todoPriorityClass } from "./constants";
+
+const TODO_STATUS_OPTIONS = [
+  { value: "open", label: "open" },
+  { value: "in-progress", label: "in progress" },
+  { value: "done", label: "done" },
+];
 
 export function TodoItem({
   todo,
@@ -67,15 +74,13 @@ export function TodoItem({
               #{tag}
             </Chip>
           ))}
-          <select
-            className="ml-auto h-6 rounded border border-input bg-background px-1 text-[11px] opacity-0 group-hover:opacity-100"
+          <DropdownSelect
             value={todo.status}
-            onChange={(e) => onToggle(e.target.value as TodoStatus)}
-          >
-            <option value="open">open</option>
-            <option value="in-progress">in progress</option>
-            <option value="done">done</option>
-          </select>
+            onValueChange={(value) => onToggle(value as TodoStatus)}
+            options={TODO_STATUS_OPTIONS}
+            className="ml-auto h-6 w-auto rounded border border-input bg-background px-1 text-[11px] opacity-0 group-hover:opacity-100"
+            contentClassName="min-w-32"
+          />
         </div>
       </div>
       <button

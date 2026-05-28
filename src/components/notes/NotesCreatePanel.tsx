@@ -5,13 +5,7 @@ import { INPUT_BASE_CLASS } from "@/components/common/formClasses";
 import { GhostButton, BrassButton, IconButton } from "@/components/common/button";
 import { RoomDropdown } from "@/components/common/RoomDropdown";
 import { Tabs, TabsList, TabsTrigger } from "@/components/common/tabs";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/common/select";
+import { DropdownSelect } from "@/components/common/DropdownSelect";
 import { toast } from "sonner";
 import { ImagePlus } from "lucide-react";
 import type { NoteType, Priority } from "@/lib/types";
@@ -24,6 +18,12 @@ interface NotesSuggestion {
   value: string;
   hint: string;
 }
+
+const NOTE_PRIORITY_OPTIONS = [
+  { value: "high", label: "High" },
+  { value: "med", label: "Medium" },
+  { value: "low", label: "Low" },
+];
 
 type NotesStoreSlice = ReturnType<typeof useNotesStoreSlice>;
 type NotesFormState = ReturnType<typeof useNotesFormState>;
@@ -140,6 +140,14 @@ function NotesTitleField({
   activeToken: { token: string; start: number; end: number };
   onSubmit: (keepOpen: boolean) => void;
 }) {
+  const cursorPosRef = useRef(cursorPos);
+
+  function updateCursorPos(next: number) {
+    if (next === cursorPosRef.current) return;
+    cursorPosRef.current = next;
+    setCursorPos(next);
+  }
+
   return (
     <div>
       <label className="capture-label">Title</label>
@@ -148,11 +156,11 @@ function NotesTitleField({
         value={title}
         onChange={(e) => {
           setTitle(e.target.value);
-          setCursorPos(e.target.selectionStart ?? e.target.value.length);
+          updateCursorPos(e.target.selectionStart ?? e.target.value.length);
         }}
-        onClick={(e) => setCursorPos(e.currentTarget.selectionStart ?? title.length)}
+        onClick={(e) => updateCursorPos(e.currentTarget.selectionStart ?? title.length)}
         onKeyUp={(e) =>
-          setCursorPos((e.currentTarget as HTMLInputElement).selectionStart ?? title.length)
+          updateCursorPos((e.currentTarget as HTMLInputElement).selectionStart ?? title.length)
         }
         onKeyDown={(e) => {
           if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
@@ -176,7 +184,7 @@ function NotesTitleField({
                   const next =
                     `${title.slice(0, activeToken.start)}${s.value} ${title.slice(activeToken.end).trimStart()}`.trim();
                   setTitle(next);
-                  setCursorPos(next.length);
+                  updateCursorPos(next.length);
                   setTimeout(() => inputRef.current?.focus(), 0);
                 }}
                 className="capture-suggestion-btn"
@@ -263,32 +271,20 @@ function NotesMetaFields({
         {mode === "note" ? (
           <div>
             <label className="capture-label">Type / category</label>
-            <Select value={type} onValueChange={(v) => setType(v as NoteType)}>
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {NOTE_TYPES.map((noteType) => (
-                  <SelectItem key={noteType.value} value={noteType.value}>
-                    {noteType.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <DropdownSelect
+              value={type}
+              onValueChange={(v) => setType(v as NoteType)}
+              options={NOTE_TYPES}
+            />
           </div>
         ) : (
           <div>
             <label className="capture-label">Priority</label>
-            <Select value={priority} onValueChange={(v) => setPriority(v as Priority)}>
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="high">High</SelectItem>
-                <SelectItem value="med">Medium</SelectItem>
-                <SelectItem value="low">Low</SelectItem>
-              </SelectContent>
-            </Select>
+            <DropdownSelect
+              value={priority}
+              onValueChange={(v) => setPriority(v as Priority)}
+              options={NOTE_PRIORITY_OPTIONS}
+            />
           </div>
         )}
 
@@ -466,7 +462,10 @@ function useNotesSubmit({
   resetAfterSubmit: NotesFormState["resetAfterSubmit"];
 }) {
   return async function submit(keepOpen: boolean) {
-    if (!title.trim() && pendingImages.length === 0) return;
+    if (!title.trim() && pendingImages.length === 0) {
+      toast.error("Add a title or attach an image before saving.");
+      return;
+    }
     const tags = parseTags(tagsInput);
     // Pass title raw so #tag @room shortcuts inside still parse,
     // but explicit fields override.

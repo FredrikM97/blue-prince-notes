@@ -94,6 +94,8 @@ description: Describe when these instructions should be loaded by the agent base
 - Prefer named, focused hooks (one purpose each) over large aggregate hooks.
 - When `useMemo` chains are complex, add short comments explaining what each memo computes and why.
 - Prefer inlining trivial `useMemo` calls in the component body over extracting them into a hook with a long parameter list.
+- Avoid adding `useMemo` by default. Use it only when a value is demonstrably expensive to recompute, or when a stable reference is required for a memoized child or effect dependency. Prefer plain computation, module constants, or derived selectors first.
+- Avoid `setState` when the value is purely derived from props or can live in a ref/controlled DOM element without changing render output. In hot UI paths, keep state as local and minimal; prefer refs for transient cursor/selection data and uncontrolled inputs only when that measurably reduces rerenders.
 
 ## Structural Simplicity
 

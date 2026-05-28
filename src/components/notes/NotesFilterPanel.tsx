@@ -9,6 +9,11 @@ const TYPE_OPTIONS: { value: NoteType; label: string }[] = [
   { value: "story", label: "Stories" },
 ];
 
+const STATUS_OPTIONS = [
+  { value: "open", label: "Open" },
+  { value: "solved", label: "Solved" },
+];
+
 export function NotesFilterPanel({
   filterType,
   typeFilter,
@@ -34,29 +39,31 @@ export function NotesFilterPanel({
   rooms: string[];
   tags: string[];
 }) {
+  const typeOptions = TYPE_OPTIONS;
+  const statusOptions = STATUS_OPTIONS;
+  const roomOptions = rooms.map((r) => ({ value: r, label: r }));
+  const tagOptions = tags.map((t) => ({ value: t, label: `#${t}` }));
+
   return (
     <div className="notes-view-filters-panel">
       {!filterType && (
         <FilterGroup
           label="Type"
-          options={TYPE_OPTIONS.map((o) => ({ value: o.value, label: o.label }))}
+          options={typeOptions}
           value={typeFilter}
           onChange={(v) => setTypeFilter(v as NoteType | null)}
         />
       )}
       <FilterGroup
         label="Status"
-        options={[
-          { value: "open", label: "Open" },
-          { value: "solved", label: "Solved" },
-        ]}
+        options={statusOptions}
         value={statusFilter}
         onChange={(v) => setStatusFilter(v as "open" | "solved" | null)}
       />
       {rooms.length > 0 && (
         <FilterGroup
           label="Room"
-          options={rooms.map((r) => ({ value: r, label: r }))}
+          options={roomOptions}
           value={roomFilter}
           onChange={setRoomFilter}
         />
@@ -64,7 +71,7 @@ export function NotesFilterPanel({
       {tags.length > 0 && (
         <FilterGroup
           label="Tag"
-          options={tags.map((t) => ({ value: t, label: `#${t}` }))}
+          options={tagOptions}
           value={tagFilter}
           onChange={setTagFilter}
         />

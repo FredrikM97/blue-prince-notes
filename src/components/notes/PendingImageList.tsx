@@ -1,7 +1,7 @@
-import { useEffect, useMemo } from "react";
+import { memo, useEffect, useMemo } from "react";
 import { X } from "lucide-react";
 
-function PendingImageItem({
+const PendingImageItem = memo(function PendingImageItem({
   blob,
   index,
   onRemove,
@@ -28,7 +28,7 @@ function PendingImageItem({
       </button>
     </div>
   );
-}
+});
 
 export function PendingImageList({
   images,

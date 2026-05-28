@@ -12,13 +12,7 @@ import {
   ROOM_GROUPS,
   type RoomCategory,
 } from "@/data/rooms";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/common/select";
+import { DropdownSelect } from "@/components/common/DropdownSelect";
 import { exportAll, importAll } from "@/data/io";
 import {
   pickSyncFolder,
@@ -38,6 +32,8 @@ import {
   setSteamImportEnabled,
 } from "@/data/steamImport";
 import { toast } from "sonner";
+
+const ROOM_CATEGORY_OPTIONS = ROOM_GROUPS.map((group) => ({ value: group, label: group }));
 
 function SettingsSection({ title, children }: { title: string; children: ReactNode }) {
   return (
@@ -166,21 +162,11 @@ export function SettingsPage() {
                   className="h-9 rounded-md border border-input bg-card/65 px-3 text-sm"
                 />
 
-                <Select
+                <DropdownSelect
                   value={newRoomCategory}
                   onValueChange={(value) => setNewRoomCategory(value as RoomCategory)}
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {ROOM_GROUPS.map((group) => (
-                      <SelectItem key={group} value={group}>
-                        {group}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                  options={ROOM_CATEGORY_OPTIONS}
+                />
 
                 <Button variant="outline" onClick={addRoom}>
                   Add room

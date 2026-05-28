@@ -3,6 +3,7 @@ import type { Note } from "@/lib/types";
 import { INPUT_BASE_CLASS } from "@/components/common/formClasses";
 import { BrassButton, Button, GhostButton } from "@/components/common/button";
 import { RoomDropdown } from "@/components/common/RoomDropdown";
+import { DropdownSelect } from "@/components/common/DropdownSelect";
 import { StoredImageView } from "@/components/StoredImageView";
 import { useStore } from "@/data/store";
 import { ImagePlus, X } from "lucide-react";
@@ -12,6 +13,13 @@ import { toast } from "sonner";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/common/dialog";
 
 type ImageSort = "newest" | "oldest" | "name-asc" | "name-desc";
+
+const IMAGE_SORT_OPTIONS = [
+  { value: "newest", label: "Newest first" },
+  { value: "oldest", label: "Oldest first" },
+  { value: "name-asc", label: "Name A-Z" },
+  { value: "name-desc", label: "Name Z-A" },
+];
 
 function parseTagsInput(value: string) {
   return value
@@ -23,6 +31,14 @@ function parseTagsInput(value: string) {
 function getImageLabel(img: { name: string; caption?: string }) {
   return img.caption?.trim() || img.name;
 }
+
+const NOTE_STATUS_OPTIONS = [
+  { value: "open", label: "open" },
+  { value: "solved", label: "solved" },
+  { value: "stale", label: "stale" },
+];
+
+const NOTE_TYPE_OPTIONS = Object.entries(TYPE_LABEL).map(([value, label]) => ({ value, label }));
 
 export function NotesEditorPanel({
   draft,
@@ -141,29 +157,21 @@ export function NotesEditorPanel({
         </div>
         <div>
           <label className="capture-label">Type</label>
-          <select
-            className="note-editor-select w-full"
+          <DropdownSelect
             value={draft.type}
-            onChange={(e) => setDraft({ ...draft, type: e.target.value as Note["type"] })}
-          >
-            {Object.keys(TYPE_LABEL).map((k) => (
-              <option key={k} value={k}>
-                {TYPE_LABEL[k as keyof typeof TYPE_LABEL]}
-              </option>
-            ))}
-          </select>
+            onValueChange={(value) => setDraft({ ...draft, type: value as Note["type"] })}
+            options={NOTE_TYPE_OPTIONS}
+            className="note-editor-select w-full"
+          />
         </div>
         <div>
           <label className="capture-label">Status</label>
-          <select
-            className="note-editor-select w-full"
+          <DropdownSelect
             value={draft.status}
-            onChange={(e) => setDraft({ ...draft, status: e.target.value as Note["status"] })}
-          >
-            <option value="open">open</option>
-            <option value="solved">solved</option>
-            <option value="stale">stale</option>
-          </select>
+            onValueChange={(value) => setDraft({ ...draft, status: value as Note["status"] })}
+            options={NOTE_STATUS_OPTIONS}
+            className="note-editor-select w-full"
+          />
         </div>
       </div>
 
@@ -289,16 +297,12 @@ function SelectExistingImagesDialog({
           <div className="flex items-center justify-between gap-3">
             <DialogTitle>Attach existing image</DialogTitle>
             <div className="flex items-center gap-2">
-              <select
-                className="note-editor-select h-8 rounded-md border border-input bg-background px-2 text-xs"
+              <DropdownSelect
                 value={imageSort}
-                onChange={(e) => setImageSort(e.target.value as ImageSort)}
-              >
-                <option value="newest">Newest first</option>
-                <option value="oldest">Oldest first</option>
-                <option value="name-asc">Name A-Z</option>
-                <option value="name-desc">Name Z-A</option>
-              </select>
+                onValueChange={(value) => setImageSort(value as ImageSort)}
+                options={IMAGE_SORT_OPTIONS}
+                className="note-editor-select h-8 w-44 rounded-md border border-input bg-background px-2 text-xs"
+              />
               <Button
                 type="button"
                 variant="secondary"

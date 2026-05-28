@@ -1,11 +1,10 @@
-import { useState } from "react";
+import { memo, useState } from "react";
 import { HelpCircle } from "lucide-react";
 import { IconButton } from "@/components/common/button";
-import { MarkdownEditor } from "@/components/common/MarkdownEditor";
+import { MarkdownEditor, formatAllMarkdownTables } from "@/components/common/MarkdownEditor";
 import { NotesShortcutHelp } from "@/components/notes/NotesShortcutHelp";
-import { formatAllMarkdownTables } from "@/components/common/markdown-table";
 
-export function NoteDetailsField({
+function NoteDetailsFieldComponent({
   value,
   onChange,
   placeholder,
@@ -48,3 +47,5 @@ export function NoteDetailsField({
     </div>
   );
 }
+
+export const NoteDetailsField = memo(NoteDetailsFieldComponent);
