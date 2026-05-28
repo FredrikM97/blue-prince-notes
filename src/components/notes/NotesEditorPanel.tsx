@@ -141,10 +141,7 @@ export function NotesEditorPanel({
           />
         </div>
         <div>
-          <label className="capture-label">
-            Tags{" "}
-            <span className="text-muted-foreground/70 normal-case">(space or comma separated)</span>
-          </label>
+          <label className="capture-label">Tags</label>
           <input
             value={tagsInput}
             onFocus={() => setIsTagsFocused(true)}

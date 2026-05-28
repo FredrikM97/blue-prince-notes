@@ -323,10 +323,7 @@ function NotesTagsField({
 }) {
   return (
     <div>
-      <label className="capture-label">
-        Tags{" "}
-        <span className="text-muted-foreground/70 normal-case">(space or comma separated)</span>
-      </label>
+      <label className="capture-label">Tags</label>
       <input
         value={tagsInput}
         onChange={(e) => setTagsInput(e.target.value)}
