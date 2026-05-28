@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import type { Note } from "@/lib/types";
 import { INPUT_BASE_CLASS } from "@/components/common/formClasses";
 import { BrassButton, GhostButton, IconButton } from "@/components/common/button";
@@ -10,6 +10,13 @@ import { TYPE_LABEL } from "./constants";
 import { MarkdownEditor } from "@/components/common/MarkdownEditor";
 import { NotesShortcutHelp } from "@/components/notes/NotesShortcutHelp";
 import { formatAllMarkdownTables } from "@/components/common/markdown-table";
+
+function parseTagsInput(value: string) {
+  return value
+    .split(/[\s,]+/)
+    .map((token) => token.replace(/^#/, "").trim().toLowerCase())
+    .filter(Boolean);
+}
 
 export function NotesEditorPanel({
   draft,
@@ -24,6 +31,13 @@ export function NotesEditorPanel({
 }) {
   const addImage = useStore((s) => s.addImage);
   const [showHelp, setShowHelp] = useState(false);
+  const [tagsInput, setTagsInput] = useState(draft.tags.join(", "));
+  const [isTagsFocused, setIsTagsFocused] = useState(false);
+
+  useEffect(() => {
+    if (isTagsFocused) return;
+    setTagsInput(draft.tags.join(", "));
+  }, [draft.id, draft.tags, isTagsFocused]);
 
   const shortcutToggle = (
     <IconButton
@@ -83,13 +97,20 @@ export function NotesEditorPanel({
           />
         </div>
         <div>
-          <label className="capture-label">Tags</label>
+          <label className="capture-label">
+            Tags{" "}
+            <span className="text-muted-foreground/70 normal-case">(space or comma separated)</span>
+          </label>
           <input
-            value={draft.tags.join(" ")}
-            onChange={(e) =>
-              setDraft({ ...draft, tags: e.target.value.split(/\s+/).filter(Boolean) })
-            }
-            placeholder="tag1 tag2"
+            value={tagsInput}
+            onFocus={() => setIsTagsFocused(true)}
+            onBlur={() => setIsTagsFocused(false)}
+            onChange={(e) => {
+              const next = e.target.value;
+              setTagsInput(next);
+              setDraft({ ...draft, tags: parseTagsInput(next) });
+            }}
+            placeholder="safe, gem, puzzle"
             className={INPUT_BASE_CLASS}
           />
         </div>
