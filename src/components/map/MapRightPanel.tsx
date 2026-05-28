@@ -1,8 +1,8 @@
 import { BrassButton, Button, GhostButton, IconButton } from "@/components/common/button";
+import { useNavigate } from "@tanstack/react-router";
 import { Chip } from "@/components/common/Chip";
-import { MarkdownPreview } from "@/components/common/MarkdownPreview";
+import { MarkdownEditor } from "@/components/common/MarkdownEditor";
 import { RoomDropdown } from "@/components/common/RoomDropdown";
-import { TEXTAREA_BASE_CLASS } from "@/components/common/formClasses";
 import { Eraser, Trash2, X } from "lucide-react";
 import type { GridCell, Note, Todo } from "@/lib/types";
 
@@ -16,7 +16,12 @@ export interface MapRightPanelProps {
   onClose: () => void;
   upsertCell: (cell: Partial<GridCell> & { row: number; col: number }) => Promise<void>;
   clearCell: (row: number, col: number) => Promise<void>;
-  openCapture: (opts?: { kind?: "note" | "todo"; prefill?: string; room?: string }) => void;
+  openCapture: (opts?: {
+    kind?: "note" | "todo";
+    prefill?: string;
+    room?: string;
+    returnTo?: string;
+  }) => void;
   row: number;
   col: number;
 }
@@ -35,7 +40,14 @@ export function MapRightPanel({
   row,
   col,
 }: MapRightPanelProps) {
+  const navigate = useNavigate();
   const activeRoom = activeCell?.roomName;
+
+  async function openCaptureFromMap(kind: "note" | "todo") {
+    if (!activeRoom) return;
+    await navigate({ to: "/" });
+    openCapture({ kind, room: activeRoom, returnTo: "/section/map" });
+  }
 
   return (
     <div className="map-panel">
@@ -61,24 +73,16 @@ export function MapRightPanel({
 
         <div>
           <label className="map-field-label">Cell details</label>
-          <textarea
+          <MarkdownEditor
             value={commentDraft}
-            onChange={(e) => setCommentDraft(e.target.value)}
+            onChange={setCommentDraft}
             onBlur={() => upsertCell({ row, col, comment: commentDraft })}
             placeholder="Quick note about this cell - door direction, gem cost, danger..."
             rows={6}
-            className={TEXTAREA_BASE_CLASS}
           />
           <p className="map-comment-help">
             Markdown supported: headings, lists, checkboxes, bold, italic, code.
           </p>
-
-          {commentDraft.trim().length > 0 && (
-            <div className="map-comment-preview-card">
-              <div className="map-comment-preview-title">Preview</div>
-              <MarkdownPreview>{commentDraft}</MarkdownPreview>
-            </div>
-          )}
         </div>
 
         {activeRoom && (
@@ -86,7 +90,9 @@ export function MapRightPanel({
             <BrassButton
               size="sm"
               className="flex-1"
-              onClick={() => openCapture({ kind: "note", room: activeRoom })}
+              onClick={() => {
+                void openCaptureFromMap("note");
+              }}
             >
               + Note (image)
             </BrassButton>
@@ -94,7 +100,9 @@ export function MapRightPanel({
               variant="outline"
               size="sm"
               className="flex-1"
-              onClick={() => openCapture({ kind: "todo", room: activeRoom })}
+              onClick={() => {
+                void openCaptureFromMap("todo");
+              }}
             >
               + Todo
             </Button>

@@ -30,6 +30,7 @@ export function AppHeader() {
   const setSearch = useStore((s) => s.setSearch);
   const openCapture = useStore((s) => s.openCapture);
   const captureOpen = useStore((s) => s.captureOpen);
+  const closeCapture = useStore((s) => s.closeCapture);
   const load = useStore((s) => s.load);
   const syncFolderName = useStore((s) => s.syncFolderName);
   const pathname = useRouterState({ select: (r) => r.location.pathname });
@@ -51,9 +52,9 @@ export function AppHeader() {
 
   useEffect(() => {
     if (captureOpen && !canCreateInPlace) {
-      void navigate({ to: "/" });
+      closeCapture();
     }
-  }, [captureOpen, canCreateInPlace, navigate]);
+  }, [captureOpen, canCreateInPlace, closeCapture]);
 
   useEffect(() => {
     function onKey(e: KeyboardEvent) {
@@ -65,12 +66,16 @@ export function AppHeader() {
       if (!canCreateInPlace) {
         void navigate({ to: "/" });
       }
-      openCapture({ kind: "note", noteType: defaultCaptureNoteType });
+      openCapture({
+        kind: "note",
+        noteType: defaultCaptureNoteType,
+        returnTo: canCreateInPlace ? undefined : pathname,
+      });
     }
 
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [openCapture, canCreateInPlace, defaultCaptureNoteType, navigate]);
+  }, [openCapture, canCreateInPlace, defaultCaptureNoteType, navigate, pathname]);
 
   function hrefFor(s: { id: string; builtin?: string; filter?: { type?: string } }) {
     if (s.builtin === "notes") return "/";
@@ -135,7 +140,11 @@ export function AppHeader() {
               if (!canCreateInPlace) {
                 void navigate({ to: "/" });
               }
-              openCapture({ kind: "note", noteType: defaultCaptureNoteType });
+              openCapture({
+                kind: "note",
+                noteType: defaultCaptureNoteType,
+                returnTo: canCreateInPlace ? undefined : pathname,
+              });
             }}
             className="app-add-button"
           >

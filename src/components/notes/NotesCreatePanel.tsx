@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import { useNavigate } from "@tanstack/react-router";
 import { useStore } from "@/data/store";
 import { INPUT_BASE_CLASS } from "@/components/common/formClasses";
 import { GhostButton, BrassButton, IconButton } from "@/components/common/button";
@@ -12,14 +13,12 @@ import {
   SelectValue,
 } from "@/components/common/select";
 import { toast } from "sonner";
-import { ImagePlus, HelpCircle } from "lucide-react";
+import { ImagePlus } from "lucide-react";
 import type { NoteType, Priority } from "@/lib/types";
 import { getRoomCatalog } from "@/data/rooms";
 import { NOTE_TYPES } from "@/components/notes/constants";
-import { NotesShortcutHelp } from "@/components/notes/NotesShortcutHelp";
 import { PendingImageList } from "@/components/notes/PendingImageList";
-import { MarkdownEditor } from "@/components/common/MarkdownEditor";
-import { formatAllMarkdownTables } from "@/components/common/markdown-table";
+import { NoteDetailsField } from "@/components/notes/NoteDetailsField";
 
 interface NotesSuggestion {
   value: string;
@@ -36,12 +35,25 @@ function useNotesStoreSlice() {
   const prefill = useStore((s) => s.capturePrefill);
   const prefillRoom = useStore((s) => s.capturePrefillRoom);
   const prefillType = useStore((s) => s.capturePrefillType);
+  const returnTo = useStore((s) => s.captureReturnTo);
   const gridCells = useStore((s) => s.gridCells);
   const notes = useStore((s) => s.notes);
   const todos = useStore((s) => s.todos);
   const create = useStore((s) => s.createFromCapture);
 
-  return { open, close, kind, prefill, prefillRoom, prefillType, gridCells, notes, todos, create };
+  return {
+    open,
+    close,
+    kind,
+    prefill,
+    prefillRoom,
+    prefillType,
+    returnTo,
+    gridCells,
+    notes,
+    todos,
+    create,
+  };
 }
 
 function useNotesFormState({
@@ -68,7 +80,6 @@ function useNotesFormState({
   const [priority, setPriority] = useState<Priority>("med");
   const [body, setBody] = useState("");
   const [pendingImages, setPendingImages] = useState<Blob[]>([]);
-  const [showHelp, setShowHelp] = useState(false);
   const [cursorPos, setCursorPos] = useState(0);
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -82,7 +93,6 @@ function useNotesFormState({
     setTagsInput("");
     setPriority("med");
     setBody("");
-    setShowHelp(false);
     setPendingImages([]);
     setCursorPos(prefill.length);
     setTimeout(() => inputRef.current?.focus(), 50);
@@ -115,8 +125,6 @@ function useNotesFormState({
     setBody,
     pendingImages,
     setPendingImages,
-    showHelp,
-    setShowHelp,
     cursorPos,
     setCursorPos,
     inputRef,
@@ -334,57 +342,13 @@ function NotesTagsField({
   );
 }
 
-function NotesDetailsSection({
-  mode,
-  body,
-  setBody,
-  showHelp,
-  setShowHelp,
-}: {
-  mode: "note" | "todo";
-  body: string;
-  setBody: React.Dispatch<React.SetStateAction<string>>;
-  showHelp: boolean;
-  setShowHelp: React.Dispatch<React.SetStateAction<boolean>>;
-}) {
-  const shortcutToggle = (
-    <IconButton
-      aria-label="Toggle shortcut help"
-      title="Shortcuts"
-      className="h-7 w-7"
-      onClick={() => setShowHelp((v) => !v)}
-    >
-      <HelpCircle className="h-3.5 w-3.5" />
-    </IconButton>
-  );
-
-  return (
-    <div>
-      <label className="capture-label">
-        Details <span className="text-muted-foreground/70 normal-case">(optional)</span>
-      </label>
-      <MarkdownEditor
-        value={body}
-        onChange={setBody}
-        onFormatTables={() => setBody(formatAllMarkdownTables(body))}
-        placeholder={mode === "todo" ? "Details about this todo…" : "Longer note, paste evidence…"}
-        rows={12}
-        extraTools={shortcutToggle}
-      />
-      {showHelp && (
-        <div className="mt-1">
-          <NotesShortcutHelp />
-        </div>
-      )}
-    </div>
-  );
-}
-
 function NotesFooterActions({
   submit,
+  close,
   setPendingImages,
 }: {
   submit: (keepOpen: boolean) => void | Promise<void>;
+  close: () => void;
   setPendingImages: React.Dispatch<React.SetStateAction<Blob[]>>;
 }) {
   return (
@@ -406,6 +370,7 @@ function NotesFooterActions({
         />
       </label>
       <div className="flex gap-2 sm:ml-auto">
+        <GhostButton onClick={close}>Cancel</GhostButton>
         <GhostButton onClick={() => submit(true)}>Save &amp; add another</GhostButton>
         <BrassButton onClick={() => submit(false)}>Save</BrassButton>
       </div>
@@ -488,7 +453,7 @@ function parseTags(tagsInput: string) {
 
 function useNotesSubmit({
   create,
-  close,
+  closeWithReturn,
   mode,
   title,
   pendingImages,
@@ -501,7 +466,7 @@ function useNotesSubmit({
   resetAfterSubmit,
 }: {
   create: NotesStoreSlice["create"];
-  close: () => void;
+  closeWithReturn: () => Promise<void>;
   mode: NotesFormState["mode"];
   title: NotesFormState["title"];
   pendingImages: NotesFormState["pendingImages"];
@@ -532,12 +497,13 @@ function useNotesSubmit({
     if (keepOpen) {
       resetAfterSubmit();
     } else {
-      close();
+      await closeWithReturn();
     }
   };
 }
 
 export function NotesCreatePanel({ defaultNoteType }: { defaultNoteType?: NoteType }) {
+  const navigate = useNavigate();
   const store = useNotesStoreSlice();
   const form = useNotesFormState({
     open: store.open,
@@ -560,9 +526,17 @@ export function NotesCreatePanel({ defaultNoteType }: { defaultNoteType?: NoteTy
     setPendingImages: form.setPendingImages,
   });
 
+  const closeWithReturn = async () => {
+    const target = store.returnTo;
+    store.close();
+    if (target) {
+      await navigate({ to: target as "/" });
+    }
+  };
+
   const submit = useNotesSubmit({
     create: store.create,
-    close: store.close,
+    closeWithReturn,
     mode: form.mode,
     title: form.title,
     pendingImages: form.pendingImages,
@@ -593,12 +567,12 @@ export function NotesCreatePanel({ defaultNoteType }: { defaultNoteType?: NoteTy
           onSubmit={submit}
         />
 
-        <NotesDetailsSection
-          mode={form.mode}
-          body={form.body}
-          setBody={form.setBody}
-          showHelp={form.showHelp}
-          setShowHelp={form.setShowHelp}
+        <NoteDetailsField
+          value={form.body}
+          onChange={form.setBody}
+          placeholder={
+            form.mode === "todo" ? "Details about this todo…" : "Longer note, paste evidence…"
+          }
         />
 
         <NotesMetaFields
@@ -621,7 +595,13 @@ export function NotesCreatePanel({ defaultNoteType }: { defaultNoteType?: NoteTy
         />
       </div>
 
-      <NotesFooterActions submit={submit} setPendingImages={form.setPendingImages} />
+      <NotesFooterActions
+        submit={submit}
+        close={() => {
+          void closeWithReturn();
+        }}
+        setPendingImages={form.setPendingImages}
+      />
     </>
   );
 
@@ -663,7 +643,7 @@ function buildSuggestions(
     value
       .toLowerCase()
       .replace(/[.,!?;:]+$/g, "")
-      .replace(/_/g, " ")
+      .replace(/[_-]+/g, " ")
       .trim();
 
   if (token.startsWith("@") || /^room:/i.test(token)) {
@@ -671,7 +651,7 @@ function buildSuggestions(
     return rooms
       .filter((room) => normalize(room).includes(q))
       .slice(0, 8)
-      .map((room) => ({ value: `@${room.replace(/\s+/g, "_")}`, hint: "room" }));
+      .map((room) => ({ value: `@${room.replace(/\s+/g, "-")}`, hint: "room" }));
   }
 
   if (token.startsWith("#")) {
@@ -679,7 +659,7 @@ function buildSuggestions(
     return tags
       .filter((tag) => normalize(tag).includes(q))
       .slice(0, 8)
-      .map((tag) => ({ value: `#${tag}`, hint: "tag" }));
+      .map((tag) => ({ value: `#${tag.replace(/\s+/g, "-")}`, hint: "tag" }));
   }
 
   if (token.startsWith("!")) {

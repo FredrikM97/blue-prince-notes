@@ -175,6 +175,7 @@ function findTableCellJump(value: string, cursor: number, reverse: boolean) {
 export function MarkdownEditor({
   value,
   onChange,
+  onBlur,
   onFormatTables,
   placeholder,
   rows = 6,
@@ -183,6 +184,7 @@ export function MarkdownEditor({
 }: {
   value: string;
   onChange: (v: string) => void;
+  onBlur?: () => void;
   onFormatTables?: () => void;
   placeholder?: string;
   rows?: number;
@@ -249,6 +251,7 @@ export function MarkdownEditor({
           ref={ref}
           value={value}
           onChange={(e) => onChange(e.target.value)}
+          onBlur={onBlur}
           onKeyDown={(e) => {
             if (e.key === "Tab" && !e.metaKey && !e.ctrlKey && !e.altKey && ref.current) {
               const next = findTableCellJump(value, ref.current.selectionStart, e.shiftKey);

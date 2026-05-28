@@ -57,4 +57,14 @@ describe("parseCapture", () => {
     expect(result.type).toBe("theory");
     expect(result.title).toBe("hidden mechanism");
   });
+
+  it("supports hyphen tokens for spaced room and tag names", () => {
+    const result = parseCapture("!todo #power-room @entrance-hall Check lock");
+
+    expect(result.room).toBe("entrance hall");
+    expect(result.tags).toEqual(["power room"]);
+    expect(result.type).toBe("task");
+    expect(result.isTodo).toBe(true);
+    expect(result.title).toBe("Check lock");
+  });
 });

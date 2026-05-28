@@ -1,15 +1,13 @@
 import { useEffect, useMemo, useState } from "react";
 import type { Note } from "@/lib/types";
 import { INPUT_BASE_CLASS } from "@/components/common/formClasses";
-import { BrassButton, Button, GhostButton, IconButton } from "@/components/common/button";
+import { BrassButton, Button, GhostButton } from "@/components/common/button";
 import { RoomDropdown } from "@/components/common/RoomDropdown";
 import { StoredImageView } from "@/components/StoredImageView";
 import { useStore } from "@/data/store";
-import { ImagePlus, X, HelpCircle } from "lucide-react";
+import { ImagePlus, X } from "lucide-react";
 import { TYPE_LABEL } from "./constants";
-import { MarkdownEditor } from "@/components/common/MarkdownEditor";
-import { NotesShortcutHelp } from "@/components/notes/NotesShortcutHelp";
-import { formatAllMarkdownTables } from "@/components/common/markdown-table";
+import { NoteDetailsField } from "@/components/notes/NoteDetailsField";
 import { toast } from "sonner";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/common/dialog";
 
@@ -39,7 +37,6 @@ export function NotesEditorPanel({
 }) {
   const addImage = useStore((s) => s.addImage);
   const images = useStore((s) => s.images);
-  const [showHelp, setShowHelp] = useState(false);
   const [tagsInput, setTagsInput] = useState(draft.tags.join(", "));
   const [isTagsFocused, setIsTagsFocused] = useState(false);
   const [imagePickerOpen, setImagePickerOpen] = useState(false);
@@ -83,17 +80,6 @@ export function NotesEditorPanel({
     return () => window.removeEventListener("paste", onPaste);
   }, [addImage, setDraft]);
 
-  const shortcutToggle = (
-    <IconButton
-      aria-label="Toggle shortcut help"
-      title="Shortcuts"
-      className="h-7 w-7"
-      onClick={() => setShowHelp((v) => !v)}
-    >
-      <HelpCircle className="h-3.5 w-3.5" />
-    </IconButton>
-  );
-
   return (
     <div className="note-editor-wrap">
       <div>
@@ -112,24 +98,11 @@ export function NotesEditorPanel({
         />
       </div>
 
-      <div>
-        <label className="capture-label">
-          Details <span className="text-muted-foreground/70 normal-case">(optional)</span>
-        </label>
-        <MarkdownEditor
-          value={draft.body}
-          onChange={(v) => setDraft({ ...draft, body: v })}
-          onFormatTables={() => setDraft({ ...draft, body: formatAllMarkdownTables(draft.body) })}
-          placeholder="Details (markdown supported)…"
-          rows={12}
-          extraTools={shortcutToggle}
-        />
-        {showHelp && (
-          <div className="mt-1">
-            <NotesShortcutHelp />
-          </div>
-        )}
-      </div>
+      <NoteDetailsField
+        value={draft.body}
+        onChange={(value) => setDraft({ ...draft, body: value })}
+        placeholder="Details (markdown supported)…"
+      />
 
       <div className="note-editor-grid-2">
         <div>

@@ -35,6 +35,9 @@ export interface ParsedCapture {
  *   done:               → status solved
  */
 export function parseCapture(input: string): ParsedCapture {
+  const normalizeTokenValue = (value: string) =>
+    value.replace(/[_-]+/g, " ").replace(/\s+/g, " ").trim();
+
   const tags: string[] = [];
   let type: NoteType = "clue";
   let isTodo = false;
@@ -57,7 +60,8 @@ export function parseCapture(input: string): ParsedCapture {
   for (const tok of tokens) {
     if (!tok) continue;
     if (tok.startsWith("#") && tok.length > 1) {
-      tags.push(tok.slice(1).toLowerCase());
+      const tag = normalizeTokenValue(tok.slice(1)).toLowerCase();
+      if (tag) tags.push(tag);
     } else if (tok.startsWith("!") && tok.length > 1) {
       const key = tok.slice(1).toLowerCase();
       if (key === "todo" || key === "task") {
@@ -67,9 +71,11 @@ export function parseCapture(input: string): ParsedCapture {
         type = TYPE_MAP[key];
       }
     } else if (/^room:/i.test(tok)) {
-      room = tok.slice(5).replace(/_/g, " ");
+      const parsedRoom = normalizeTokenValue(tok.slice(5));
+      if (parsedRoom) room = parsedRoom;
     } else if (tok.startsWith("@") && tok.length > 1) {
-      room = tok.slice(1).replace(/_/g, " ");
+      const parsedRoom = normalizeTokenValue(tok.slice(1));
+      if (parsedRoom) room = parsedRoom;
     } else if (/^>\d{4}-\d{2}-\d{2}$/.test(tok)) {
       date = tok.slice(1);
     } else if (/^(high|med|medium|low)$/i.test(tok)) {

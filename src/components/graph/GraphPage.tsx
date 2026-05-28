@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState, type MouseEvent, type WheelEvent } from "react";
+import { useMemo, useRef, useState, type MouseEvent, type WheelEvent } from "react";
 import { Button } from "@/components/common/button";
 import { Chip } from "@/components/common/Chip";
 import { EmptyState } from "@/components/common/EmptyState";
@@ -7,7 +7,7 @@ import { MarkdownPreview } from "@/components/common/MarkdownPreview";
 import { AttachedImagesGallery } from "@/components/common/AttachedImagesGallery";
 import { BookOpen, Eye, Key, Lightbulb, ListTodo, Sparkles } from "lucide-react";
 import { useStore } from "@/data/store";
-import type { Note } from "@/lib/types";
+import type { Note, Todo } from "@/lib/types";
 
 const GRAPH_VIEWBOX = "0 0 1000 680";
 const LAYOUT_CENTER_X = 500;
@@ -82,6 +82,7 @@ const TYPE_ICON: Record<
 
 export function GraphPage() {
   const notes = useStore((s) => s.notes);
+  const todos = useStore((s) => s.todos);
   const [selectedNoteId, setSelectedNoteId] = useState<string | null>(null);
   const [zoom, setZoom] = useState(1);
   const [pan, setPan] = useState({ x: 0, y: 0 });
@@ -90,17 +91,18 @@ export function GraphPage() {
     null,
   );
 
-  const { nodes, edges } = useMemo(() => buildGraph(notes), [notes]);
+  const graphEntries = useMemo(() => toGraphEntries(notes, todos), [notes, todos]);
+  const { nodes, edges } = useMemo(() => buildGraph(graphEntries), [graphEntries]);
   const nodeById = useMemo(() => indexNodes(nodes), [nodes]);
-  const selectedNode = useMemo(
-    () => nodes.find((node) => node.id === selectedNoteId) ?? null,
+  const selectedNodeId = useMemo(
+    () =>
+      selectedNoteId && nodes.some((node) => node.id === selectedNoteId) ? selectedNoteId : null,
     [nodes, selectedNoteId],
   );
-
-  useEffect(() => {
-    if (!selectedNoteId) return;
-    if (!nodes.some((node) => node.id === selectedNoteId)) setSelectedNoteId(null);
-  }, [nodes, selectedNoteId]);
+  const selectedNode = useMemo(
+    () => nodes.find((node) => node.id === selectedNodeId) ?? null,
+    [nodes, selectedNodeId],
+  );
 
   const incomingCount = selectedNode
     ? edges.filter((edge) => edge.to === selectedNode.id).length
@@ -187,7 +189,9 @@ export function GraphPage() {
       }
       middle={
         nodes.length === 0 ? (
-          <EmptyState>No notes yet. Add notes to build your connection graph.</EmptyState>
+          <EmptyState>
+            No notes or todos yet. Add entries to build your connection graph.
+          </EmptyState>
         ) : (
           <div className="overflow-hidden rounded-lg border border-border bg-card/40 p-2">
             <div className="mb-2 flex items-center justify-between text-sm text-muted-foreground">
@@ -259,11 +263,11 @@ function GraphRightPanel({
       <div>
         <h2 className="font-serif text-lg">Connections</h2>
         <p className="mt-1 text-sm text-muted-foreground">
-          Arrows reflect explicit references in note text: @room and #tag.
+          Arrows reflect explicit references in entry text: @room and #tag.
         </p>
       </div>
       <div className="flex items-center gap-3 text-sm text-muted-foreground">
-        <span>{noteCount} notes</span>
+        <span>{noteCount} entries</span>
         <span>{edgeCount} links</span>
       </div>
     </div>
@@ -415,6 +419,25 @@ function buildGraph(notes: Note[]): GraphModel {
   };
 }
 
+function toGraphEntries(notes: Note[], todos: Todo[]): Note[] {
+  const todoEntries: Note[] = todos.map((todo) => ({
+    id: `todo:${todo.id}`,
+    type: "task",
+    title: todo.title,
+    body: todo.notes ?? "",
+    room: todo.room,
+    tags: todo.tags,
+    date: undefined,
+    status: todo.status === "done" ? "solved" : "open",
+    scope: todo.scope === "someday" ? "cross-run" : todo.scope,
+    imageIds: [],
+    createdAt: todo.createdAt,
+    updatedAt: todo.updatedAt,
+  }));
+
+  return [...notes, ...todoEntries];
+}
+
 function buildNodes(notes: Note[]): GraphNode[] {
   return notes.map((note, i) => {
     const angle = (2 * Math.PI * i) / Math.max(notes.length, 1);
@@ -508,7 +531,7 @@ function extractReferences(note: Note): ReferenceSignals {
   hashMatches.forEach((tok) => tags.add(normalizeTag(tok.slice(1))));
 
   const roomMatches = raw.match(/@[\w-]+/g) ?? [];
-  roomMatches.forEach((tok) => rooms.add(normalizeRoom(tok.slice(1).replace(/_/g, " "))));
+  roomMatches.forEach((tok) => rooms.add(normalizeRoom(tok.slice(1))));
 
   return { tags, rooms };
 }
@@ -576,11 +599,11 @@ function edgeGeometry(from: GraphNode, to: GraphNode, pad: number): LineGeometry
 }
 
 function normalizeTag(value: string) {
-  return value.trim().toLowerCase();
+  return value.trim().toLowerCase().replace(/[_-]+/g, " ").replace(/\s+/g, " ");
 }
 
 function normalizeRoom(value: string) {
-  return value.trim().toLowerCase().replace(/_/g, " ");
+  return value.trim().toLowerCase().replace(/[_-]+/g, " ").replace(/\s+/g, " ");
 }
 
 function intersectCount(a: Set<string>, b: Set<string>) {

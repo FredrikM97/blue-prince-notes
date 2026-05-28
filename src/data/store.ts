@@ -59,6 +59,7 @@ interface State {
   capturePrefillPriority?: Priority;
   captureEditNoteId?: string;
   captureEditTodoId?: string;
+  captureReturnTo?: string;
 
   syncFolderName: string | null;
   setSyncFolderName: (name: string | null) => void;
@@ -73,6 +74,7 @@ interface State {
     noteType?: NoteType;
     note?: Note;
     todo?: Todo;
+    returnTo?: string;
   }) => void;
   closeCapture: () => void;
 
@@ -194,6 +196,7 @@ export const useStore = create<State>((set, get) => ({
   capturePrefillPriority: undefined,
   captureEditNoteId: undefined,
   captureEditTodoId: undefined,
+  captureReturnTo: undefined,
 
   async load() {
     if (!isBrowser()) return;
@@ -256,6 +259,7 @@ export const useStore = create<State>((set, get) => ({
         capturePrefillPriority: undefined,
         captureEditNoteId: note.id,
         captureEditTodoId: undefined,
+        captureReturnTo: opts?.returnTo,
       });
       return;
     }
@@ -272,6 +276,7 @@ export const useStore = create<State>((set, get) => ({
         capturePrefillPriority: todo.priority,
         captureEditNoteId: undefined,
         captureEditTodoId: todo.id,
+        captureReturnTo: opts?.returnTo,
       });
       return;
     }
@@ -287,6 +292,7 @@ export const useStore = create<State>((set, get) => ({
       capturePrefillPriority: undefined,
       captureEditNoteId: undefined,
       captureEditTodoId: undefined,
+      captureReturnTo: opts?.returnTo,
     });
   },
   closeCapture: () =>
@@ -300,6 +306,7 @@ export const useStore = create<State>((set, get) => ({
       capturePrefillPriority: undefined,
       captureEditNoteId: undefined,
       captureEditTodoId: undefined,
+      captureReturnTo: undefined,
     }),
 
   async createFromCapture(raw, opts) {

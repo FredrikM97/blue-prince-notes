@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { useStore } from "@/data/store";
-import type { Note, NoteType } from "@/lib/types";
+import type { Note, NoteType, Todo } from "@/lib/types";
 import { PageLayout } from "@/components/common/PageLayout";
 import { Button, GhostButton } from "@/components/common/button";
 import {
@@ -26,12 +26,14 @@ export function NotesPage({
   emptyHint?: string;
 }) {
   const notes = useStore((s) => s.notes);
+  const todos = useStore((s) => s.todos);
   const search = useStore((s) => s.search);
   const openCapture = useStore((s) => s.openCapture);
   const captureOpen = useStore((s) => s.captureOpen);
   const closeCapture = useStore((s) => s.closeCapture);
   const saveNote = useStore((s) => s.saveNote);
   const removeNote = useStore((s) => s.removeNote);
+  const removeTodo = useStore((s) => s.removeTodo);
   const [typeFilter, setTypeFilter] = useState<NoteType | null>(null);
   const [roomFilter, setRoomFilter] = useState<string | null>(null);
   const [tagFilter, setTagFilter] = useState<string | null>(null);
@@ -43,20 +45,47 @@ export function NotesPage({
 
   const effectiveType = filterType ?? typeFilter;
 
+  const todoByVirtualId = useMemo(() => {
+    const index = new Map<string, Todo>();
+    todos.forEach((todo) => {
+      index.set(`todo:${todo.id}`, todo);
+    });
+    return index;
+  }, [todos]);
+
+  const noteListItems = useMemo(() => {
+    const todoNotes: Note[] = todos.map((todo) => ({
+      id: `todo:${todo.id}`,
+      type: "task",
+      title: todo.title,
+      body: todo.notes ?? "",
+      room: todo.room,
+      tags: todo.tags,
+      date: undefined,
+      status: todo.status === "done" ? "solved" : "open",
+      scope: todo.scope === "someday" ? "cross-run" : todo.scope,
+      imageIds: [],
+      createdAt: todo.createdAt,
+      updatedAt: todo.updatedAt,
+    }));
+
+    return [...notes, ...todoNotes].sort((a, b) => b.updatedAt - a.updatedAt);
+  }, [notes, todos]);
+
   const rooms = useMemo(() => {
     const set = new Set<string>();
-    notes.forEach((n) => n.room && set.add(n.room));
+    noteListItems.forEach((n) => n.room && set.add(n.room));
     return Array.from(set).sort();
-  }, [notes]);
+  }, [noteListItems]);
   const tags = useMemo(() => {
     const set = new Set<string>();
-    notes.forEach((n) => n.tags.forEach((t) => set.add(t)));
+    noteListItems.forEach((n) => n.tags.forEach((t) => set.add(t)));
     return Array.from(set).sort();
-  }, [notes]);
+  }, [noteListItems]);
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
-    return notes.filter((n) => {
+    return noteListItems.filter((n) => {
       if (effectiveType && n.type !== effectiveType) return false;
       if (roomFilter && n.room !== roomFilter) return false;
       if (tagFilter && !n.tags.includes(tagFilter)) return false;
@@ -67,7 +96,7 @@ export function NotesPage({
       }
       return true;
     });
-  }, [notes, effectiveType, roomFilter, tagFilter, statusFilter, search]);
+  }, [noteListItems, effectiveType, roomFilter, tagFilter, statusFilter, search]);
 
   const activeNote = useMemo(
     () => notes.find((n) => n.id === activeNoteId) ?? null,
@@ -142,18 +171,37 @@ export function NotesPage({
               openCapture({ kind: "note", noteType: filterType });
             }}
             onOpenEdit={(note) => {
+              const todo = todoByVirtualId.get(note.id);
+              if (todo) {
+                setActiveNoteId(null);
+                setDraft(null);
+                openCapture({ todo });
+                return;
+              }
               closeCapture();
               setPanelMode("edit");
               setActiveNoteId(note.id);
               setDraft(note);
             }}
             onOpenPreview={(note) => {
+              const todo = todoByVirtualId.get(note.id);
+              if (todo) {
+                setActiveNoteId(null);
+                setDraft(null);
+                openCapture({ todo });
+                return;
+              }
               closeCapture();
               setPanelMode("preview");
               setActiveNoteId(note.id);
               setDraft(note);
             }}
             onDelete={(note) => {
+              const todo = todoByVirtualId.get(note.id);
+              if (todo) {
+                void removeTodo(todo.id);
+                return;
+              }
               setPendingDelete(note);
             }}
           />
