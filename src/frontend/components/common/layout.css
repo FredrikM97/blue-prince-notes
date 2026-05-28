@@ -1,7 +1,7 @@
 @layer components {
   /* Outer wrapper — centers content, limits max width */
   .page-layout {
-    @apply mx-auto w-full max-w-7xl px-3 py-3 sm:px-4 sm:py-6;
+    @apply mx-auto h-full w-full max-w-7xl px-3 py-3 sm:px-4 sm:py-6;
   }
 
   /* Layout variants */
@@ -20,7 +20,7 @@
   /* Left sticky sidebar column */
   .page-layout-sidebar {
     @apply lg:sticky lg:self-start;
-    top: calc(3.5rem + 1.5rem); /* header height + page top padding */
+    top: 0;
   }
 
   /* Main content area ("middle") */
@@ -35,7 +35,7 @@
   /* Right sticky sidebar column */
   .page-layout-rightbar {
     @apply lg:sticky lg:self-start;
-    top: calc(3.5rem + 1.5rem);
+    top: 0;
   }
 
   /* SidebarPanel — fixed right overlay, slides in from the right edge */
@@ -49,14 +49,23 @@
     }
   }
 
-  @media (min-width: 64rem) {
-    .page-layout-sidebar,
-    .page-layout-content,
-    .page-layout-rightbar {
-      max-height: calc(100dvh - 6.5rem);
-      overflow-y: auto;
-      scrollbar-gutter: stable;
-      overscroll-behavior: contain;
-    }
+  /* Force the grid row to fill the container height so the middle column
+     has a definite size to scroll within. Sidebars keep top-alignment via
+     their own lg:self-start class, so only the middle column stretches. */
+  .page-layout-middle-scroll-priority {
+    grid-template-rows: 1fr;
+    align-items: stretch;
+  }
+
+  .page-layout-middle-scroll-priority .page-layout-content {
+    min-height: 0;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+  }
+
+  .page-layout-middle-scroll-priority .page-layout-sidebar,
+  .page-layout-middle-scroll-priority .page-layout-rightbar {
+    min-height: 0;
+    overflow: hidden;
   }
 }

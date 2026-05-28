@@ -13,7 +13,7 @@
   }
 
   .notes-view-list {
-    @apply overflow-hidden rounded-lg border border-border bg-card;
+    @apply space-y-2;
   }
 
   .notes-view-panel {
@@ -23,14 +23,13 @@
   .notes-right-panel-shell {
     @apply rounded-lg;
     max-height: calc(100dvh - 7rem);
-    overflow-y: auto;
-    scrollbar-gutter: stable both-edges;
+    overflow: hidden;
   }
 
   @media (min-width: 64rem) {
     .notes-right-panel-shell {
       height: calc(100dvh - 7rem);
-      overflow-y: scroll;
+      overflow: hidden;
     }
   }
 

@@ -1,4 +1,5 @@
-import type { ReactNode } from "react";
+import { useRef } from "react";
+import type { ReactNode, WheelEvent } from "react";
 
 /**
  * Standard page wrapper with optional left and right sidebars.
@@ -14,15 +15,29 @@ export function PageLayout({
   rightSidebar,
   children,
   className,
+  prioritizeMiddleScroll,
 }: {
   leftSidebar?: ReactNode;
   middle?: ReactNode;
   rightSidebar?: ReactNode;
   children?: ReactNode;
   className?: string;
+  prioritizeMiddleScroll?: boolean;
 }) {
+  const middleRef = useRef<HTMLElement | null>(null);
+
+  function forwardWheelToMiddle(event: WheelEvent<HTMLElement>) {
+    if (!prioritizeMiddleScroll) return;
+    if (event.deltaY === 0) return;
+    const middleEl = middleRef.current;
+    if (!middleEl) return;
+    event.preventDefault();
+    middleEl.scrollTop += event.deltaY;
+  }
+
   const layoutClass = [
     "page-layout",
+    prioritizeMiddleScroll ? "page-layout-middle-scroll-priority" : "",
     leftSidebar && rightSidebar
       ? "page-layout-three-column"
       : leftSidebar
@@ -37,9 +52,19 @@ export function PageLayout({
 
   return (
     <div className={layoutClass}>
-      {leftSidebar && <aside className="page-layout-sidebar">{leftSidebar}</aside>}
-      <main className="page-layout-content">{middle ?? children}</main>
-      {rightSidebar && <aside className="page-layout-rightbar">{rightSidebar}</aside>}
+      {leftSidebar && (
+        <aside className="page-layout-sidebar" onWheel={forwardWheelToMiddle}>
+          {leftSidebar}
+        </aside>
+      )}
+      <main ref={middleRef} className="page-layout-content">
+        {middle ?? children}
+      </main>
+      {rightSidebar && (
+        <aside className="page-layout-rightbar" onWheel={forwardWheelToMiddle}>
+          {rightSidebar}
+        </aside>
+      )}
     </div>
   );
 }

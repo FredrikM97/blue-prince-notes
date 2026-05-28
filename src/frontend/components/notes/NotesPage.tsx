@@ -90,6 +90,7 @@ export function NotesPage({
     <>
       <PageLayout
         className="lg:[grid-template-columns:240px_minmax(0,1fr)_420px]"
+        prioritizeMiddleScroll
         leftSidebar={
           <NotesLeftPanel
             title={title}
