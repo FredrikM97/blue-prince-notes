@@ -2,7 +2,8 @@
  * File System Access API sync utilities.
  *
  * Writes a sync snapshot folder to a user-chosen local directory after every
- * mutation. Data is stored in `manifest.json` and image blobs in `images/`.
+ * mutation. Data is stored in a configurable manifest file (default
+ * `manifest.json`) and image blobs in `images/`.
  * If the directory is inside Dropbox / OneDrive / iCloud Drive, the OS cloud
  * client syncs it automatically — zero extra infrastructure.
  */
@@ -57,7 +58,7 @@ declare global {
 }
 
 // ---------------------------------------------------------------------------
-// Data shape written to data.json
+// Data shape written to the sync manifest file
 // ---------------------------------------------------------------------------
 
 export interface SyncManifest {
