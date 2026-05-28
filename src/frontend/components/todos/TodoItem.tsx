@@ -65,17 +65,15 @@ export function TodoItem({
               #{tag}
             </Chip>
           ))}
-          {todo.status !== "done" && (
-            <select
-              className="ml-auto h-6 rounded border border-input bg-background px-1 text-[11px] opacity-0 group-hover:opacity-100"
-              value={todo.status}
-              onChange={(e) => onToggle(e.target.value as TodoStatus)}
-            >
-              <option value="open">open</option>
-              <option value="in-progress">in progress</option>
-              <option value="done">done</option>
-            </select>
-          )}
+          <select
+            className="ml-auto h-6 rounded border border-input bg-background px-1 text-[11px] opacity-0 group-hover:opacity-100"
+            value={todo.status}
+            onChange={(e) => onToggle(e.target.value as TodoStatus)}
+          >
+            <option value="open">open</option>
+            <option value="in-progress">in progress</option>
+            <option value="done">done</option>
+          </select>
         </div>
       </div>
       <button
