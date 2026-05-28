@@ -1,8 +1,19 @@
 import { useMemo, useRef } from "react";
+import type { ReactNode } from "react";
 import { useStore } from "@/frontend/data/store";
-import { buttonClass } from "@/frontend/components/common/buttonClasses";
+import { Button, BrassButton } from "@/frontend/components/ui/button";
+import { Kbd } from "@/frontend/components/ui/kbd";
 import { exportAll, importAll } from "@/frontend/data/io";
 import { toast } from "sonner";
+
+function SettingsSection({ title, children }: { title: string; children: ReactNode }) {
+  return (
+    <section className="space-y-3">
+      <h2 className="font-serif text-lg">{title}</h2>
+      {children}
+    </section>
+  );
+}
 
 export function SettingsPage() {
   const allSections = useStore((s) => s.sections);
@@ -22,17 +33,12 @@ export function SettingsPage() {
         </p>
       </header>
 
-      <section className="space-y-3">
-        <h2 className="font-serif text-lg">Data</h2>
+      <SettingsSection title="Data">
         <div className="flex flex-wrap gap-2">
-          <button className={buttonClass({})} onClick={() => exportAll().then(() => toast.success("Exported"))}>
-            Export ZIP
-          </button>
-          <button className={buttonClass({ variant: "outline" })} onClick={() => fileRef.current?.click()}>
-            Import (merge)...
-          </button>
-          <button
-            className={buttonClass({ variant: "outline" })}
+          <BrassButton onClick={() => exportAll().then(() => toast.success("Exported"))}>Export ZIP</BrassButton>
+          <Button variant="outline" onClick={() => fileRef.current?.click()}>Import (merge)...</Button>
+          <Button
+            variant="outline"
             onClick={async () => {
               const f = fileRef.current;
               if (!f) return;
@@ -41,7 +47,7 @@ export function SettingsPage() {
             }}
           >
             Import (replace)...
-          </button>
+          </Button>
         </div>
         <input
           ref={fileRef}
@@ -63,10 +69,9 @@ export function SettingsPage() {
             e.target.dataset.mode = "merge";
           }}
         />
-      </section>
+      </SettingsSection>
 
-      <section className="space-y-3">
-        <h2 className="font-serif text-lg">Sections</h2>
+      <SettingsSection title="Sections">
         <p className="text-xs text-muted-foreground">
           Sections are fixed for now. Tag-based custom sections will return in a future update.
         </p>
@@ -80,16 +85,15 @@ export function SettingsPage() {
             </li>
           ))}
         </ul>
-      </section>
+      </SettingsSection>
 
-      <section className="space-y-2">
-        <h2 className="font-serif text-lg">Keyboard</h2>
-        <ul className="text-sm text-muted-foreground space-y-1">
-          <li><kbd className="rounded bg-accent px-1">N</kbd> - open quick capture</li>
-          <li><kbd className="rounded bg-accent px-1">Esc</kbd> - close capture</li>
-          <li><kbd className="rounded bg-accent px-1">Enter</kbd> - save - <kbd className="rounded bg-accent px-1">Shift+Enter</kbd> - save & keep open</li>
+      <SettingsSection title="Keyboard">
+        <ul className="space-y-1 text-sm text-muted-foreground">
+          <li><Kbd>N</Kbd> - open quick capture</li>
+          <li><Kbd>Esc</Kbd> - close capture</li>
+          <li><Kbd>Enter</Kbd> - save · <Kbd>Shift+Enter</Kbd> - save &amp; keep open</li>
         </ul>
-      </section>
+      </SettingsSection>
     </div>
   );
 }

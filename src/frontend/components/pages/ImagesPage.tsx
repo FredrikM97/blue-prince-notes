@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
+import { EmptyState } from "@/frontend/components/common/EmptyState";
 import { useStore } from "@/frontend/data/store";
 import { Chip } from "@/frontend/components/common/Chip";
-import { buttonClass } from "@/frontend/components/common/buttonClasses";
+import { Button, BrassButton, GhostButton } from "@/frontend/components/ui/button";
 import { INPUT_BASE_CLASS } from "@/frontend/components/common/formClasses";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/frontend/components/ui/dialog";
 import { Download, Trash2, Copy } from "lucide-react";
@@ -31,11 +32,7 @@ export function ImagesPage() {
       </header>
 
       {filtered.length === 0 ? (
-        <div className="images-page-empty">
-          <p className="images-page-empty-text">
-            No images yet. Add one from note capture or from a note's editor.
-          </p>
-        </div>
+        <EmptyState>No images yet. Add one from note capture or from a note&apos;s editor.</EmptyState>
       ) : (
         <div className="images-grid">
           {filtered.map((img) => (
@@ -171,28 +168,15 @@ function ImageDetail({
         </div>
       </div>
       <div className="images-detail-actions">
-        <button
-          className={buttonClass({
-            size: "sm",
-            variant: "outline",
-            className: "images-action-button",
-          })}
-          onClick={download}
-        >
-          <Download className="images-action-icon" /> Download
-        </button>
-        <button
-          className={buttonClass({
-            size: "sm",
-            variant: "outline",
-            className: "images-action-button",
-          })}
-          onClick={copy}
-        >
-          <Copy className="images-action-icon" /> Copy
-        </button>
-        <button
-          className={buttonClass({ size: "sm", className: "images-save-button" })}
+        <Button variant="outline" size="sm" onClick={download}>
+          <Download /> Download
+        </Button>
+        <Button variant="outline" size="sm" onClick={copy}>
+          <Copy /> Copy
+        </Button>
+        <BrassButton
+          size="sm"
+          className="ml-auto"
           onClick={() =>
             onUpdate({
               ...img,
@@ -203,17 +187,10 @@ function ImageDetail({
           }
         >
           Save
-        </button>
-        <button
-          className={buttonClass({
-            size: "sm",
-            variant: "ghost",
-            className: "images-delete-button",
-          })}
-          onClick={onDelete}
-        >
-          <Trash2 className="images-delete-icon" />
-        </button>
+        </BrassButton>
+        <GhostButton className="text-destructive hover:text-destructive" onClick={onDelete}>
+          <Trash2 />
+        </GhostButton>
       </div>
     </>
   );

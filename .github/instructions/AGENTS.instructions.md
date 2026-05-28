@@ -37,6 +37,13 @@ description: Describe when these instructions should be loaded by the agent base
 - If a class list grows beyond a small, readable size, refactor it before finishing the task.
 - Keep inline `className` usage limited to short, readable cases; extract long class lists into local component styles.
 
+## Component Isolation
+
+- Each component should own only the state and effects directly tied to its own rendering. Do not let parent components hold state that belongs to a child.
+- Extract self-contained behaviors into dedicated components (e.g. `ThemeToggle` owns its own theme state — `AppHeader` does not need to know the current theme).
+- A component that manages its own data (localStorage, subscriptions, derived values) should be the single owner of that data. Avoid duplicating that logic in a parent.
+- When a parent component conditionally renders logic that could be a named sub-component, prefer extracting it so the parent body stays flat and readable.
+
 ## Component Scope And Maintainability
 
 - Avoid massive component functions that mix store wiring, derived data, effects, and submit/business logic in one place.
@@ -54,6 +61,32 @@ description: Describe when these instructions should be loaded by the agent base
 
 - Keep naming consistent for note-domain UI components; prefer `Notes*` names over mixing `Note*` and `Notes*` at the same architectural level.
 - Avoid reintroducing retired names (for example `Capture*`) once a new naming direction is chosen.
+
+## Button Usage
+
+- Use the premade button components from `ui/button.tsx` instead of calling `buttonClass()` directly.
+- Available components: `Button` (general, supports `variant` and `size` props), `IconButton` (ghost icon, always square with `shrink-0` and `type="button"` built in), `BrassButton` (accent primary action), `GhostButton` (secondary/cancel action).
+- Do not reach for `buttonClass()` for new code. If an exact combination is not covered by a premade component, add a new variant to `ui/button.tsx` rather than using the raw function.
+- `IconButton` has `type="button"` and `shrink-0` built in — never pass these explicitly at the call site.
+
+## Markdown Support
+
+- Use `MarkdownEditor` from `common/MarkdownEditor.tsx` wherever users write markdown text (note body, details fields). It includes a toolbar and live preview toggle.
+- Use `MarkdownPreview` from `common/MarkdownPreview.tsx` to render stored markdown in read-only contexts (note detail views, map cell previews).
+- Do not reach for raw `ReactMarkdown` + `remarkGfm` inline in components — always use these shared wrappers.
+
+## Hook Complexity
+
+- If a hook returns more than 4–5 values or takes more than 4–5 parameters, consider splitting it.
+- Prefer named, focused hooks (one purpose each) over large aggregate hooks.
+- When `useMemo` chains are complex, add short comments explaining what each memo computes and why.
+- Prefer inlining trivial `useMemo` calls in the component body over extracting them into a hook with a long parameter list.
+
+## Structural Simplicity
+
+- Prefer fewer div layers. Before wrapping in a new `<div>`, check if the existing parent container can receive the needed class instead.
+- Avoid wrapping a single child in a structural div that adds no layout behavior — remove it and apply the class directly.
+- Regularly review components for redundant container elements after refactors.
 
 ## Instruction Maintenance
 

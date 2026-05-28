@@ -1,7 +1,6 @@
 import { useMemo, useState, type ReactNode } from "react";
-import ReactMarkdown from "react-markdown";
-import remarkGfm from "remark-gfm";
-import { useStore } from "@/frontend/data/store";
+import { Button, BrassButton, GhostButton } from "@/frontend/components/ui/button";
+import { MarkdownPreview } from "@/frontend/components/common/MarkdownPreview";
 import {
   ROOMS_BY_CATEGORY,
   ROOM_CATEGORIES,
@@ -9,16 +8,15 @@ import {
   GRID_ROWS,
   cellId,
 } from "@/frontend/data/rooms";
-import { Chip } from "@/frontend/components/common/Chip";
-import { buttonClass } from "@/frontend/components/common/buttonClasses";
+import { useStore } from "@/frontend/data/store";
 import { TEXTAREA_BASE_CLASS } from "@/frontend/components/common/formClasses";
+import { Chip } from "@/frontend/components/common/Chip";
+import { SidebarPanel } from "@/frontend/components/ui/sidebar-panel";
 import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-  SheetDescription,
-} from "@/frontend/components/ui/sheet";
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/frontend/components/ui/dialog";
 import {
   Select,
   SelectContent,
@@ -213,18 +211,17 @@ function MapCellEditorSheet({
   const activeRoom = activeCell?.roomName;
 
   return (
-    <Sheet open={!!active} onOpenChange={(open) => !open && onClose()}>
-      <SheetContent className="map-sheet-content">
-        {active && (
-          <>
-            <SheetHeader>
-              <SheetTitle className="map-sheet-title">
-                {activeCell?.roomName ?? `Cell ${coordLabel(active.row, active.col)}`}
-              </SheetTitle>
-              <SheetDescription>Coordinate {coordLabel(active.row, active.col)}</SheetDescription>
-            </SheetHeader>
+    <SidebarPanel open={!!active} onClose={onClose}>
+      {active && (
+        <>
+          <DialogHeader>
+            <DialogTitle className="map-sheet-title">
+              {activeCell?.roomName ?? `Cell ${coordLabel(active.row, active.col)}`}
+            </DialogTitle>
+            <DialogDescription>Coordinate {coordLabel(active.row, active.col)}</DialogDescription>
+          </DialogHeader>
 
-            <div className="map-sheet-body">
+          <div className="map-sheet-body">
               <div>
                 <label className="map-field-label">Room</label>
                 <Select
@@ -272,78 +269,34 @@ function MapCellEditorSheet({
                 {commentDraft.trim().length > 0 && (
                   <div className="map-comment-preview-card">
                     <div className="map-comment-preview-title">Preview</div>
-                    <div className="capture-preview-markdown">
-                      <ReactMarkdown remarkPlugins={[remarkGfm]}>{commentDraft}</ReactMarkdown>
-                    </div>
+                    <MarkdownPreview>{commentDraft}</MarkdownPreview>
                   </div>
                 )}
               </div>
 
               {activeRoom && (
                 <div className="map-sheet-action-row">
-                  <button
-                    className={buttonClass({
-                      size: "sm",
-                      className: "map-sheet-action-primary",
-                    })}
-                    onClick={() => openCapture({ kind: "note", room: activeRoom })}
-                  >
-                    + Note (image)
-                  </button>
-                  <button
-                    className={buttonClass({
-                      size: "sm",
-                      variant: "outline",
-                      className: "map-sheet-action-secondary",
-                    })}
-                    onClick={() => openCapture({ kind: "todo", room: activeRoom })}
-                  >
-                    + Todo
-                  </button>
+                  <BrassButton size="sm" className="flex-1" onClick={() => openCapture({ kind: "note", room: activeRoom })}>+ Note (image)</BrassButton>
+                  <Button variant="outline" size="sm" className="flex-1" onClick={() => openCapture({ kind: "todo", room: activeRoom })}>+ Todo</Button>
                 </div>
               )}
 
               <div className="map-sheet-clear-row">
-                <button
-                  className={buttonClass({
-                    size: "sm",
-                    variant: "ghost",
-                    className: "map-sheet-clear-comment",
-                  })}
-                  onClick={() => {
-                    setCommentDraft("");
-                    upsertCell({
-                      row: active.row,
-                      col: active.col,
-                      comment: "",
-                    });
-                  }}
-                >
-                  <Eraser className="map-sheet-clear-icon" /> Clear comment
-                </button>
-                <button
-                  className={buttonClass({
-                    size: "sm",
-                    variant: "ghost",
-                    className: "map-sheet-clear-cell",
-                  })}
-                  onClick={() => {
-                    clearCell(active.row, active.col);
-                    onClose();
-                  }}
-                >
-                  <Trash2 className="map-sheet-clear-icon" /> Clear cell
-                </button>
+                <GhostButton className="text-muted-foreground" onClick={() => { setCommentDraft(""); upsertCell({ row: active.row, col: active.col, comment: "" }); }}>
+                  <Eraser /> Clear comment
+                </GhostButton>
+                <GhostButton className="text-destructive hover:text-destructive" onClick={() => { clearCell(active.row, active.col); onClose(); }}>
+                  <Trash2 /> Clear cell
+                </GhostButton>
               </div>
 
               {activeNotes.length > 0 && <MapRoomNotes notes={activeNotes} />}
 
               {activeTodos.length > 0 && <MapRoomTodos todos={activeTodos} />}
-            </div>
-          </>
-        )}
-      </SheetContent>
-    </Sheet>
+          </div>
+        </>
+      )}
+    </SidebarPanel>
   );
 }
 

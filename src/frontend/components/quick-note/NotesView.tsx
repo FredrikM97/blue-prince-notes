@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useStore } from "@/frontend/data/store";
 import type { Note, NoteType } from "@/lib/types";
 import { NotesRow } from "./NotesRow";
-import { buttonClass } from "@/frontend/components/common/buttonClasses";
+import { BrassButton, GhostButton } from "@/frontend/components/ui/button";
 import { NoteRowEditor } from "@/frontend/components/note-row/NoteRowEditor";
 import { NoteRowDetails } from "@/frontend/components/note-row/NoteRowDetails";
 import { DialogDescription, DialogHeader, DialogTitle } from "@/frontend/components/ui/dialog";
@@ -113,14 +113,9 @@ export function NotesView({
             <p className="text-sm text-muted-foreground">
               {emptyHint ?? "No notes yet. Press N to add one."}
             </p>
-            <button
-              className={buttonClass({
-                className: "mt-4 bg-brass text-brass-foreground hover:bg-brass/90",
-              })}
-              onClick={() => openCapture()}
-            >
+            <BrassButton className="mt-4" onClick={() => openCapture()}>
               Add your first note
-            </button>
+            </BrassButton>
           </div>
         ) : (
           <div className="notes-view-list">
@@ -183,19 +178,16 @@ export function NotesView({
                   }}
                 />
               ) : (
-                <div className="notes-panel-preview-wrap">
+                <>
                   <div className="notes-panel-preview-scroll">
                     <NoteRowDetails note={activeNote} />
                   </div>
                   <div className="notes-panel-preview-footer">
-                    <button
-                      className={buttonClass({ size: "sm", variant: "ghost" })}
-                      onClick={() => setActiveNoteId(null)}
-                    >
+                    <GhostButton onClick={() => setActiveNoteId(null)}>
                       Close
-                    </button>
+                    </GhostButton>
                   </div>
-                </div>
+                </>
               )}
             </div>
           </>

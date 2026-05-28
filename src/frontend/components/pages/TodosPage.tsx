@@ -1,10 +1,82 @@
 import { useMemo, useState } from "react";
 import { useStore } from "@/frontend/data/store";
 import { Chip } from "@/frontend/components/common/Chip";
-import { buttonClass } from "@/frontend/components/common/buttonClasses";
+import { BrassButton } from "@/frontend/components/ui/button";
 import { TODO_STATUS_COLUMNS, groupTodosByStatus } from "@/frontend/components/todos/constants";
 import { TodoScopeFilter } from "@/frontend/components/todos/TodoScopeFilter";
 import { TodoItem } from "@/frontend/components/todos/TodoItem";
+import type { Todo } from "@/lib/types";
+
+/** Quick summary card showing open "this-run" todos at a glance. */
+function TodoRunCard({
+  todos,
+  onToggleDone,
+}: {
+  todos: Todo[];
+  onToggleDone: (id: string) => void;
+}) {
+  return (
+    <div className="todos-run-open-card">
+      <div className="todos-run-open-title">This run · {todos.length} open</div>
+      <ul className="todos-run-open-list">
+        {todos.map((t) => (
+          <li key={t.id} className="todos-run-open-item">
+            <input
+              type="checkbox"
+              checked={false}
+              onChange={() => onToggleDone(t.id)}
+              className="todos-run-open-checkbox"
+            />
+            <span>{t.title}</span>
+            {t.room && <Chip className="todos-run-open-chip">@{t.room}</Chip>}
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
+/** A single kanban-style status column. */
+function TodoColumn({
+  label,
+  value,
+  todos,
+  onToggle,
+  onDelete,
+  onEdit,
+}: {
+  label: string;
+  value: string;
+  todos: Todo[];
+  onToggle: (id: string, next: Todo["status"]) => void;
+  onDelete: (id: string) => void;
+  onEdit: (t: Todo) => void;
+}) {
+  return (
+    <div className="todos-column">
+      <div className="todos-column-header">
+        <h2 className="todos-column-title">{label}</h2>
+        <span className="todos-column-count">{todos.length}</span>
+      </div>
+      <ul className="todos-column-list">
+        {todos.length === 0 && (
+          <li className="todos-column-empty">
+            {value === "open" ? "Press N to add a todo" : "Empty"}
+          </li>
+        )}
+        {todos.map((t) => (
+          <TodoItem
+            key={t.id}
+            todo={t}
+            onToggle={(next) => onToggle(t.id, next)}
+            onDelete={() => onDelete(t.id)}
+            onEdit={onEdit}
+          />
+        ))}
+      </ul>
+    </div>
+  );
+}
 
 export function TodosPage() {
   const todos = useStore((s) => s.todos);
@@ -28,6 +100,8 @@ export function TodosPage() {
 
   const grouped = groupTodosByStatus(filtered);
   const thisRunOpen = filtered.filter((t) => t.scope === "this-run" && t.status !== "done");
+  const showRunCard =
+    thisRunOpen.length > 0 && scopeFilter !== "cross-run" && scopeFilter !== "someday";
 
   return (
     <div className="todos-page">
@@ -35,64 +109,31 @@ export function TodosPage() {
         <h1 className="todos-page-title">Todo</h1>
         <div className="todos-page-header-actions">
           <TodoScopeFilter value={scopeFilter} onChange={setScopeFilter} />
-          <button
-            className={buttonClass({
-              size: "sm",
-              className: "todos-add-button",
-            })}
+          <BrassButton
+            size="sm"
+            className="todos-add-button"
             onClick={() => openCapture({ kind: "todo" })}
           >
             Add todo
-          </button>
+          </BrassButton>
         </div>
       </div>
 
-      {thisRunOpen.length > 0 && scopeFilter !== "cross-run" && scopeFilter !== "someday" && (
-        <div className="todos-run-open-card">
-          <div className="todos-run-open-title">This run · {thisRunOpen.length} open</div>
-          <ul className="todos-run-open-list">
-            {thisRunOpen.map((t) => (
-              <li key={t.id} className="todos-run-open-item">
-                <input
-                  type="checkbox"
-                  checked={false}
-                  onChange={() => toggle(t.id, "done")}
-                  className="todos-run-open-checkbox"
-                />
-                <span>{t.title}</span>
-                {t.room && <Chip className="todos-run-open-chip">@{t.room}</Chip>}
-              </li>
-            ))}
-          </ul>
-        </div>
-      )}
+      {showRunCard && <TodoRunCard todos={thisRunOpen} onToggleDone={(id) => toggle(id, "done")} />}
 
       <div className="todos-columns-grid">
         {TODO_STATUS_COLUMNS.map((col) => (
-          <div key={col.value} className="todos-column">
-            <div className="todos-column-header">
-              <h2 className="todos-column-title">{col.label}</h2>
-              <span className="todos-column-count">{grouped[col.value].length}</span>
-            </div>
-            <ul className="todos-column-list">
-              {grouped[col.value].length === 0 && (
-                <li className="todos-column-empty">
-                  {col.value === "open" ? "Press N to add a todo" : "Empty"}
-                </li>
-              )}
-              {grouped[col.value].map((t) => (
-                <TodoItem
-                  key={t.id}
-                  todo={t}
-                  onToggle={(next) => toggle(t.id, next)}
-                  onDelete={() => {
-                    if (confirm("Delete this todo?")) remove(t.id);
-                  }}
-                  onEdit={(updated) => save(updated)}
-                />
-              ))}
-            </ul>
-          </div>
+          <TodoColumn
+            key={col.value}
+            label={col.label}
+            value={col.value}
+            todos={grouped[col.value]}
+            onToggle={(id, next) => toggle(id, next)}
+            onDelete={(id) => {
+              if (confirm("Delete this todo?")) remove(id);
+            }}
+            onEdit={save}
+          />
         ))}
       </div>
     </div>

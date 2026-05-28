@@ -7,6 +7,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/frontend/components/ui/dialog";
+import { MarkdownPreview } from "@/frontend/components/common/MarkdownPreview";
 
 export function NoteRowDetails({
   note,
@@ -17,7 +18,7 @@ export function NoteRowDetails({
 
   return (
     <>
-      {note.body && <p className="whitespace-pre-wrap text-sm leading-relaxed">{note.body}</p>}
+      {note.body && <MarkdownPreview>{note.body}</MarkdownPreview>}
       {note.imageIds.length > 0 && (
         <section className="note-details-images">
           <div className="note-details-images-label">

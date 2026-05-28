@@ -1,4 +1,5 @@
 @import "tailwindcss";
+@plugin "@tailwindcss/typography";
 @source "..";
 @import "tw-animate-css";
 
@@ -415,14 +416,6 @@
     @apply text-xs text-muted-foreground;
   }
 
-  .images-page-empty {
-    @apply rounded-lg border border-dashed border-border p-12 text-center;
-  }
-
-  .images-page-empty-text {
-    @apply text-sm text-muted-foreground;
-  }
-
   .images-grid {
     @apply grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5;
   }
@@ -483,26 +476,6 @@
     @apply flex flex-wrap items-center gap-2;
   }
 
-  .images-action-button {
-    @apply items-center;
-  }
-
-  .images-action-icon {
-    @apply mr-1 h-4 w-4;
-  }
-
-  .images-save-button {
-    @apply ml-auto bg-brass text-brass-foreground hover:bg-brass/90;
-  }
-
-  .images-delete-button {
-    @apply text-destructive;
-  }
-
-  .images-delete-icon {
-    @apply h-4 w-4;
-  }
-
   .map-page {
     @apply mx-auto max-w-5xl px-4 py-6;
   }
@@ -551,10 +524,6 @@
     @apply text-[10px] opacity-50;
   }
 
-  .map-sheet-content {
-    @apply w-full overflow-y-auto sm:max-w-md;
-  }
-
   .map-sheet-title {
     @apply font-serif text-2xl;
   }
@@ -583,28 +552,8 @@
     @apply flex gap-2;
   }
 
-  .map-sheet-action-primary {
-    @apply flex-1 bg-brass text-brass-foreground hover:bg-brass/90;
-  }
-
-  .map-sheet-action-secondary {
-    @apply flex-1;
-  }
-
   .map-sheet-clear-row {
     @apply flex gap-2 border-t border-border pt-3;
-  }
-
-  .map-sheet-clear-comment {
-    @apply text-muted-foreground;
-  }
-
-  .map-sheet-clear-cell {
-    @apply text-destructive hover:text-destructive;
-  }
-
-  .map-sheet-clear-icon {
-    @apply mr-1 h-3.5 w-3.5;
   }
 
   .map-list-title {

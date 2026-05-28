@@ -1,11 +1,10 @@
 import type { Note } from "@/lib/types";
 import { INPUT_BASE_CLASS, TEXTAREA_BASE_CLASS } from "@/frontend/components/common/formClasses";
-import { buttonClass } from "@/frontend/components/common/buttonClasses";
+import { BrassButton, GhostButton } from "@/frontend/components/ui/button";
 import { StoredImageView } from "@/frontend/components/StoredImageView";
 import { useStore } from "@/frontend/data/store";
 import { ImagePlus, X } from "lucide-react";
-import { TYPE_LABEL } from "./constants";
-
+import { TYPE_LABEL } from "./constants";import { MarkdownEditor } from "@/frontend/components/common/MarkdownEditor";
 export function NoteRowEditor({
   draft,
   setDraft,
@@ -27,12 +26,11 @@ export function NoteRowEditor({
         placeholder="Title"
         className={INPUT_BASE_CLASS}
       />
-      <textarea
+      <MarkdownEditor
         value={draft.body}
-        onChange={(e) => setDraft({ ...draft, body: e.target.value })}
-        placeholder="Details..."
-        rows={4}
-        className={TEXTAREA_BASE_CLASS}
+        onChange={(v) => setDraft({ ...draft, body: v })}
+        placeholder="Details (markdown supported)…"
+        rows={5}
       />
       <div className="note-editor-grid-2">
         <input
@@ -136,18 +134,10 @@ export function NoteRowEditor({
           <option value="cross-run">cross-run</option>
           <option value="this-run">this-run</option>
         </select>
-        <button
-          className={buttonClass({
-            size: "sm",
-            className: "ml-auto bg-brass text-brass-foreground hover:bg-brass/90",
-          })}
-          onClick={onSave}
-        >
+        <BrassButton size="sm" className="ml-auto" onClick={onSave}>
           Save
-        </button>
-        <button className={buttonClass({ size: "sm", variant: "ghost" })} onClick={onCancel}>
-          Cancel
-        </button>
+        </BrassButton>
+        <GhostButton onClick={onCancel}>Cancel</GhostButton>
       </div>
     </div>
   );

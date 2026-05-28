@@ -1,4 +1,4 @@
-export function QuickNoteShortcutHelp() {
+export function NotesShortcutHelp() {
   return (
     <div className="rounded-md border border-border bg-card/60 p-2 text-[11px] text-muted-foreground">
       You can type commands directly in the title:

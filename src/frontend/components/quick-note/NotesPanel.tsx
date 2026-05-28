@@ -1,9 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import ReactMarkdown from "react-markdown";
-import remarkGfm from "remark-gfm";
 import { useStore } from "@/frontend/data/store";
-import { INPUT_BASE_CLASS, TEXTAREA_BASE_CLASS } from "@/frontend/components/common/formClasses";
-import { buttonClass } from "@/frontend/components/common/buttonClasses";
+import { INPUT_BASE_CLASS } from "@/frontend/components/common/formClasses";
+import { GhostButton, BrassButton } from "@/frontend/components/ui/button";
 import { Tabs, TabsList, TabsTrigger } from "@/frontend/components/ui/tabs";
 import {
   DialogHeader,
@@ -24,8 +22,9 @@ import { ImagePlus, Info } from "lucide-react";
 import type { NoteType, Priority } from "@/lib/types";
 import { DEFAULT_ROOMS } from "@/frontend/data/rooms";
 import { NOTE_TYPES } from "@/frontend/components/quick-note/constants";
-import { QuickNoteShortcutHelp } from "@/frontend/components/quick-note/QuickNoteShortcutHelp";
+import { NotesShortcutHelp } from "@/frontend/components/quick-note/NotesShortcutHelp";
 import { PendingImageList } from "@/frontend/components/quick-note/PendingImageList";
+import { MarkdownEditor } from "@/frontend/components/common/MarkdownEditor";
 
 interface NotesSuggestion {
   value: string;
@@ -69,7 +68,6 @@ function useNotesFormState({
   const [tagsInput, setTagsInput] = useState("");
   const [priority, setPriority] = useState<Priority>("med");
   const [body, setBody] = useState("");
-  const [showDetailsPreview, setShowDetailsPreview] = useState(false);
   const [pendingImages, setPendingImages] = useState<Blob[]>([]);
   const [showHelp, setShowHelp] = useState(false);
   const [cursorPos, setCursorPos] = useState(0);
@@ -84,7 +82,7 @@ function useNotesFormState({
     setTagsInput("");
     setPriority("med");
     setBody("");
-    setShowDetailsPreview(false);
+    setShowHelp(false);
     setPendingImages([]);
     setCursorPos(prefill.length);
     setTimeout(() => inputRef.current?.focus(), 50);
@@ -114,8 +112,6 @@ function useNotesFormState({
     setPriority,
     body,
     setBody,
-    showDetailsPreview,
-    setShowDetailsPreview,
     pendingImages,
     setPendingImages,
     showHelp,
@@ -377,51 +373,22 @@ function NotesDetailsSection({
   mode,
   body,
   setBody,
-  showDetailsPreview,
-  setShowDetailsPreview,
 }: {
   mode: "note" | "todo";
   body: string;
   setBody: React.Dispatch<React.SetStateAction<string>>;
-  showDetailsPreview: boolean;
-  setShowDetailsPreview: React.Dispatch<React.SetStateAction<boolean>>;
 }) {
   return (
     <div>
-      <div className="mb-1 flex items-center justify-between gap-2">
-        <label className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
-          Details {mode === "todo" ? "(optional)" : "(optional)"}
-        </label>
-        {mode === "note" && (
-          <button
-            type="button"
-            onClick={() => setShowDetailsPreview((v) => !v)}
-            className="text-[11px] text-muted-foreground hover:text-foreground"
-          >
-            {showDetailsPreview ? "Hide preview" : "Open preview"}
-          </button>
-        )}
-      </div>
-      <textarea
+      <label className="capture-label">
+        Details <span className="text-muted-foreground/70 normal-case">(optional)</span>
+      </label>
+      <MarkdownEditor
         value={body}
-        onChange={(e) => setBody(e.target.value)}
-        placeholder="Longer note, paste evidence here, or details about the todo…"
+        onChange={setBody}
+        placeholder={mode === "todo" ? "Details about this todo…" : "Longer note, paste evidence…"}
         rows={6}
-        className={TEXTAREA_BASE_CLASS}
       />
-
-      {mode === "note" && showDetailsPreview && (
-        <div className="capture-preview-card">
-          <div className="capture-preview-title">Details preview</div>
-          <div className="capture-preview-markdown">
-            {body.trim().length > 0 ? (
-              <ReactMarkdown remarkPlugins={[remarkGfm]}>{body}</ReactMarkdown>
-            ) : (
-              <p className="text-muted-foreground">Nothing to preview yet.</p>
-            )}
-          </div>
-        </div>
-      )}
     </div>
   );
 }
@@ -459,7 +426,7 @@ function NotesAttachmentsSection({
         </button>
       </div>
 
-      {showHelp && <QuickNoteShortcutHelp />}
+      {showHelp && <NotesShortcutHelp />}
     </>
   );
 }
@@ -469,17 +436,8 @@ function NotesFooterActions({ submit }: { submit: (keepOpen: boolean) => void | 
     <DialogFooter className="capture-footer">
       <p className="capture-footer-hint">⌘/Ctrl+Enter to save · Shift to keep open</p>
       <div className="flex gap-2">
-        <button className={buttonClass({ variant: "ghost" })} onClick={() => submit(true)}>
-          Save & add another
-        </button>
-        <button
-          onClick={() => submit(false)}
-          className={buttonClass({
-            className: "bg-brass text-brass-foreground hover:bg-brass/90",
-          })}
-        >
-          Save
-        </button>
+        <GhostButton onClick={() => submit(true)}>Save &amp; add another</GhostButton>
+        <BrassButton onClick={() => submit(false)}>Save</BrassButton>
       </div>
     </DialogFooter>
   );
@@ -500,43 +458,38 @@ function useNotesDerivedData({
   cursorPos: number;
   room: string;
 }) {
-  // Rooms placed on the map get priority in the dropdown.
-  const placedRooms = useMemo(() => {
-    const set = new Set<string>();
-    gridCells.forEach((c) => c.roomName && set.add(c.roomName));
-    return Array.from(set).sort();
-  }, [gridCells]);
-
+  // All room names known to the app, merged from map cells, notes, todos, and defaults.
   const roomOptions = useMemo(() => {
     const all = new Set<string>(DEFAULT_ROOMS.map((r) => r.name));
-    placedRooms.forEach((r) => all.add(r));
-    for (const n of notes) {
-      if (n.room?.trim()) all.add(n.room.trim());
-    }
-    for (const t of todos) {
-      if (t.room?.trim()) all.add(t.room.trim());
-    }
+    gridCells.forEach((c) => c.roomName && all.add(c.roomName));
+    notes.forEach((n) => n.room?.trim() && all.add(n.room.trim()));
+    todos.forEach((t) => t.room?.trim() && all.add(t.room.trim()));
     return Array.from(all).sort();
-  }, [placedRooms, notes, todos]);
+  }, [gridCells, notes, todos]);
 
+  // All tags seen across notes and todos.
   const tagSuggestions = useMemo(() => {
     const all = new Set<string>();
-    for (const n of notes) n.tags.forEach((t) => all.add(t));
-    for (const t of todos) t.tags.forEach((x) => all.add(x));
+    notes.forEach((n) => n.tags.forEach((t) => all.add(t)));
+    todos.forEach((t) => t.tags.forEach((x) => all.add(x)));
     return Array.from(all).sort();
   }, [notes, todos]);
 
+  // The word being typed at the cursor — used for inline command suggestions.
   const activeToken = useMemo(() => getActiveToken(title, cursorPos), [title, cursorPos]);
 
+  // Room dropdown: filtered by what the user has typed so far.
   const roomFieldSuggestions = useMemo(() => {
     const q = room.trim().toLowerCase();
     if (!q) return roomOptions.slice(0, 8);
     return roomOptions.filter((r) => r.toLowerCase().includes(q)).slice(0, 8);
   }, [room, roomOptions]);
 
-  const suggestions = useMemo(() => {
-    return buildSuggestions(activeToken, roomOptions, tagSuggestions);
-  }, [activeToken, roomOptions, tagSuggestions]);
+  // Inline title suggestions (e.g. @room, #tag autocomplete).
+  const suggestions = useMemo(
+    () => buildSuggestions(activeToken, roomOptions, tagSuggestions),
+    [activeToken, roomOptions, tagSuggestions],
+  );
 
   return { roomFieldSuggestions, activeToken, suggestions };
 }
@@ -705,13 +658,7 @@ export function NotesPanel() {
 
         <NotesTagsField tagsInput={form.tagsInput} setTagsInput={form.setTagsInput} />
 
-        <NotesDetailsSection
-          mode={form.mode}
-          body={form.body}
-          setBody={form.setBody}
-          showDetailsPreview={form.showDetailsPreview}
-          setShowDetailsPreview={form.setShowDetailsPreview}
-        />
+        <NotesDetailsSection mode={form.mode} body={form.body} setBody={form.setBody} />
 
         <NotesAttachmentsSection
           setPendingImages={form.setPendingImages}

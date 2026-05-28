@@ -1,6 +1,6 @@
 import type { Note } from "@/lib/types";
 import { NoteRowSummary } from "@/frontend/components/note-row/NoteRowSummary";
-import { buttonClass } from "@/frontend/components/common/buttonClasses";
+import { IconButton } from "@/frontend/components/ui/button";
 import { ChevronRight, Pencil, Trash2 } from "lucide-react";
 
 export function NotesRow({
@@ -14,7 +14,6 @@ export function NotesRow({
   onDelete: () => void;
   onOpenPreview: () => void;
 }) {
-
   return (
     <div className="note-row-item">
       <div className="note-row-inner group">
@@ -28,9 +27,7 @@ export function NotesRow({
         >
           <NoteRowSummary note={note} />
         </button>
-        <button
-          type="button"
-          className={buttonClass({ size: "icon", variant: "ghost", className: "shrink-0" })}
+        <IconButton
           onClick={(e) => {
             e.stopPropagation();
             onOpenEdit();
@@ -38,14 +35,9 @@ export function NotesRow({
           aria-label="Edit note"
         >
           <Pencil className="h-4 w-4" />
-        </button>
-        <button
-          type="button"
-          className={buttonClass({
-            size: "icon",
-            variant: "ghost",
-            className: "shrink-0 text-destructive hover:text-destructive",
-          })}
+        </IconButton>
+        <IconButton
+          className="text-destructive hover:text-destructive"
           onClick={(e) => {
             e.stopPropagation();
             onDelete();
@@ -53,10 +45,8 @@ export function NotesRow({
           aria-label="Delete note"
         >
           <Trash2 className="h-4 w-4" />
-        </button>
-        <button
-          type="button"
-          className={buttonClass({ size: "icon", variant: "ghost", className: "shrink-0" })}
+        </IconButton>
+        <IconButton
           onClick={(e) => {
             e.stopPropagation();
             onOpenPreview();
@@ -64,7 +54,7 @@ export function NotesRow({
           aria-label="Preview note"
         >
           <ChevronRight className="h-4 w-4" />
-        </button>
+        </IconButton>
       </div>
     </div>
   );

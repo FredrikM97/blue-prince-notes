@@ -1,4 +1,5 @@
 import { useMemo } from "react";
+import { EmptyState } from "@/frontend/components/common/EmptyState";
 import { useStore } from "@/frontend/data/store";
 import type { Note } from "@/lib/types";
 
@@ -77,9 +78,7 @@ export function GraphPage() {
       </div>
 
       {nodes.length === 0 ? (
-        <div className="rounded-lg border border-dashed border-border p-12 text-center text-sm text-muted-foreground">
-          No notes yet. Add notes to build your connection graph.
-        </div>
+        <EmptyState>No notes yet. Add notes to build your connection graph.</EmptyState>
       ) : (
         <div className="overflow-hidden rounded-lg border border-border bg-card/40 p-2">
           <svg viewBox={GRAPH_VIEWBOX} className="h-[68vh] min-h-[420px] w-full">
