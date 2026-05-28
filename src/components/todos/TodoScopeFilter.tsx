@@ -1,4 +1,5 @@
 import { TODO_SCOPE_OPTIONS } from "./constants";
+import { SelectButton } from "@/components/common/button";
 
 export function TodoScopeFilter({
   value,
@@ -8,17 +9,15 @@ export function TodoScopeFilter({
   onChange: (value: string | null) => void;
 }) {
   return (
-    <div className="flex gap-1 rounded-md bg-secondary p-1 text-xs">
+    <div className="flex flex-wrap gap-1">
       {TODO_SCOPE_OPTIONS.map((option) => (
-        <button
+        <SelectButton
           key={String(option.value)}
+          active={value === option.value}
           onClick={() => onChange(option.value)}
-          className={`rounded px-2 py-1 ${
-            value === option.value ? "bg-brass text-brass-foreground" : "text-muted-foreground"
-          }`}
         >
           {option.label}
-        </button>
+        </SelectButton>
       ))}
     </div>
   );
