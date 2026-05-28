@@ -1,4 +1,4 @@
-import { useDeferredValue, useMemo, useState } from "react";
+import { useCallback, useDeferredValue, useMemo, useState } from "react";
 import { useStore } from "@/data/store";
 import type { Note, NoteType, Todo } from "@/lib/types";
 import { PageLayout } from "@/components/common/PageLayout";
@@ -118,6 +118,58 @@ export function NotesPage({
     });
   };
 
+  const openCaptureForNotes = useCallback(() => {
+    setActiveNoteId(null);
+    setDraft(null);
+    openCapture({ kind: "note", noteType: filterType });
+  }, [openCapture, filterType]);
+
+  const openEditFromList = useCallback(
+    (note: Note) => {
+      const todo = todoByVirtualId.get(note.id);
+      if (todo) {
+        setActiveNoteId(null);
+        setDraft(null);
+        openCapture({ todo });
+        return;
+      }
+      closeCapture();
+      setPanelMode("edit");
+      setActiveNoteId(note.id);
+      setDraft(note);
+    },
+    [todoByVirtualId, openCapture, closeCapture],
+  );
+
+  const openPreviewFromList = useCallback(
+    (note: Note) => {
+      const todo = todoByVirtualId.get(note.id);
+      if (todo) {
+        setActiveNoteId(null);
+        setDraft(null);
+        openCapture({ todo });
+        return;
+      }
+      closeCapture();
+      setPanelMode("preview");
+      setActiveNoteId(note.id);
+      setDraft(note);
+    },
+    [todoByVirtualId, openCapture, closeCapture],
+  );
+
+  const deleteFromList = useCallback(
+    (note: Note) => {
+      const todo = todoByVirtualId.get(note.id);
+      if (todo) {
+        void removeTodo(todo.id);
+        return;
+      }
+      setPendingDelete(note);
+    },
+    [todoByVirtualId, removeTodo],
+  );
+
   return (
     <>
       <PageLayout
@@ -168,45 +220,10 @@ export function NotesPage({
           <NotesView
             emptyHint={emptyHint}
             filtered={filtered}
-            openCapture={() => {
-              setActiveNoteId(null);
-              setDraft(null);
-              openCapture({ kind: "note", noteType: filterType });
-            }}
-            onOpenEdit={(note) => {
-              const todo = todoByVirtualId.get(note.id);
-              if (todo) {
-                setActiveNoteId(null);
-                setDraft(null);
-                openCapture({ todo });
-                return;
-              }
-              closeCapture();
-              setPanelMode("edit");
-              setActiveNoteId(note.id);
-              setDraft(note);
-            }}
-            onOpenPreview={(note) => {
-              const todo = todoByVirtualId.get(note.id);
-              if (todo) {
-                setActiveNoteId(null);
-                setDraft(null);
-                openCapture({ todo });
-                return;
-              }
-              closeCapture();
-              setPanelMode("preview");
-              setActiveNoteId(note.id);
-              setDraft(note);
-            }}
-            onDelete={(note) => {
-              const todo = todoByVirtualId.get(note.id);
-              if (todo) {
-                void removeTodo(todo.id);
-                return;
-              }
-              setPendingDelete(note);
-            }}
+            openCapture={openCaptureForNotes}
+            onOpenEdit={openEditFromList}
+            onOpenPreview={openPreviewFromList}
+            onDelete={deleteFromList}
           />
         }
       >

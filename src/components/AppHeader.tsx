@@ -8,7 +8,7 @@ import {
   FolderSync,
   Coffee,
 } from "lucide-react";
-import { useEffect, useMemo, useRef } from "react";
+import { useDeferredValue, useEffect, useMemo, useRef, useState } from "react";
 import { useStore } from "@/data/store";
 import { exportAll, importAll } from "@/data/io";
 import { INPUT_BASE_CLASS } from "@/components/common/formClasses";
@@ -28,6 +28,8 @@ export function AppHeader() {
   const sections = useStore((s) => s.sections);
   const search = useStore((s) => s.search);
   const setSearch = useStore((s) => s.setSearch);
+  const [searchInput, setSearchInput] = useState(search);
+  const deferredSearchInput = useDeferredValue(searchInput);
   const openCapture = useStore((s) => s.openCapture);
   const captureOpen = useStore((s) => s.captureOpen);
   const closeCapture = useStore((s) => s.closeCapture);
@@ -49,6 +51,12 @@ export function AppHeader() {
     (pathname.startsWith("/section/") && (!activeSection || !activeSection.builtin));
 
   const defaultCaptureNoteType = activeSection?.filter?.type;
+
+  useEffect(() => {
+    if (deferredSearchInput !== search) {
+      setSearch(deferredSearchInput);
+    }
+  }, [deferredSearchInput, search, setSearch]);
 
   useEffect(() => {
     if (captureOpen && !canCreateInPlace) {
@@ -127,8 +135,8 @@ export function AppHeader() {
           <div className="app-search-wrap">
             <Search className="app-search-icon" />
             <input
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
+              value={searchInput}
+              onChange={(e) => setSearchInput(e.target.value)}
               placeholder=""
               aria-label="Search notes"
               className={`${INPUT_BASE_CLASS} app-search-input`}
