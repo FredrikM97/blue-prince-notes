@@ -4,6 +4,7 @@ import { Chip } from "@/frontend/components/common/Chip";
 import { EmptyState } from "@/frontend/components/common/EmptyState";
 import { PageLayout } from "@/frontend/components/common/PageLayout";
 import { MarkdownPreview } from "@/frontend/components/common/MarkdownPreview";
+import { BookOpen, Eye, Key, Lightbulb, ListTodo, Sparkles } from "lucide-react";
 import { useStore } from "@/frontend/data/store";
 import type { Note } from "@/lib/types";
 
@@ -17,6 +18,7 @@ const MIN_ZOOM = 0.55;
 const MAX_ZOOM = 2.2;
 const MIN_LABEL_SCALE = 0.6;
 const MAX_LABEL_SCALE = 1.9;
+const NODE_ICON_SIZE = 12;
 
 interface GraphNode {
   id: string;
@@ -63,6 +65,18 @@ const TYPE_COLOR: Record<Note["type"], string> = {
   theory: "#d8b3ff",
   story: "#f4a7a7",
   task: "#f0e68c",
+};
+
+const TYPE_ICON: Record<
+  Note["type"],
+  React.ComponentType<{ size?: number; className?: string }>
+> = {
+  clue: Lightbulb,
+  code: Key,
+  observation: Eye,
+  theory: Sparkles,
+  story: BookOpen,
+  task: ListTodo,
 };
 
 export function GraphPage() {
@@ -201,7 +215,7 @@ export function GraphPage() {
                   markerHeight="6"
                   orient="auto-start-reverse"
                 >
-                  <path d="M 0 0 L 10 5 L 0 10 z" fill="rgba(255,255,255,0.45)" />
+                  <path d="M 0 0 L 10 5 L 0 10 z" fill="var(--color-foreground)" opacity="0.45" />
                 </marker>
               </defs>
 
@@ -334,8 +348,9 @@ function renderNode(
     zoom: number;
   },
 ) {
-  const stroke = selected ? "rgba(255,255,255,0.95)" : "rgba(0,0,0,0.35)";
-  const strokeWidth = selected ? 2 : 1;
+  const Icon = TYPE_ICON[node.note.type];
+  const stroke = selected ? "var(--color-ring)" : "var(--color-foreground)";
+  const strokeWidth = selected ? 2.2 : 1.1;
   const labelScale = labelScaleForZoom(zoom);
 
   return (
@@ -344,6 +359,7 @@ function renderNode(
       role="button"
       tabIndex={0}
       className="cursor-pointer"
+      onMouseDown={(event) => event.preventDefault()}
       onClick={onSelect}
       onKeyDown={(event) => {
         if (event.key === "Enter" || event.key === " ") {
@@ -362,8 +378,13 @@ function renderNode(
       >
         <title>{node.note.title}</title>
       </circle>
+
+      <g transform={`translate(${node.x - NODE_ICON_SIZE / 2} ${node.y - NODE_ICON_SIZE / 2})`}>
+        <Icon size={NODE_ICON_SIZE} className="text-black/80" />
+      </g>
+
       <g transform={`translate(${node.x + 18} ${node.y + 5}) scale(${labelScale})`}>
-        <text fill="rgba(255,255,255,0.92)" fontSize="14" fontWeight="500">
+        <text fill="var(--color-foreground)" fontSize="14" fontWeight="500" opacity="0.92">
           {trim(node.note.title, 22)}
         </text>
       </g>
@@ -504,12 +525,13 @@ function renderEdge(edge: GraphEdge, nodeById: Map<string, GraphNode>, zoom: num
         y1={line.y1}
         x2={line.x2}
         y2={line.y2}
-        stroke="rgba(255,255,255,0.22)"
+        stroke="var(--color-foreground)"
+        strokeOpacity="0.22"
         strokeWidth={Math.min(1 + edge.weight * 0.4, 3)}
         markerEnd="url(#graph-arrow)"
       />
       <g transform={`translate(${line.mx} ${line.my - 4}) scale(${labelScale})`}>
-        <text fill="rgba(255,255,255,0.7)" fontSize="9" textAnchor="middle">
+        <text fill="var(--color-foreground)" opacity="0.72" fontSize="9" textAnchor="middle">
           {edge.relations.join("+")}
         </text>
       </g>

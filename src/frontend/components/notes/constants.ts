@@ -21,7 +21,7 @@ export const TYPE_ICON = {
 export const TYPE_LABEL = {
   clue: "Clue",
   code: "Code",
-  observation: "Obs.",
+  observation: "Observation",
   theory: "Theory",
   story: "Story",
   task: "Todo",
