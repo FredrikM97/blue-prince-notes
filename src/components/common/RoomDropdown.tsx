@@ -25,15 +25,18 @@ export function RoomDropdown({
 }) {
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
-  const groupedRooms = getGroupedRoomCatalog();
-  const roomCategoryByName = new Map<string, RoomCategory>();
-  ROOM_GROUPS.forEach((group) => {
-    groupedRooms[group].forEach((room) => {
-      if (!roomCategoryByName.has(room.name)) {
-        roomCategoryByName.set(room.name, group);
-      }
+  const groupedRooms = useMemo(() => getGroupedRoomCatalog(), []);
+  const roomCategoryByName = useMemo(() => {
+    const next = new Map<string, RoomCategory>();
+    ROOM_GROUPS.forEach((group) => {
+      groupedRooms[group].forEach((room) => {
+        if (!next.has(room.name)) {
+          next.set(room.name, group);
+        }
+      });
     });
-  });
+    return next;
+  }, [groupedRooms]);
 
   const activeRoom = value?.trim() ? value.trim() : "";
   const activeCategory = activeRoom ? (roomCategoryByName.get(activeRoom) ?? null) : null;

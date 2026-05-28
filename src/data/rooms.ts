@@ -23,6 +23,9 @@ export interface RoomDef {
 
 const CUSTOM_ROOMS_STORAGE_KEY = "bp-custom-rooms-v1";
 
+let cachedRoomCatalog: RoomDef[] | null = null;
+let cachedGroupedRoomCatalog: Record<RoomCategory, RoomDef[]> | null = null;
+
 export const ROOM_GROUPS: RoomGroup[] = [
   "Rooms 001-012",
   "Rooms 013-024",
@@ -211,6 +214,8 @@ export function replaceCustomRooms(rooms: Array<{ name: string; category: RoomCa
   const deduped = Array.from(byName.values()).sort((a, b) => a.name.localeCompare(b.name));
 
   writeCustomRooms(deduped);
+  cachedRoomCatalog = null;
+  cachedGroupedRoomCatalog = null;
   return deduped;
 }
 
@@ -218,6 +223,8 @@ function writeCustomRooms(rooms: RoomDef[]) {
   if (!canUseStorage()) return;
   const serializable = rooms.map((room) => ({ name: room.name, category: room.category }));
   window.localStorage.setItem(CUSTOM_ROOMS_STORAGE_KEY, JSON.stringify(serializable));
+  cachedRoomCatalog = null;
+  cachedGroupedRoomCatalog = null;
 }
 
 export function addCustomRoom(name: string, category: RoomCategory) {
@@ -245,7 +252,10 @@ export function clearCustomRooms() {
 }
 
 export function getRoomCatalog() {
-  return [...DEFAULT_ROOMS, ...listCustomRooms()];
+  if (cachedRoomCatalog) return cachedRoomCatalog;
+
+  cachedRoomCatalog = [...DEFAULT_ROOMS, ...listCustomRooms()];
+  return cachedRoomCatalog;
 }
 
 function groupRoomsByCategory(rooms: RoomDef[]) {
@@ -259,7 +269,10 @@ function groupRoomsByCategory(rooms: RoomDef[]) {
 }
 
 export function getGroupedRoomCatalog() {
-  return groupRoomsByCategory(getRoomCatalog());
+  if (cachedGroupedRoomCatalog) return cachedGroupedRoomCatalog;
+
+  cachedGroupedRoomCatalog = groupRoomsByCategory(getRoomCatalog());
+  return cachedGroupedRoomCatalog;
 }
 
 // Mt. Holly map grid dimensions.
