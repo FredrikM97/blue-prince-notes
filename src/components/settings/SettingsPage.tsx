@@ -27,6 +27,8 @@ import {
   importSyncManifest,
   writeToSyncFolder,
   getActiveSyncHandle,
+  getActiveSyncFolderName,
+  openSyncFolderInPicker,
 } from "@/data/sync";
 import { toast } from "sonner";
 
@@ -241,7 +243,7 @@ function SyncFolderSection() {
         await writeToSyncFolder(handle);
         toast.success(`Connected — data will sync to "${handle.name}"`);
       }
-      setSyncFolderName(handle.name);
+      setSyncFolderName(getActiveSyncFolderName() ?? handle.name);
     } catch (err) {
       const message = err instanceof Error ? err.message.toLowerCase() : "";
       if (message.includes("system files") || message.includes("sensitive")) {
@@ -274,6 +276,16 @@ function SyncFolderSection() {
     }
   }
 
+  async function handleOpenSyncFolder() {
+    try {
+      const opened = await openSyncFolderInPicker();
+      if (!opened) return;
+      toast.success("Opened sync folder picker");
+    } catch {
+      toast.error("Could not open sync folder picker");
+    }
+  }
+
   if (!isSupported) {
     return (
       <p className="text-sm text-muted-foreground">
@@ -297,6 +309,9 @@ function SyncFolderSection() {
         <div className="flex flex-wrap gap-2">
           <Button variant="outline" size="sm" onClick={handleSyncNow} disabled={busy}>
             Sync now
+          </Button>
+          <Button variant="outline" size="sm" onClick={handleOpenSyncFolder} disabled={busy}>
+            Open folder
           </Button>
           <Button
             variant="outline"

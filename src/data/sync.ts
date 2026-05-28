@@ -49,7 +49,10 @@ interface FileHandle {
 
 declare global {
   interface Window {
-    showDirectoryPicker(options?: { mode?: "read" | "readwrite" }): Promise<DirHandle>;
+    showDirectoryPicker(options?: {
+      mode?: "read" | "readwrite";
+      startIn?: DirHandle;
+    }): Promise<DirHandle>;
   }
 }
 
@@ -71,6 +74,7 @@ export interface SyncManifest {
 }
 
 const SYNC_DIR_HANDLE_META_KEY = "sync-dir-handle";
+const SYNC_ROOT_DIR_NAME = "blue-prince-notes-sync";
 const SYNC_MANIFEST_FILE_NAME = "manifest.json";
 const SYNC_IMAGES_DIR_NAME = "images";
 
@@ -90,7 +94,25 @@ export function getActiveSyncHandle(): DirHandle | null {
 }
 
 export function getActiveSyncFolderName(): string | null {
-  return _handle?.name ?? null;
+  return _handle ? `${_handle.name}/${SYNC_ROOT_DIR_NAME}` : null;
+}
+
+async function getSyncRootDirectory(handle: DirHandle, create: boolean): Promise<DirHandle> {
+  return handle.getDirectoryHandle(SYNC_ROOT_DIR_NAME, { create });
+}
+
+export async function openSyncFolderInPicker(): Promise<boolean> {
+  if (!_handle) return false;
+  try {
+    const syncRoot = await getSyncRootDirectory(_handle, true);
+    await window.showDirectoryPicker({ mode: "readwrite", startIn: syncRoot });
+    return true;
+  } catch (err) {
+    if (err instanceof DOMException && err.name === "AbortError") {
+      return false;
+    }
+    throw err;
+  }
 }
 
 // ---------------------------------------------------------------------------
@@ -143,7 +165,14 @@ export async function disconnectSyncFolder(): Promise<void> {
 
 export async function readFromSyncFolder(handle: DirHandle): Promise<SyncFolderPayload | null> {
   try {
-    const fh = await handle.getFileHandle(SYNC_MANIFEST_FILE_NAME, { create: false });
+    let targetDir: DirHandle = handle;
+    try {
+      targetDir = await getSyncRootDirectory(handle, false);
+    } catch {
+      targetDir = handle;
+    }
+
+    const fh = await targetDir.getFileHandle(SYNC_MANIFEST_FILE_NAME, { create: false });
     const file = await fh.getFile();
     const text = await file.text();
     const manifest = JSON.parse(text) as SyncManifest;
@@ -152,7 +181,7 @@ export async function readFromSyncFolder(handle: DirHandle): Promise<SyncFolderP
     const images: StoredImage[] = [];
     let imagesDir: DirHandle | null = null;
     try {
-      imagesDir = await handle.getDirectoryHandle(SYNC_IMAGES_DIR_NAME, { create: false });
+      imagesDir = await targetDir.getDirectoryHandle(SYNC_IMAGES_DIR_NAME, { create: false });
     } catch {
       imagesDir = null;
     }
@@ -193,7 +222,8 @@ export async function writeToSyncFolder(handle: DirHandle): Promise<void> {
     listGridCells(),
   ]);
   const customRooms = listCustomRooms().map((r) => ({ name: r.name, category: r.category }));
-  const imagesDir = await handle.getDirectoryHandle(SYNC_IMAGES_DIR_NAME, { create: true });
+  const syncRoot = await getSyncRootDirectory(handle, true);
+  const imagesDir = await syncRoot.getDirectoryHandle(SYNC_IMAGES_DIR_NAME, { create: true });
   const imageManifest = [] as Array<Omit<StoredImage, "blob"> & { fileName: string }>;
 
   for (const image of images) {
@@ -227,7 +257,7 @@ export async function writeToSyncFolder(handle: DirHandle): Promise<void> {
     customRooms,
   };
 
-  const fh = await handle.getFileHandle(SYNC_MANIFEST_FILE_NAME, { create: true });
+  const fh = await syncRoot.getFileHandle(SYNC_MANIFEST_FILE_NAME, { create: true });
   const writable = await fh.createWritable();
   await writable.write(JSON.stringify(manifest, null, 2));
   await writable.close();

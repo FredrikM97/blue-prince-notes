@@ -55,7 +55,7 @@ function AppFrame({ children }: { children: React.ReactNode }) {
       // 2. Try to restore a previously chosen sync folder
       const handle = await restoreSyncHandle();
       if (handle) {
-        setSyncFolderName(handle.name);
+        setSyncFolderName(getActiveSyncFolderName() ?? handle.name);
         // If IndexedDB is empty, import from the folder
         const state = useStore.getState();
         if (state.notes.length === 0 && state.todos.length === 0) {

@@ -1,7 +1,12 @@
 import { useRef, useState } from "react";
 import { FolderOpen, Sparkles, Upload, Waypoints } from "lucide-react";
 import { importAll } from "@/data/io";
-import { pickSyncFolder, readFromSyncFolder, importSyncManifest } from "@/data/sync";
+import {
+  pickSyncFolder,
+  readFromSyncFolder,
+  importSyncManifest,
+  getActiveSyncFolderName,
+} from "@/data/sync";
 import { useStore } from "@/data/store";
 import { toast } from "sonner";
 
@@ -80,7 +85,7 @@ export function WelcomeScreen({
       } else {
         toast.success(`Connected to "${handle.name}" — data will sync here automatically`);
       }
-      onDone(handle.name);
+      onDone(getActiveSyncFolderName() ?? handle.name);
     } catch (err) {
       const message = err instanceof Error ? err.message.toLowerCase() : "";
       if (message.includes("system files") || message.includes("sensitive")) {
