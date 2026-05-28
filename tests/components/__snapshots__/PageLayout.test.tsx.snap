@@ -1,0 +1,47 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`PageLayout > matches snapshot for single-column middle-scroll mode 1`] = `
+<DocumentFragment>
+  <div
+    class="page-layout page-layout-middle-scroll-priority"
+  >
+    <main
+      class="page-layout-content"
+    >
+      <div>
+        settings-like-content
+      </div>
+    </main>
+  </div>
+</DocumentFragment>
+`;
+
+exports[`PageLayout > matches snapshot for three-column layout 1`] = `
+<DocumentFragment>
+  <div
+    class="page-layout page-layout-three-column"
+  >
+    <aside
+      class="page-layout-sidebar"
+    >
+      <div>
+        left
+      </div>
+    </aside>
+    <main
+      class="page-layout-content"
+    >
+      <div>
+        middle
+      </div>
+    </main>
+    <aside
+      class="page-layout-rightbar"
+    >
+      <div>
+        right
+      </div>
+    </aside>
+  </div>
+</DocumentFragment>
+`;
