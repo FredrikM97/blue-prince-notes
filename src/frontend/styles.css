@@ -50,27 +50,27 @@
   --color-sidebar-ring: var(--sidebar-ring);
 }
 
-/* Blue Prince — lifted manor navy + brass. Single dark theme. */
+/* Blue Prince theme tokens. Light by default with optional dark mode. */
 :root {
   --radius: 0.5rem;
-  --background: oklch(0.23 0.022 250);
-  --foreground: oklch(0.96 0.012 80);
-  --card: oklch(0.29 0.026 250);
-  --card-foreground: oklch(0.96 0.012 80);
-  --popover: oklch(0.3 0.024 250);
-  --popover-foreground: oklch(0.96 0.012 80);
+  --background: oklch(0.97 0.008 95);
+  --foreground: oklch(0.3 0.02 250);
+  --card: oklch(0.99 0.004 95);
+  --card-foreground: oklch(0.3 0.02 250);
+  --popover: oklch(0.99 0.004 95);
+  --popover-foreground: oklch(0.3 0.02 250);
   --primary: oklch(0.76 0.13 80);
   --primary-foreground: oklch(0.22 0.022 250);
-  --secondary: oklch(0.34 0.03 250);
-  --secondary-foreground: oklch(0.96 0.012 80);
-  --muted: oklch(0.33 0.027 250);
-  --muted-foreground: oklch(0.8 0.02 80);
-  --accent: oklch(0.38 0.034 250);
-  --accent-foreground: oklch(0.96 0.012 80);
+  --secondary: oklch(0.92 0.012 250);
+  --secondary-foreground: oklch(0.3 0.02 250);
+  --muted: oklch(0.95 0.012 250);
+  --muted-foreground: oklch(0.47 0.02 250);
+  --accent: oklch(0.89 0.02 250);
+  --accent-foreground: oklch(0.3 0.02 250);
   --destructive: oklch(0.58 0.21 27);
   --destructive-foreground: oklch(0.98 0.01 80);
-  --border: oklch(1 0 0 / 18%);
-  --input: oklch(1 0 0 / 26%);
+  --border: oklch(0.68 0.02 250 / 40%);
+  --input: oklch(0.68 0.02 250 / 55%);
   --ring: oklch(0.76 0.13 80);
   --brass: oklch(0.76 0.13 80);
   --brass-foreground: oklch(0.22 0.022 250);
@@ -79,14 +79,41 @@
   --chart-3: oklch(0.55 0.18 30);
   --chart-4: oklch(0.7 0.12 150);
   --chart-5: oklch(0.55 0.18 320);
+  --sidebar: oklch(0.94 0.012 250);
+  --sidebar-foreground: oklch(0.3 0.02 250);
+  --sidebar-primary: oklch(0.76 0.13 80);
+  --sidebar-primary-foreground: oklch(0.22 0.022 250);
+  --sidebar-accent: oklch(0.89 0.02 250);
+  --sidebar-accent-foreground: oklch(0.3 0.02 250);
+  --sidebar-border: oklch(0.68 0.02 250 / 40%);
+  --sidebar-ring: oklch(0.76 0.13 80);
+  color-scheme: light;
+}
+
+:root.dark {
+  --background: oklch(0.23 0.022 250);
+  --foreground: oklch(0.96 0.012 80);
+  --card: oklch(0.29 0.026 250);
+  --card-foreground: oklch(0.96 0.012 80);
+  --popover: oklch(0.3 0.024 250);
+  --popover-foreground: oklch(0.96 0.012 80);
+  --primary-foreground: oklch(0.22 0.022 250);
+  --secondary: oklch(0.34 0.03 250);
+  --secondary-foreground: oklch(0.96 0.012 80);
+  --muted: oklch(0.33 0.027 250);
+  --muted-foreground: oklch(0.8 0.02 80);
+  --accent: oklch(0.38 0.034 250);
+  --accent-foreground: oklch(0.96 0.012 80);
+  --border: oklch(1 0 0 / 18%);
+  --input: oklch(1 0 0 / 26%);
+  --brass-foreground: oklch(0.22 0.022 250);
   --sidebar: oklch(0.2 0.023 250);
   --sidebar-foreground: oklch(0.96 0.012 80);
-  --sidebar-primary: oklch(0.76 0.13 80);
   --sidebar-primary-foreground: oklch(0.22 0.022 250);
   --sidebar-accent: oklch(0.32 0.028 250);
   --sidebar-accent-foreground: oklch(0.96 0.012 80);
   --sidebar-border: oklch(1 0 0 / 18%);
-  --sidebar-ring: oklch(0.76 0.13 80);
+  color-scheme: dark;
 }
 
 @layer base {

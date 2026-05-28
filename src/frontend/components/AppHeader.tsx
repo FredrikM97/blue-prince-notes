@@ -1,6 +1,6 @@
 import { Link, useRouterState } from "@tanstack/react-router";
-import { Search, Plus, Settings as SettingsIcon, Download, Upload } from "lucide-react";
-import { useEffect, useRef } from "react";
+import { Search, Plus, Settings as SettingsIcon, Download, Upload, Moon, Sun } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
 import { useStore } from "@/frontend/data/store";
 import { exportAll, importAll } from "@/frontend/data/io";
 import { INPUT_BASE_CLASS } from "@/frontend/components/common/formClasses";
@@ -23,10 +23,27 @@ export function AppHeader() {
   const load = useStore((s) => s.load);
   const pathname = useRouterState({ select: (r) => r.location.pathname });
   const fileRef = useRef<HTMLInputElement>(null);
+  const [theme, setTheme] = useState<"light" | "dark">("dark");
 
   useEffect(() => {
     closeCapture();
   }, [pathname, closeCapture]);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const stored = window.localStorage.getItem("bp-theme");
+    const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+    const next = stored === "light" || stored === "dark" ? stored : prefersDark ? "dark" : "light";
+    document.documentElement.classList.toggle("dark", next === "dark");
+    setTheme(next);
+  }, []);
+
+  function toggleTheme() {
+    const next = theme === "dark" ? "light" : "dark";
+    setTheme(next);
+    document.documentElement.classList.toggle("dark", next === "dark");
+    window.localStorage.setItem("bp-theme", next);
+  }
 
   function hrefFor(s: { id: string; builtin?: string; filter?: { type?: string } }) {
     if (s.builtin === "notes") return "/";
@@ -40,9 +57,7 @@ export function AppHeader() {
           <span className="grid h-8 w-8 place-items-center rounded-md bg-brass text-brass-foreground font-serif text-lg font-semibold">
             B
           </span>
-          <span className="font-serif text-lg font-semibold tracking-tight">
-            Blue Prince Notes
-          </span>
+          <span className="font-serif text-lg font-semibold tracking-tight">Blue Prince Notes</span>
         </Link>
 
         <nav className="flex flex-1 items-center gap-1 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
@@ -68,6 +83,14 @@ export function AppHeader() {
         </nav>
 
         <div className="flex items-center gap-2">
+          <button
+            onClick={toggleTheme}
+            className={buttonClass({ variant: "ghost", size: "icon" })}
+            aria-label={theme === "dark" ? "Switch to light theme" : "Switch to dark theme"}
+            title={theme === "dark" ? "Light theme" : "Dark theme"}
+          >
+            {theme === "dark" ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+          </button>
           <div className="relative">
             <Search className="pointer-events-none absolute left-2 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
             <input
@@ -86,11 +109,14 @@ export function AppHeader() {
           >
             <Plus className="mr-1 h-4 w-4" />
             <span>Add note</span>
-            <kbd className="ml-2 rounded bg-black/20 px-1 text-[10px]">N</kbd>
+            <kbd className="ml-2 rounded bg-accent px-1 text-[10px]">N</kbd>
           </button>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <button className={buttonClass({ variant: "ghost", size: "icon" })} aria-label="Settings">
+              <button
+                className={buttonClass({ variant: "ghost", size: "icon" })}
+                aria-label="Settings"
+              >
                 <SettingsIcon className="h-4 w-4" />
               </button>
             </DropdownMenuTrigger>
