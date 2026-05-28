@@ -29,6 +29,8 @@ import {
   getActiveSyncHandle,
   getActiveSyncFolderName,
   openSyncFolderInPicker,
+  getActiveSyncManifestFileName,
+  setActiveSyncManifestFileName,
 } from "@/data/sync";
 import { toast } from "sonner";
 
@@ -222,6 +224,7 @@ function SyncFolderSection() {
   const setSyncFolderName = useStore((s) => s.setSyncFolderName);
   const load = useStore((s) => s.load);
   const [busy, setBusy] = useState(false);
+  const [manifestFileName, setManifestFileName] = useState(() => getActiveSyncManifestFileName());
 
   const isSupported = typeof window !== "undefined" && "showDirectoryPicker" in window;
 
@@ -247,7 +250,7 @@ function SyncFolderSection() {
     } catch (err) {
       const message = err instanceof Error ? err.message.toLowerCase() : "";
       if (message.includes("system files") || message.includes("sensitive")) {
-        toast.error("That folder is restricted by the browser. Pick a normal subfolder instead.");
+        toast.error("That folder is restricted by the browser. Pick a normal folder instead.");
       } else {
         toast.error("Could not connect to folder");
       }
@@ -286,6 +289,24 @@ function SyncFolderSection() {
     }
   }
 
+  async function handleSaveManifestFileName() {
+    setBusy(true);
+    try {
+      const next = await setActiveSyncManifestFileName(manifestFileName);
+      setManifestFileName(next);
+      const handle = getActiveSyncHandle();
+      if (handle) {
+        setSyncFolderName(getActiveSyncFolderName() ?? handle.name);
+        await writeToSyncFolder(handle);
+      }
+      toast.success("Manifest file name updated");
+    } catch {
+      toast.error("Could not update manifest file name");
+    } finally {
+      setBusy(false);
+    }
+  }
+
   if (!isSupported) {
     return (
       <p className="text-sm text-muted-foreground">
@@ -297,14 +318,36 @@ function SyncFolderSection() {
   if (syncFolderName) {
     return (
       <div className="space-y-3">
+        <div className="space-y-1.5">
+          <label htmlFor="sync-manifest-file-name" className="text-xs text-muted-foreground">
+            Manifest file name
+          </label>
+          <div className="flex flex-wrap gap-2">
+            <input
+              id="sync-manifest-file-name"
+              value={manifestFileName}
+              onChange={(e) => setManifestFileName(e.target.value)}
+              placeholder="manifest.json"
+              className="h-9 min-w-0 flex-1 rounded-md border border-input bg-card/65 px-3 text-sm"
+            />
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleSaveManifestFileName}
+              disabled={busy}
+            >
+              Save name
+            </Button>
+          </div>
+        </div>
         <div className="flex items-center gap-2 rounded-lg border border-border bg-card/40 px-3 py-2.5 text-sm">
           <FolderSync className="h-4 w-4 shrink-0 text-green-500" />
           <span className="min-w-0 flex-1 truncate font-medium">{syncFolderName}</span>
           <span className="shrink-0 text-xs text-muted-foreground">auto-syncing</span>
         </div>
         <p className="text-xs text-muted-foreground">
-          Sync writes <code>manifest.json</code> plus image files in <code>images/</code>. Place
-          this folder inside Dropbox, OneDrive, or iCloud Drive to sync across devices.
+          Sync writes <code>{manifestFileName}</code> plus image files in <code>images/</code>.
+          Place this folder inside Dropbox, OneDrive, or iCloud Drive to sync across devices.
         </p>
         <div className="flex flex-wrap gap-2">
           <Button variant="outline" size="sm" onClick={handleSyncNow} disabled={busy}>
@@ -329,8 +372,25 @@ function SyncFolderSection() {
 
   return (
     <div className="space-y-3">
+      <div className="space-y-1.5">
+        <label htmlFor="sync-manifest-file-name" className="text-xs text-muted-foreground">
+          Manifest file name
+        </label>
+        <div className="flex flex-wrap gap-2">
+          <input
+            id="sync-manifest-file-name"
+            value={manifestFileName}
+            onChange={(e) => setManifestFileName(e.target.value)}
+            placeholder="manifest.json"
+            className="h-9 min-w-0 flex-1 rounded-md border border-input bg-card/65 px-3 text-sm"
+          />
+          <Button variant="outline" size="sm" onClick={handleSaveManifestFileName} disabled={busy}>
+            Save name
+          </Button>
+        </div>
+      </div>
       <p className="text-sm text-muted-foreground">
-        Connect a local folder and the app will keep <code>manifest.json</code> and an{" "}
+        Connect a local folder and the app will keep <code>{manifestFileName}</code> and an{" "}
         <code>images/</code> folder up to date after every change.
       </p>
       <BrassButton onClick={handleConnect} disabled={busy}>

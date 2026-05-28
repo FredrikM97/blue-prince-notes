@@ -89,7 +89,7 @@ export function WelcomeScreen({
     } catch (err) {
       const message = err instanceof Error ? err.message.toLowerCase() : "";
       if (message.includes("system files") || message.includes("sensitive")) {
-        toast.error("That folder is restricted by the browser. Pick a normal subfolder instead.");
+        toast.error("That folder is restricted by the browser. Pick a normal folder instead.");
       } else {
         toast.error("Could not connect to folder");
       }
