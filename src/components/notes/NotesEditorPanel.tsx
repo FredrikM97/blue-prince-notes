@@ -10,6 +10,7 @@ import { TYPE_LABEL } from "./constants";
 import { MarkdownEditor } from "@/components/common/MarkdownEditor";
 import { NotesShortcutHelp } from "@/components/notes/NotesShortcutHelp";
 import { formatAllMarkdownTables } from "@/components/common/markdown-table";
+import { toast } from "sonner";
 
 function parseTagsInput(value: string) {
   return value
@@ -38,6 +39,39 @@ export function NotesEditorPanel({
     if (isTagsFocused) return;
     setTagsInput(draft.tags.join(", "));
   }, [draft.id, draft.tags, isTagsFocused]);
+
+  useEffect(() => {
+    function onPaste(e: ClipboardEvent) {
+      const items = e.clipboardData?.items;
+      if (!items) return;
+
+      const images: File[] = [];
+      for (const item of items) {
+        if (!item.type.startsWith("image/")) continue;
+        const file = item.getAsFile();
+        if (file) images.push(file);
+      }
+
+      if (images.length === 0) return;
+
+      void (async () => {
+        try {
+          const created = await Promise.all(images.map((f) => addImage(f, f.name)));
+          const newIds = created.map((img) => img.id);
+          setDraft((prev) => ({
+            ...prev,
+            imageIds: Array.from(new Set([...prev.imageIds, ...newIds])),
+          }));
+          toast.success(images.length === 1 ? "Pasted image attached" : "Pasted images attached");
+        } catch {
+          toast.error("Could not attach pasted image");
+        }
+      })();
+    }
+
+    window.addEventListener("paste", onPaste);
+    return () => window.removeEventListener("paste", onPaste);
+  }, [addImage, setDraft]);
 
   const shortcutToggle = (
     <IconButton
