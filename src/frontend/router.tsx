@@ -12,8 +12,8 @@ import {
 } from "@tanstack/react-router";
 import { useEffect, useMemo } from "react";
 import { AppHeader } from "@/frontend/components/AppHeader";
-import { CaptureDialog } from "@/frontend/components/CaptureDialog";
-import { NotesView } from "@/frontend/components/NotesView";
+import { NotesPanel } from "@/frontend/components/quick-note/NotesPanel";
+import { NotesView } from "@/frontend/components/quick-note/NotesView";
 import { Toaster } from "@/frontend/components/ui/sonner";
 import { useStore } from "@/frontend/data/store";
 import { SettingsPage } from "@/frontend/components/pages/SettingsPage";
@@ -112,7 +112,7 @@ function AppFrame({ children }: { children: React.ReactNode }) {
     <div className="min-h-screen bg-background pb-32 text-foreground">
       <AppHeader />
       {children}
-      <CaptureDialog />
+      <NotesPanel />
       <Toaster />
     </div>
   );

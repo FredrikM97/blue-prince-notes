@@ -51,16 +51,14 @@ export function AppHeader() {
   }
 
   return (
-    <header className="sticky top-0 z-40 border-b border-border bg-background/80 backdrop-blur">
-      <div className="mx-auto flex max-w-7xl items-center gap-3 px-4 py-3">
-        <Link to="/" className="flex shrink-0 items-center gap-2">
-          <span className="grid h-8 w-8 place-items-center rounded-md bg-brass text-brass-foreground font-serif text-lg font-semibold">
-            B
-          </span>
-          <span className="font-serif text-lg font-semibold tracking-tight">Blue Prince Notes</span>
+    <header className="app-header">
+      <div className="app-header-inner">
+        <Link to="/" className="app-brand-link">
+          <span className="app-brand-badge">B</span>
+          <span className="app-brand-title">Blue Prince Notes</span>
         </Link>
 
-        <nav className="flex flex-1 items-center gap-1 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+        <nav className="app-nav">
           {sections
             .filter((s) => !s.hidden && (Boolean(s.builtin) || s.id === "books"))
             .map((s) => {
@@ -70,11 +68,7 @@ export function AppHeader() {
                 <Link
                   key={s.id}
                   to={href}
-                  className={`shrink-0 rounded-md px-3 py-1.5 text-sm transition-colors ${
-                    active
-                      ? "bg-accent text-brass"
-                      : "text-muted-foreground hover:bg-accent hover:text-foreground"
-                  }`}
+                  className={`app-nav-link ${active ? "app-nav-link-active" : ""}`}
                 >
                   {s.label}
                 </Link>
@@ -82,55 +76,63 @@ export function AppHeader() {
             })}
         </nav>
 
-        <div className="flex items-center gap-2">
+        <div className="app-header-controls">
           <button
             onClick={toggleTheme}
-            className={buttonClass({ variant: "ghost", size: "icon" })}
+            className={buttonClass({
+              variant: "ghost",
+              size: "icon",
+              className: "app-icon-button",
+            })}
             aria-label={theme === "dark" ? "Switch to light theme" : "Switch to dark theme"}
             title={theme === "dark" ? "Light theme" : "Dark theme"}
           >
-            {theme === "dark" ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+            {theme === "dark" ? <Sun className="app-icon-sm" /> : <Moon className="app-icon-sm" />}
           </button>
-          <div className="relative">
-            <Search className="pointer-events-none absolute left-2 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+          <div className="app-search-wrap">
+            <Search className="app-search-icon" />
             <input
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Search…"
-              className={`${INPUT_BASE_CLASS} h-9 w-48 pl-8`}
+              className={`${INPUT_BASE_CLASS} app-search-input`}
             />
           </div>
           <button
             onClick={() => openCapture()}
             className={buttonClass({
               size: "sm",
-              className: "bg-brass text-brass-foreground hover:bg-brass/90",
+              className: "app-add-button",
             })}
           >
-            <Plus className="mr-1 h-4 w-4" />
+            <Plus className="app-add-icon" />
             <span>Add note</span>
-            <kbd className="ml-2 rounded bg-accent px-1 text-[10px]">N</kbd>
+            <kbd className="app-add-shortcut">N</kbd>
           </button>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <button
-                className={buttonClass({ variant: "ghost", size: "icon" })}
+                className={buttonClass({
+                  variant: "ghost",
+                  size: "icon",
+                  className: "app-icon-button",
+                })}
                 aria-label="Settings"
               >
-                <SettingsIcon className="h-4 w-4" />
+                <SettingsIcon className="app-icon-sm" />
               </button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
               <DropdownMenuItem onClick={() => exportAll().then(() => toast.success("Exported"))}>
-                <Download className="mr-2 h-4 w-4" /> Export all (ZIP)
+                <Download className="app-menu-icon" /> Export all (ZIP)
               </DropdownMenuItem>
               <DropdownMenuItem onClick={() => fileRef.current?.click()}>
-                <Upload className="mr-2 h-4 w-4" /> Import…
+                <Upload className="app-menu-icon" /> Import…
               </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem asChild>
                 <Link to="/settings">
-                  <SettingsIcon className="mr-2 h-4 w-4" /> Settings
+                  <SettingsIcon className="app-menu-icon" /> Settings
                 </Link>
               </DropdownMenuItem>
             </DropdownMenuContent>
@@ -139,7 +141,7 @@ export function AppHeader() {
             ref={fileRef}
             type="file"
             accept=".zip,application/zip,application/json,.json"
-            className="hidden"
+            className="app-hidden-file-input"
             onChange={async (e) => {
               const f = e.target.files?.[0];
               if (!f) return;

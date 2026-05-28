@@ -19,16 +19,16 @@ export function NoteRowDetails({
     <>
       {note.body && <p className="whitespace-pre-wrap text-sm leading-relaxed">{note.body}</p>}
       {note.imageIds.length > 0 && (
-        <section className="mt-5 space-y-3 border-t border-border pt-3">
-          <div className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
+        <section className="note-details-images">
+          <div className="note-details-images-label">
             Images ({note.imageIds.length})
           </div>
-          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+          <div className="note-details-images-grid">
           {note.imageIds.map((id) => (
             <button
               key={id}
               type="button"
-              className="overflow-hidden rounded border border-border transition-colors hover:border-brass"
+              className="note-details-image-btn"
               onClick={() => setZoomedImageId(id)}
               aria-label="Open image preview"
             >
@@ -48,7 +48,7 @@ export function NoteRowDetails({
           <DialogHeader>
             <DialogTitle className="font-serif">Image preview</DialogTitle>
           </DialogHeader>
-          <div className="max-h-[75vh] overflow-hidden rounded border border-border bg-black/60 p-2">
+          <div className="note-details-zoom-preview">
             {zoomedImageId && (
               <StoredImageView
                 id={zoomedImageId}

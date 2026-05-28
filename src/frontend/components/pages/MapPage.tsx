@@ -28,7 +28,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/frontend/components/ui/select";
-import type { GridCell } from "@/lib/types";
+import type { GridCell, Note, Todo } from "@/lib/types";
 import { Trash2, Eraser } from "lucide-react";
 
 const COL_LABELS = ["A", "B", "C", "D", "E"] as const;
@@ -38,11 +38,13 @@ function coordLabel(row: number, col: number) {
 }
 
 const STATUS_COLOR: Record<GridCell["status"], string> = {
-  unknown: "bg-card border-border text-muted-foreground",
-  drafted: "bg-card border-border text-muted-foreground",
-  explored: "bg-card border-border text-muted-foreground",
-  cleared: "bg-brass border-brass text-brass-foreground",
+  unknown: "map-cell-neutral",
+  drafted: "map-cell-neutral",
+  explored: "map-cell-neutral",
+  cleared: "map-cell-cleared",
 };
+
+type ActiveCellCoord = { row: number; col: number };
 
 export function MapPage() {
   const gridCells = useStore((s) => s.gridCells);
@@ -51,7 +53,7 @@ export function MapPage() {
   const upsertCell = useStore((s) => s.upsertCell);
   const clearCell = useStore((s) => s.clearCell);
   const openCapture = useStore((s) => s.openCapture);
-  const [active, setActive] = useState<{ row: number; col: number } | null>(null);
+  const [active, setActive] = useState<ActiveCellCoord | null>(null);
 
   const byId = useMemo(() => {
     const m = new Map<string, GridCell>();
@@ -64,6 +66,15 @@ export function MapPage() {
   const activeNotes = activeRoom ? notes.filter((n) => n.room === activeRoom) : [];
   const activeTodos = activeRoom ? todos.filter((t) => t.room === activeRoom) : [];
 
+  const noteCountByRoom = useMemo(() => {
+    const counts = new Map<string, number>();
+    for (const note of notes) {
+      if (!note.room) continue;
+      counts.set(note.room, (counts.get(note.room) ?? 0) + 1);
+    }
+    return counts;
+  }, [notes]);
+
   const [commentDraft, setCommentDraft] = useState("");
   function openCell(row: number, col: number) {
     setActive({ row, col });
@@ -72,250 +83,305 @@ export function MapPage() {
   }
 
   return (
-    <div className="mx-auto max-w-5xl px-4 py-6">
-      <div className="mb-4 flex items-baseline justify-between">
+    <div className="map-page">
+      <div className="map-page-header">
         <div>
-          <h1 className="font-serif text-2xl">Mt. Holly Map</h1>
-          <p className="text-xs text-muted-foreground">
+          <h1 className="map-page-title">Mt. Holly Map</h1>
+          <p className="map-page-subtitle">
             5 × 9 grid — click a cell to place a room and add comments.
           </p>
         </div>
-        <div className="hidden items-center gap-2 text-xs text-muted-foreground sm:flex">
+        <div className="map-page-legend-wrap">
           <Legend color={STATUS_COLOR.cleared}>Cleared</Legend>
         </div>
       </div>
 
-      <div
-        className="mx-auto grid gap-2"
-        style={{
-          gridTemplateColumns: `repeat(${GRID_COLS}, minmax(0, 1fr))`,
-          width: `min(100%, clamp(28rem, calc((100dvh - 8rem) * ${GRID_COLS} / ${GRID_ROWS}), 36rem))`,
-        }}
-      >
-        {Array.from({ length: GRID_ROWS }).flatMap((_, row) =>
-          Array.from({ length: GRID_COLS }).map((__, col) => {
-            const cell = byId.get(cellId(row, col));
-            const status = cell?.status === "cleared" ? "cleared" : "unknown";
-            const roomNoteCount = cell?.roomName
-              ? notes.filter((n) => n.room === cell.roomName).length
-              : 0;
-            return (
-              <button
-                key={`${row},${col}`}
-                onClick={() => openCell(row, col)}
-                className={`flex aspect-square flex-col items-center justify-center gap-0.5 rounded-md border p-1.5 text-center transition hover:scale-[1.03] hover:border-brass ${STATUS_COLOR[status]}`}
-              >
-                {cell?.roomName ? (
-                  <>
-                    <span className="font-serif text-[11px] leading-tight sm:text-xs">
-                      {cell.roomName}
-                    </span>
-                    {(cell.comment || roomNoteCount > 0) && (
-                      <span className="text-[9px] opacity-80">
-                        {cell.comment && "💬"}
-                        {roomNoteCount > 0 && ` 📝${roomNoteCount}`}
-                      </span>
-                    )}
-                  </>
-                ) : (
-                  <span className="text-[10px] opacity-50">{coordLabel(row, col)}</span>
-                )}
-              </button>
-            );
-          }),
-        )}
-      </div>
+      <MapGrid byId={byId} noteCountByRoom={noteCountByRoom} onOpenCell={openCell} />
 
-      <Sheet open={!!active} onOpenChange={(o) => !o && setActive(null)}>
-        <SheetContent className="w-full overflow-y-auto sm:max-w-md">
-          {active && (
-            <>
-              <SheetHeader>
-                <SheetTitle className="font-serif text-2xl">
-                  {activeCell?.roomName ?? `Cell ${coordLabel(active.row, active.col)}`}
-                </SheetTitle>
-                <SheetDescription>
-                  Coordinate {coordLabel(active.row, active.col)}
-                </SheetDescription>
-              </SheetHeader>
+      <MapCellEditorSheet
+        active={active}
+        activeCell={activeCell}
+        activeNotes={activeNotes}
+        activeTodos={activeTodos}
+        commentDraft={commentDraft}
+        setCommentDraft={setCommentDraft}
+        onClose={() => setActive(null)}
+        upsertCell={upsertCell}
+        clearCell={clearCell}
+        openCapture={openCapture}
+      />
+    </div>
+  );
+}
 
-              <div className="mt-4 space-y-4">
-                <div>
-                  <label className="mb-1 block text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
-                    Room
-                  </label>
-                  <Select
-                    value={activeCell?.roomName ?? ""}
-                    onValueChange={(name) =>
-                      upsertCell({ row: active.row, col: active.col, roomName: name })
-                    }
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Pick a room..." />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {ROOM_CATEGORIES.map((cat) => (
-                        <SelectGroup key={cat}>
-                          <SelectLabel>{cat}</SelectLabel>
-                          {ROOMS_BY_CATEGORY[cat].map((r) => (
-                            <SelectItem key={r.name} value={r.name}>
-                              {r.name}
-                            </SelectItem>
-                          ))}
-                        </SelectGroup>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
+function MapGrid({
+  byId,
+  noteCountByRoom,
+  onOpenCell,
+}: {
+  byId: Map<string, GridCell>;
+  noteCountByRoom: Map<string, number>;
+  onOpenCell: (row: number, col: number) => void;
+}) {
+  return (
+    <div
+      className="map-grid"
+      style={{
+        gridTemplateColumns: `repeat(${GRID_COLS}, minmax(0, 1fr))`,
+        width: `min(100%, clamp(28rem, calc((100dvh - 8rem) * ${GRID_COLS} / ${GRID_ROWS}), 36rem))`,
+      }}
+    >
+      {Array.from({ length: GRID_ROWS }).flatMap((_, row) =>
+        Array.from({ length: GRID_COLS }).map((__, col) => {
+          const cell = byId.get(cellId(row, col));
+          const status = cell?.status === "cleared" ? "cleared" : "unknown";
+          const roomNoteCount = cell?.roomName ? (noteCountByRoom.get(cell.roomName) ?? 0) : 0;
+          return (
+            <MapGridCellButton
+              key={`${row},${col}`}
+              row={row}
+              col={col}
+              cell={cell}
+              roomNoteCount={roomNoteCount}
+              statusClass={STATUS_COLOR[status]}
+              onOpenCell={onOpenCell}
+            />
+          );
+        }),
+      )}
+    </div>
+  );
+}
 
-                <div>
-                  <label className="mb-1 block text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
-                    Cell details
-                  </label>
-                  <textarea
-                    value={commentDraft}
-                    onChange={(e) => setCommentDraft(e.target.value)}
-                    onBlur={() =>
-                      upsertCell({
-                        row: active.row,
-                        col: active.col,
-                        comment: commentDraft,
-                      })
-                    }
-                    placeholder="Quick note about this cell — door direction, gem cost, danger..."
-                    rows={6}
-                    className={TEXTAREA_BASE_CLASS}
-                  />
-                  <p className="mt-1 text-[11px] text-muted-foreground">
-                    Markdown supported: headings, lists, checkboxes, bold, italic, code.
-                  </p>
+function MapGridCellButton({
+  row,
+  col,
+  cell,
+  roomNoteCount,
+  statusClass,
+  onOpenCell,
+}: {
+  row: number;
+  col: number;
+  cell: GridCell | undefined;
+  roomNoteCount: number;
+  statusClass: string;
+  onOpenCell: (row: number, col: number) => void;
+}) {
+  return (
+    <button onClick={() => onOpenCell(row, col)} className={`map-cell ${statusClass}`}>
+      {cell?.roomName ? (
+        <>
+          <span className="map-cell-room-name">{cell.roomName}</span>
+          {(cell.comment || roomNoteCount > 0) && (
+            <span className="map-cell-meta">
+              {cell.comment && "💬"}
+              {roomNoteCount > 0 && ` 📝${roomNoteCount}`}
+            </span>
+          )}
+        </>
+      ) : (
+        <span className="map-cell-coord">{coordLabel(row, col)}</span>
+      )}
+    </button>
+  );
+}
 
-                  {commentDraft.trim().length > 0 && (
-                    <div className="mt-2 rounded-md border border-border bg-card/60 p-3">
-                      <div className="mb-2 text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
-                        Preview
-                      </div>
-                      <div className="text-sm leading-relaxed text-foreground [&_h1]:mb-2 [&_h1]:text-xl [&_h1]:font-semibold [&_h2]:mb-2 [&_h2]:text-lg [&_h2]:font-semibold [&_h3]:mb-2 [&_h3]:text-base [&_h3]:font-semibold [&_p]:mb-2 [&_ul]:mb-2 [&_ul]:list-disc [&_ul]:pl-5 [&_ol]:mb-2 [&_ol]:list-decimal [&_ol]:pl-5 [&_li]:mb-1 [&_code]:rounded [&_code]:bg-secondary [&_code]:px-1 [&_code]:py-0.5 [&_pre]:mb-2 [&_pre]:overflow-x-auto [&_pre]:rounded [&_pre]:bg-secondary [&_pre]:p-2 [&_pre_code]:bg-transparent [&_pre_code]:p-0">
-                        <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                          {commentDraft}
-                        </ReactMarkdown>
-                      </div>
+function MapCellEditorSheet({
+  active,
+  activeCell,
+  activeNotes,
+  activeTodos,
+  commentDraft,
+  setCommentDraft,
+  onClose,
+  upsertCell,
+  clearCell,
+  openCapture,
+}: {
+  active: ActiveCellCoord | null;
+  activeCell: GridCell | undefined;
+  activeNotes: Note[];
+  activeTodos: Todo[];
+  commentDraft: string;
+  setCommentDraft: (next: string) => void;
+  onClose: () => void;
+  upsertCell: (cell: Partial<GridCell> & { row: number; col: number }) => Promise<void>;
+  clearCell: (row: number, col: number) => Promise<void>;
+  openCapture: (opts?: { kind?: "note" | "todo"; prefill?: string; room?: string }) => void;
+}) {
+  const activeRoom = activeCell?.roomName;
+
+  return (
+    <Sheet open={!!active} onOpenChange={(open) => !open && onClose()}>
+      <SheetContent className="map-sheet-content">
+        {active && (
+          <>
+            <SheetHeader>
+              <SheetTitle className="map-sheet-title">
+                {activeCell?.roomName ?? `Cell ${coordLabel(active.row, active.col)}`}
+              </SheetTitle>
+              <SheetDescription>Coordinate {coordLabel(active.row, active.col)}</SheetDescription>
+            </SheetHeader>
+
+            <div className="map-sheet-body">
+              <div>
+                <label className="map-field-label">Room</label>
+                <Select
+                  value={activeCell?.roomName ?? ""}
+                  onValueChange={(name) => upsertCell({ row: active.row, col: active.col, roomName: name })}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Pick a room..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {ROOM_CATEGORIES.map((cat) => (
+                      <SelectGroup key={cat}>
+                        <SelectLabel>{cat}</SelectLabel>
+                        {ROOMS_BY_CATEGORY[cat].map((r) => (
+                          <SelectItem key={r.name} value={r.name}>
+                            {r.name}
+                          </SelectItem>
+                        ))}
+                      </SelectGroup>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div>
+                <label className="map-field-label">Cell details</label>
+                <textarea
+                  value={commentDraft}
+                  onChange={(e) => setCommentDraft(e.target.value)}
+                  onBlur={() =>
+                    upsertCell({
+                      row: active.row,
+                      col: active.col,
+                      comment: commentDraft,
+                    })
+                  }
+                  placeholder="Quick note about this cell - door direction, gem cost, danger..."
+                  rows={6}
+                  className={TEXTAREA_BASE_CLASS}
+                />
+                <p className="map-comment-help">
+                  Markdown supported: headings, lists, checkboxes, bold, italic, code.
+                </p>
+
+                {commentDraft.trim().length > 0 && (
+                  <div className="map-comment-preview-card">
+                    <div className="map-comment-preview-title">Preview</div>
+                    <div className="capture-preview-markdown">
+                      <ReactMarkdown remarkPlugins={[remarkGfm]}>{commentDraft}</ReactMarkdown>
                     </div>
-                  )}
-                </div>
-
-                <div className="flex gap-2">
-                  {activeRoom && (
-                    <>
-                      <button
-                        className={buttonClass({
-                          size: "sm",
-                          className: "flex-1 bg-brass text-brass-foreground hover:bg-brass/90",
-                        })}
-                        onClick={() => openCapture({ kind: "note", room: activeRoom })}
-                      >
-                        + Note (image)
-                      </button>
-                      <button
-                        className={buttonClass({ size: "sm", variant: "outline", className: "flex-1" })}
-                        onClick={() => openCapture({ kind: "todo", room: activeRoom })}
-                      >
-                        + Todo
-                      </button>
-                    </>
-                  )}
-                </div>
-
-                <div className="flex gap-2 border-t border-border pt-3">
-                  <button
-                    className={buttonClass({
-                      size: "sm",
-                      variant: "ghost",
-                      className: "text-muted-foreground",
-                    })}
-                    onClick={() => {
-                      setCommentDraft("");
-                      upsertCell({
-                        row: active.row,
-                        col: active.col,
-                        comment: "",
-                      });
-                    }}
-                  >
-                    <Eraser className="mr-1 h-3.5 w-3.5" /> Clear comment
-                  </button>
-                  <button
-                    className={buttonClass({
-                      size: "sm",
-                      variant: "ghost",
-                      className: "text-destructive hover:text-destructive",
-                    })}
-                    onClick={() => {
-                      clearCell(active.row, active.col);
-                      setActive(null);
-                    }}
-                  >
-                    <Trash2 className="mr-1 h-3.5 w-3.5" /> Clear cell
-                  </button>
-                </div>
-
-                {activeNotes.length > 0 && (
-                  <div>
-                    <div className="mb-2 text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
-                      Notes in this room
-                    </div>
-                    <ul className="space-y-2">
-                      {activeNotes.map((n) => (
-                        <li
-                          key={n.id}
-                          className="rounded border border-border bg-card p-2 text-sm"
-                        >
-                          <div className="font-medium">{n.title}</div>
-                          <div className="mt-1 flex flex-wrap gap-1">
-                            <Chip className="border-border bg-secondary text-foreground">
-                              {n.type}
-                            </Chip>
-                            {n.imageIds.length > 0 && (
-                              <Chip className="border-border text-foreground">
-                                📎 {n.imageIds.length}
-                              </Chip>
-                            )}
-                            {n.tags.map((t) => (
-                              <Chip key={t} className="border-border text-foreground">
-                                #{t}
-                              </Chip>
-                            ))}
-                          </div>
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                )}
-
-                {activeTodos.length > 0 && (
-                  <div>
-                    <div className="mb-2 text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
-                      Todo items in this room
-                    </div>
-                    <ul className="space-y-1 text-sm">
-                      {activeTodos.map((t) => (
-                        <li
-                          key={t.id}
-                          className={
-                            t.status === "done" ? "text-muted-foreground line-through" : ""
-                          }
-                        >
-                          · {t.title}
-                        </li>
-                      ))}
-                    </ul>
                   </div>
                 )}
               </div>
-            </>
-          )}
-        </SheetContent>
-      </Sheet>
+
+              {activeRoom && (
+                <div className="map-sheet-action-row">
+                  <button
+                    className={buttonClass({
+                      size: "sm",
+                      className: "map-sheet-action-primary",
+                    })}
+                    onClick={() => openCapture({ kind: "note", room: activeRoom })}
+                  >
+                    + Note (image)
+                  </button>
+                  <button
+                    className={buttonClass({
+                      size: "sm",
+                      variant: "outline",
+                      className: "map-sheet-action-secondary",
+                    })}
+                    onClick={() => openCapture({ kind: "todo", room: activeRoom })}
+                  >
+                    + Todo
+                  </button>
+                </div>
+              )}
+
+              <div className="map-sheet-clear-row">
+                <button
+                  className={buttonClass({
+                    size: "sm",
+                    variant: "ghost",
+                    className: "map-sheet-clear-comment",
+                  })}
+                  onClick={() => {
+                    setCommentDraft("");
+                    upsertCell({
+                      row: active.row,
+                      col: active.col,
+                      comment: "",
+                    });
+                  }}
+                >
+                  <Eraser className="map-sheet-clear-icon" /> Clear comment
+                </button>
+                <button
+                  className={buttonClass({
+                    size: "sm",
+                    variant: "ghost",
+                    className: "map-sheet-clear-cell",
+                  })}
+                  onClick={() => {
+                    clearCell(active.row, active.col);
+                    onClose();
+                  }}
+                >
+                  <Trash2 className="map-sheet-clear-icon" /> Clear cell
+                </button>
+              </div>
+
+              {activeNotes.length > 0 && <MapRoomNotes notes={activeNotes} />}
+
+              {activeTodos.length > 0 && <MapRoomTodos todos={activeTodos} />}
+            </div>
+          </>
+        )}
+      </SheetContent>
+    </Sheet>
+  );
+}
+
+function MapRoomNotes({ notes }: { notes: Note[] }) {
+  return (
+    <div>
+      <div className="map-list-title">Notes in this room</div>
+      <ul className="map-note-list">
+        {notes.map((note) => (
+          <li key={note.id} className="map-note-item">
+            <div className="map-note-item-title">{note.title}</div>
+            <div className="map-note-chip-row">
+              <Chip className="map-note-chip">{note.type}</Chip>
+              {note.imageIds.length > 0 && <Chip className="map-note-chip">📎 {note.imageIds.length}</Chip>}
+              {note.tags.map((tag) => (
+                <Chip key={tag} className="map-note-chip">
+                  #{tag}
+                </Chip>
+              ))}
+            </div>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
+function MapRoomTodos({ todos }: { todos: Todo[] }) {
+  return (
+    <div>
+      <div className="map-list-title">Todo items in this room</div>
+      <ul className="map-todo-list">
+        {todos.map((todo) => (
+          <li key={todo.id} className={todo.status === "done" ? "map-todo-done" : ""}>
+            · {todo.title}
+          </li>
+        ))}
+      </ul>
     </div>
   );
 }

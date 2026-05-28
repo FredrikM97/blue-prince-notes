@@ -20,7 +20,7 @@ export function NoteRowEditor({
   const addImage = useStore((s) => s.addImage);
 
   return (
-    <div className="space-y-2">
+    <div className="note-editor-wrap">
       <input
         value={draft.title}
         onChange={(e) => setDraft({ ...draft, title: e.target.value })}
@@ -34,7 +34,7 @@ export function NoteRowEditor({
         rows={4}
         className={TEXTAREA_BASE_CLASS}
       />
-      <div className="grid grid-cols-2 gap-2">
+      <div className="note-editor-grid-2">
         <input
           value={draft.room ?? ""}
           onChange={(e) => setDraft({ ...draft, room: e.target.value || undefined })}
@@ -43,18 +43,18 @@ export function NoteRowEditor({
         />
         <input
           value={draft.tags.join(" ")}
-          onChange={(e) => setDraft({ ...draft, tags: e.target.value.split(/\s+/).filter(Boolean) })}
+          onChange={(e) =>
+            setDraft({ ...draft, tags: e.target.value.split(/\s+/).filter(Boolean) })
+          }
           placeholder="tags (space-sep)"
           className={INPUT_BASE_CLASS}
         />
       </div>
 
-      <div className="space-y-2 rounded-md border border-border bg-card/30 p-2">
-        <div className="flex items-center justify-between">
-          <span className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
-            Attached images
-          </span>
-          <label className="cursor-pointer rounded-md border border-input bg-secondary px-2 py-1 text-xs text-muted-foreground hover:text-foreground">
+      <div className="note-editor-images-card">
+        <div className="note-editor-images-header">
+          <span className="note-editor-images-label">Attached images</span>
+          <label className="note-editor-attach-label">
             <span className="inline-flex items-center gap-1">
               <ImagePlus className="h-3.5 w-3.5" /> Attach image
             </span>
@@ -79,9 +79,9 @@ export function NoteRowEditor({
         </div>
 
         {draft.imageIds.length > 0 ? (
-          <div className="flex flex-wrap gap-2">
+          <div className="note-editor-images-grid">
             {draft.imageIds.map((id) => (
-              <div key={id} className="relative">
+              <div key={id} className="note-editor-image-wrap">
                 <StoredImageView
                   id={id}
                   className="h-16 w-16 rounded border border-border object-cover"
@@ -94,7 +94,7 @@ export function NoteRowEditor({
                       imageIds: prev.imageIds.filter((x) => x !== id),
                     }))
                   }
-                  className="absolute right-0 top-0 rounded-bl bg-black/60 p-0.5 text-white"
+                  className="note-editor-image-remove"
                   aria-label="Remove image"
                 >
                   <X className="h-3 w-3" />
@@ -107,9 +107,9 @@ export function NoteRowEditor({
         )}
       </div>
 
-      <div className="flex items-center gap-2">
+      <div className="note-editor-selects-row">
         <select
-          className="h-9 rounded-md border border-input bg-background px-2 text-sm"
+          className="note-editor-select"
           value={draft.type}
           onChange={(e) => setDraft({ ...draft, type: e.target.value as Note["type"] })}
         >
@@ -120,7 +120,7 @@ export function NoteRowEditor({
           ))}
         </select>
         <select
-          className="h-9 rounded-md border border-input bg-background px-2 text-sm"
+          className="note-editor-select"
           value={draft.status}
           onChange={(e) => setDraft({ ...draft, status: e.target.value as Note["status"] })}
         >
@@ -129,7 +129,7 @@ export function NoteRowEditor({
           <option value="stale">stale</option>
         </select>
         <select
-          className="h-9 rounded-md border border-input bg-background px-2 text-sm"
+          className="note-editor-select"
           value={draft.scope}
           onChange={(e) => setDraft({ ...draft, scope: e.target.value as Note["scope"] })}
         >

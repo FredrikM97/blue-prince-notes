@@ -3,7 +3,7 @@ import { NoteRowSummary } from "@/frontend/components/note-row/NoteRowSummary";
 import { buttonClass } from "@/frontend/components/common/buttonClasses";
 import { ChevronRight, Pencil, Trash2 } from "lucide-react";
 
-export function NoteRow({
+export function NotesRow({
   note,
   onOpenEdit,
   onDelete,
@@ -16,13 +16,11 @@ export function NoteRow({
 }) {
 
   return (
-    <div className="border-b border-border last:border-b-0">
-      <div
-        className="group flex items-start gap-3 px-4 py-3 hover:bg-accent/40"
-      >
+    <div className="note-row-item">
+      <div className="note-row-inner group">
         <button
           type="button"
-          className="min-w-0 flex-1 text-left"
+          className="note-row-preview-btn"
           onClick={(e) => {
             e.stopPropagation();
             onOpenPreview();

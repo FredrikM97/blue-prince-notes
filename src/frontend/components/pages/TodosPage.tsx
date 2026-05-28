@@ -30,15 +30,15 @@ export function TodosPage() {
   const thisRunOpen = filtered.filter((t) => t.scope === "this-run" && t.status !== "done");
 
   return (
-    <div className="mx-auto max-w-7xl px-4 py-6">
-      <div className="mb-4 flex flex-wrap items-baseline justify-between gap-2">
-        <h1 className="font-serif text-2xl">Todo</h1>
-        <div className="flex items-center gap-2">
+    <div className="todos-page">
+      <div className="todos-page-header">
+        <h1 className="todos-page-title">Todo</h1>
+        <div className="todos-page-header-actions">
           <TodoScopeFilter value={scopeFilter} onChange={setScopeFilter} />
           <button
             className={buttonClass({
               size: "sm",
-              className: "bg-brass text-brass-foreground hover:bg-brass/90",
+              className: "todos-add-button",
             })}
             onClick={() => openCapture({ kind: "todo" })}
           >
@@ -48,39 +48,35 @@ export function TodosPage() {
       </div>
 
       {thisRunOpen.length > 0 && scopeFilter !== "cross-run" && scopeFilter !== "someday" && (
-        <div className="mb-6 rounded-lg border border-brass/40 bg-brass/5 p-3">
-          <div className="mb-2 text-[11px] font-medium uppercase tracking-wider text-brass">
-            This run · {thisRunOpen.length} open
-          </div>
-          <ul className="space-y-1">
+        <div className="todos-run-open-card">
+          <div className="todos-run-open-title">This run · {thisRunOpen.length} open</div>
+          <ul className="todos-run-open-list">
             {thisRunOpen.map((t) => (
-              <li key={t.id} className="flex items-center gap-2 text-sm">
+              <li key={t.id} className="todos-run-open-item">
                 <input
                   type="checkbox"
                   checked={false}
                   onChange={() => toggle(t.id, "done")}
-                  className="h-4 w-4 cursor-pointer rounded border-input"
+                  className="todos-run-open-checkbox"
                 />
                 <span>{t.title}</span>
-                {t.room && <Chip className="border-brass/40 text-brass">@{t.room}</Chip>}
+                {t.room && <Chip className="todos-run-open-chip">@{t.room}</Chip>}
               </li>
             ))}
           </ul>
         </div>
       )}
 
-      <div className="grid gap-4 md:grid-cols-3">
+      <div className="todos-columns-grid">
         {TODO_STATUS_COLUMNS.map((col) => (
-          <div key={col.value} className="rounded-lg border border-border bg-card">
-            <div className="flex items-center justify-between border-b border-border px-3 py-2">
-              <h2 className="font-serif text-sm uppercase tracking-wider text-muted-foreground">
-                {col.label}
-              </h2>
-              <span className="text-xs text-muted-foreground">{grouped[col.value].length}</span>
+          <div key={col.value} className="todos-column">
+            <div className="todos-column-header">
+              <h2 className="todos-column-title">{col.label}</h2>
+              <span className="todos-column-count">{grouped[col.value].length}</span>
             </div>
-            <ul className="divide-y divide-border">
+            <ul className="todos-column-list">
               {grouped[col.value].length === 0 && (
-                <li className="px-3 py-6 text-center text-xs text-muted-foreground">
+                <li className="todos-column-empty">
                   {col.value === "open" ? "Press N to add a todo" : "Empty"}
                 </li>
               )}

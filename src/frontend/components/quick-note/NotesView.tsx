@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useStore } from "@/frontend/data/store";
 import type { Note, NoteType } from "@/lib/types";
-import { NoteRow } from "./NoteRow";
+import { NotesRow } from "./NotesRow";
 import { buttonClass } from "@/frontend/components/common/buttonClasses";
 import { NoteRowEditor } from "@/frontend/components/note-row/NoteRowEditor";
 import { NoteRowDetails } from "@/frontend/components/note-row/NoteRowDetails";
@@ -125,7 +125,7 @@ export function NotesView({
         ) : (
           <div className="notes-view-list">
             {filtered.map((n) => (
-              <NoteRow
+              <NotesRow
                 key={n.id}
                 note={n}
                 onOpenEdit={() => {
@@ -183,11 +183,11 @@ export function NotesView({
                   }}
                 />
               ) : (
-                <div className="flex min-h-[24rem] flex-col">
-                  <div className="min-h-[18rem] flex-1 overflow-y-auto pr-1">
+                <div className="notes-panel-preview-wrap">
+                  <div className="notes-panel-preview-scroll">
                     <NoteRowDetails note={activeNote} />
                   </div>
-                  <div className="mt-3 flex justify-start border-t border-border pt-2">
+                  <div className="notes-panel-preview-footer">
                     <button
                       className={buttonClass({ size: "sm", variant: "ghost" })}
                       onClick={() => setActiveNoteId(null)}
