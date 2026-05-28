@@ -50,42 +50,42 @@
   --color-sidebar-ring: var(--sidebar-ring);
 }
 
-/* Blue Prince — deep manor navy + brass. Single dark theme. */
+/* Blue Prince — lifted manor navy + brass. Single dark theme. */
 :root {
   --radius: 0.5rem;
-  --background: oklch(0.18 0.025 250);
-  --foreground: oklch(0.94 0.015 80);
-  --card: oklch(0.22 0.03 250);
-  --card-foreground: oklch(0.94 0.015 80);
-  --popover: oklch(0.22 0.03 250);
-  --popover-foreground: oklch(0.94 0.015 80);
+  --background: oklch(0.23 0.022 250);
+  --foreground: oklch(0.96 0.012 80);
+  --card: oklch(0.29 0.026 250);
+  --card-foreground: oklch(0.96 0.012 80);
+  --popover: oklch(0.3 0.024 250);
+  --popover-foreground: oklch(0.96 0.012 80);
   --primary: oklch(0.76 0.13 80);
-  --primary-foreground: oklch(0.18 0.025 250);
-  --secondary: oklch(0.28 0.035 250);
-  --secondary-foreground: oklch(0.94 0.015 80);
-  --muted: oklch(0.26 0.03 250);
-  --muted-foreground: oklch(0.7 0.025 80);
-  --accent: oklch(0.32 0.04 250);
-  --accent-foreground: oklch(0.94 0.015 80);
+  --primary-foreground: oklch(0.22 0.022 250);
+  --secondary: oklch(0.34 0.03 250);
+  --secondary-foreground: oklch(0.96 0.012 80);
+  --muted: oklch(0.33 0.027 250);
+  --muted-foreground: oklch(0.8 0.02 80);
+  --accent: oklch(0.38 0.034 250);
+  --accent-foreground: oklch(0.96 0.012 80);
   --destructive: oklch(0.58 0.21 27);
   --destructive-foreground: oklch(0.98 0.01 80);
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 12%);
+  --border: oklch(1 0 0 / 18%);
+  --input: oklch(1 0 0 / 26%);
   --ring: oklch(0.76 0.13 80);
   --brass: oklch(0.76 0.13 80);
-  --brass-foreground: oklch(0.18 0.025 250);
+  --brass-foreground: oklch(0.22 0.022 250);
   --chart-1: oklch(0.76 0.13 80);
   --chart-2: oklch(0.62 0.13 200);
   --chart-3: oklch(0.55 0.18 30);
   --chart-4: oklch(0.7 0.12 150);
   --chart-5: oklch(0.55 0.18 320);
-  --sidebar: oklch(0.16 0.025 250);
-  --sidebar-foreground: oklch(0.94 0.015 80);
+  --sidebar: oklch(0.2 0.023 250);
+  --sidebar-foreground: oklch(0.96 0.012 80);
   --sidebar-primary: oklch(0.76 0.13 80);
-  --sidebar-primary-foreground: oklch(0.18 0.025 250);
-  --sidebar-accent: oklch(0.28 0.035 250);
-  --sidebar-accent-foreground: oklch(0.94 0.015 80);
-  --sidebar-border: oklch(1 0 0 / 10%);
+  --sidebar-primary-foreground: oklch(0.22 0.022 250);
+  --sidebar-accent: oklch(0.32 0.028 250);
+  --sidebar-accent-foreground: oklch(0.96 0.012 80);
+  --sidebar-border: oklch(1 0 0 / 18%);
   --sidebar-ring: oklch(0.76 0.13 80);
 }
 
@@ -103,6 +103,7 @@
     background-color: var(--color-background);
     color: var(--color-foreground);
     font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    line-height: 1.5;
   }
 
   h1, h2, h3, .font-serif {
