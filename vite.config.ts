@@ -41,4 +41,13 @@ export default defineConfig({
     ],
   },
   server: { host: "::", port: 8080 },
+  test: {
+    environment: "jsdom",
+    setupFiles: "./tests/setup.ts",
+    globals: true,
+    coverage: {
+      provider: "v8",
+      reporter: ["text", "html"],
+    },
+  },
 });

@@ -26,6 +26,13 @@ description: Describe when these instructions should be loaded by the agent base
 - Keep `noImplicitAny` behavior enforced and avoid introducing implicit `any` values.
 - Prefer typed callback params and typed state/action payloads over inference that degrades to `any`.
 
+## Testing Expectations
+
+- Add or update relevant automated tests for behavior changes and bug fixes; do not rely only on manual verification.
+- Prefer small, focused unit tests for utility/business logic and component tests for UI behavior.
+- Include snapshot tests for stable, user-facing UI structure when layout/markup changes are part of the task.
+- When snapshots change intentionally, review and keep them only when they represent the expected UI output.
+
 ## Theme Token Structure
 
 - In `src/frontend/styles.css`, keep light mode tokens in `:root` and dark mode tokens in `:root.dark`.
