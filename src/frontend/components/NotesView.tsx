@@ -33,7 +33,6 @@ export function NotesView({
   const notes = useStore((s) => s.notes);
   const search = useStore((s) => s.search);
   const openCapture = useStore((s) => s.openCapture);
-  const captureOpen = useStore((s) => s.captureOpen);
   const saveNote = useStore((s) => s.saveNote);
   const removeNote = useStore((s) => s.removeNote);
   const [typeFilter, setTypeFilter] = useState<NoteType | null>(null);
@@ -121,13 +120,7 @@ export function NotesView({
         )}
       </aside>
 
-      <section
-        className={
-          captureOpen || notePanelOpen
-            ? "min-w-0 transition-[padding-right] duration-200 ease-out [--notes-panel:20rem] md:[--notes-panel:24rem] lg:[--notes-panel:30rem] xl:[--notes-panel:34rem] [padding-right:clamp(1rem,calc(var(--notes-panel)-(100vw-80rem)/2),var(--notes-panel))]"
-            : "min-w-0"
-        }
-      >
+      <section className="min-w-0 sm:[--notes-panel:20rem] md:[--notes-panel:24rem] lg:[--notes-panel:30rem] xl:[--notes-panel:34rem] sm:[padding-right:clamp(1rem,calc(var(--notes-panel)-(100vw-80rem)/2),var(--notes-panel))]">
         <div className="mb-3 flex items-baseline justify-between">
           <h1 className="font-serif text-2xl">{title}</h1>
           <span className="text-sm text-muted-foreground">
