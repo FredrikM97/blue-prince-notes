@@ -4,6 +4,7 @@ import { Chip } from "@/components/common/Chip";
 import { EmptyState } from "@/components/common/EmptyState";
 import { PageLayout } from "@/components/common/PageLayout";
 import { MarkdownPreview } from "@/components/common/MarkdownPreview";
+import { AttachedImagesGallery } from "@/components/common/AttachedImagesGallery";
 import { BookOpen, Eye, Key, Lightbulb, ListTodo, Sparkles } from "lucide-react";
 import { useStore } from "@/data/store";
 import type { Note } from "@/lib/types";
@@ -298,7 +299,7 @@ function GraphRightPanel({
           {selectedNode.note.room && (
             <div className="flex items-center gap-2">
               <span className="w-18 text-sm text-muted-foreground">Room</span>
-              <span>@{selectedNode.note.room}</span>
+              <Chip>@{selectedNode.note.room}</Chip>
             </div>
           )}
 
@@ -331,6 +332,16 @@ function GraphRightPanel({
         ) : (
           <p className="text-xs text-muted-foreground">No details written for this note yet.</p>
         )}
+
+        <AttachedImagesGallery
+          imageIds={selectedNode.note.imageIds}
+          wrapperClassName="mt-3"
+          gridClassName="grid grid-cols-2 gap-2"
+          itemButtonClassName="rounded p-1 transition-colors hover:bg-muted/40"
+          imageClassName="h-20 w-full rounded object-cover"
+          labelClassName="mt-1 truncate text-[11px] text-muted-foreground"
+          dialogPreviewClassName="mx-auto max-h-[70vh] w-full overflow-hidden rounded-md bg-muted/20 p-2"
+        />
       </div>
     </div>
   );

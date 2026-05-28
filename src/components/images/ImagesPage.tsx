@@ -237,6 +237,10 @@ function ImagesInspectorPanel({
 }) {
   const [labelInput, setLabelInput] = useState(getImageLabel(img));
   const [savingLabel, setSavingLabel] = useState(false);
+  const [noteIndex, setNoteIndex] = useState(0);
+
+  const activeRelatedNote =
+    relatedNotes.length > 0 ? relatedNotes[((noteIndex % relatedNotes.length) + relatedNotes.length) % relatedNotes.length] : null;
 
   useEffect(() => {
     setPreviewOpen(false);
@@ -245,6 +249,15 @@ function ImagesInspectorPanel({
   useEffect(() => {
     setLabelInput(getImageLabel(img));
   }, [img.id, img.name, img.caption]);
+
+  useEffect(() => {
+    setNoteIndex(0);
+  }, [img.id, relatedNotes.length]);
+
+  function cycleRelatedNote(offset: number) {
+    if (relatedNotes.length <= 1) return;
+    setNoteIndex((prev) => (prev + offset + relatedNotes.length) % relatedNotes.length);
+  }
 
   return (
     <>
@@ -300,19 +313,44 @@ function ImagesInspectorPanel({
             </div>
           </div>
 
-          <h3 className="images-linked-notes-title">Details from notes</h3>
+          <div className="flex items-center justify-between gap-2">
+            <h3 className="images-linked-notes-title">Details from notes</h3>
+            {relatedNotes.length > 1 && (
+              <div className="flex items-center gap-1">
+                <Button
+                  variant="outline"
+                  size="icon"
+                  className="h-7 w-7"
+                  onClick={() => cycleRelatedNote(-1)}
+                  aria-label="Previous related note"
+                >
+                  <ChevronLeft className="h-3.5 w-3.5" />
+                </Button>
+                <span className="text-xs text-muted-foreground">
+                  {noteIndex + 1} / {relatedNotes.length}
+                </span>
+                <Button
+                  variant="outline"
+                  size="icon"
+                  className="h-7 w-7"
+                  onClick={() => cycleRelatedNote(1)}
+                  aria-label="Next related note"
+                >
+                  <ChevronRight className="h-3.5 w-3.5" />
+                </Button>
+              </div>
+            )}
+          </div>
           <div className="images-linked-notes-list">
-            {relatedNotes.length > 0 ? (
-              relatedNotes.slice(0, 3).map((note) => (
-                <div key={note.id} className="images-linked-note-item">
-                  <p className="images-linked-note-name">{note.title}</p>
-                  {note.body.trim() ? (
-                    <MarkdownPreview>{note.body}</MarkdownPreview>
-                  ) : (
-                    <p className="images-size-info">No details on this note yet.</p>
-                  )}
-                </div>
-              ))
+            {activeRelatedNote ? (
+              <div key={activeRelatedNote.id} className="images-linked-note-item">
+                <p className="images-linked-note-name">{activeRelatedNote.title}</p>
+                {activeRelatedNote.body.trim() ? (
+                  <MarkdownPreview>{activeRelatedNote.body}</MarkdownPreview>
+                ) : (
+                  <p className="images-size-info">No details on this note yet.</p>
+                )}
+              </div>
             ) : (
               <p className="images-size-info">No notes currently reference this image.</p>
             )}
