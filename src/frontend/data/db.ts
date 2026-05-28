@@ -2,7 +2,11 @@ import { openDB, type IDBPDatabase, type DBSchema } from "idb";
 import type { Note, Todo, StoredImage, RoomState, SectionDef, GridCell } from "@/lib/types";
 
 interface BPSchema extends DBSchema {
-  notes: { key: string; value: Note; indexes: { "by-updated": number; "by-type": string; "by-room": string } };
+  notes: {
+    key: string;
+    value: Note;
+    indexes: { "by-updated": number; "by-type": string; "by-room": string };
+  };
   todos: { key: string; value: Todo; indexes: { "by-updated": number; "by-status": string } };
   images: { key: string; value: StoredImage };
   rooms: { key: string; value: RoomState };
@@ -13,7 +17,7 @@ interface BPSchema extends DBSchema {
 
 let dbPromise: Promise<IDBPDatabase<BPSchema>> | null = null;
 
-export function getDB() {
+function getDB() {
   if (typeof indexedDB === "undefined") {
     throw new Error("IndexedDB unavailable (SSR)");
   }
@@ -58,7 +62,7 @@ export async function deleteNote(id: string) {
   const db = await getDB();
   await db.delete("notes", id);
 }
-export async function getNote(id: string) {
+async function getNote(id: string) {
   const db = await getDB();
   return db.get("notes", id);
 }

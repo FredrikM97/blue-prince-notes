@@ -1,6 +1,9 @@
-import { useMemo } from "react";
+import { useEffect, useMemo, useRef, useState, type MouseEvent, type WheelEvent } from "react";
+import { Button } from "@/frontend/components/common/button";
+import { Chip } from "@/frontend/components/common/Chip";
 import { EmptyState } from "@/frontend/components/common/EmptyState";
 import { PageLayout } from "@/frontend/components/common/PageLayout";
+import { MarkdownPreview } from "@/frontend/components/common/MarkdownPreview";
 import { useStore } from "@/frontend/data/store";
 import type { Note } from "@/lib/types";
 
@@ -8,8 +11,12 @@ const GRAPH_VIEWBOX = "0 0 1000 680";
 const LAYOUT_CENTER_X = 500;
 const LAYOUT_CENTER_Y = 340;
 const LAYOUT_RADIUS = 250;
-const NODE_RADIUS = 11;
-const EDGE_NODE_PADDING = 14;
+const NODE_RADIUS = 13;
+const EDGE_NODE_PADDING = 16;
+const MIN_ZOOM = 0.55;
+const MAX_ZOOM = 2.2;
+const MIN_LABEL_SCALE = 0.6;
+const MAX_LABEL_SCALE = 1.9;
 
 interface GraphNode {
   id: string;
@@ -60,51 +67,307 @@ const TYPE_COLOR: Record<Note["type"], string> = {
 
 export function GraphPage() {
   const notes = useStore((s) => s.notes);
+  const [selectedNoteId, setSelectedNoteId] = useState<string | null>(null);
+  const [zoom, setZoom] = useState(1);
+  const [pan, setPan] = useState({ x: 0, y: 0 });
+  const [isDragging, setIsDragging] = useState(false);
+  const dragRef = useRef<{ startX: number; startY: number; panX: number; panY: number } | null>(
+    null,
+  );
 
   const { nodes, edges } = useMemo(() => buildGraph(notes), [notes]);
   const nodeById = useMemo(() => indexNodes(nodes), [nodes]);
+  const selectedNode = useMemo(
+    () => nodes.find((node) => node.id === selectedNoteId) ?? null,
+    [nodes, selectedNoteId],
+  );
+
+  useEffect(() => {
+    if (!selectedNoteId) return;
+    if (!nodes.some((node) => node.id === selectedNoteId)) setSelectedNoteId(null);
+  }, [nodes, selectedNoteId]);
+
+  const incomingCount = selectedNode
+    ? edges.filter((edge) => edge.to === selectedNode.id).length
+    : 0;
+  const outgoingCount = selectedNode
+    ? edges.filter((edge) => edge.from === selectedNode.id).length
+    : 0;
+
+  function toSvgPoint(clientX: number, clientY: number, element: SVGSVGElement) {
+    const rect = element.getBoundingClientRect();
+    const x = ((clientX - rect.left) / rect.width) * 1000;
+    const y = ((clientY - rect.top) / rect.height) * 680;
+    return { x, y };
+  }
+
+  function resetView() {
+    setZoom(1);
+    setPan({ x: 0, y: 0 });
+  }
+
+  function startDrag(event: MouseEvent<SVGSVGElement>) {
+    const target = event.target as Element;
+    const tag = target.tagName.toLowerCase();
+    if (tag !== "svg" && tag !== "rect") return;
+
+    dragRef.current = {
+      startX: event.clientX,
+      startY: event.clientY,
+      panX: pan.x,
+      panY: pan.y,
+    };
+    setIsDragging(true);
+  }
+
+  function updateDrag(event: MouseEvent<SVGSVGElement>) {
+    const drag = dragRef.current;
+    if (!drag) return;
+
+    const svg = event.currentTarget;
+    const rect = svg.getBoundingClientRect();
+    const dx = ((event.clientX - drag.startX) / rect.width) * 1000;
+    const dy = ((event.clientY - drag.startY) / rect.height) * 680;
+    setPan({ x: drag.panX + dx, y: drag.panY + dy });
+  }
+
+  function stopDrag() {
+    dragRef.current = null;
+    setIsDragging(false);
+  }
+
+  function zoomWithWheel(event: WheelEvent<SVGSVGElement>) {
+    event.preventDefault();
+    const svg = event.currentTarget;
+    const focus = toSvgPoint(event.clientX, event.clientY, svg);
+    const factor = event.deltaY > 0 ? 0.92 : 1.08;
+
+    setZoom((currentZoom) => {
+      const nextZoom = Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, currentZoom * factor));
+      if (nextZoom === currentZoom) return currentZoom;
+
+      setPan((currentPan) => {
+        const worldX = (focus.x - currentPan.x) / currentZoom;
+        const worldY = (focus.y - currentPan.y) / currentZoom;
+        return {
+          x: focus.x - worldX * nextZoom,
+          y: focus.y - worldY * nextZoom,
+        };
+      });
+
+      return nextZoom;
+    });
+  }
 
   return (
-    <PageLayout>
-      <div className="mb-4 flex items-baseline justify-between">
-        <div>
-          <h1 className="font-serif text-2xl">Connections</h1>
-          <p className="text-xs text-muted-foreground">
-            Arrows show explicit references: @room and #tag.
-          </p>
+    <PageLayout
+      rightSidebar={
+        <GraphRightPanel
+          noteCount={nodes.length}
+          edgeCount={edges.length}
+          selectedNode={selectedNode}
+          incomingCount={incomingCount}
+          outgoingCount={outgoingCount}
+        />
+      }
+      middle={
+        nodes.length === 0 ? (
+          <EmptyState>No notes yet. Add notes to build your connection graph.</EmptyState>
+        ) : (
+          <div className="overflow-hidden rounded-lg border border-border bg-card/40 p-2">
+            <div className="mb-2 flex items-center justify-between text-sm text-muted-foreground">
+              <p>Drag on empty canvas to pan. Scroll to zoom.</p>
+              <Button variant="outline" size="sm" onClick={resetView}>
+                Reset view
+              </Button>
+            </div>
+            <svg
+              viewBox={GRAPH_VIEWBOX}
+              className={`h-[68vh] min-h-[420px] w-full ${isDragging ? "cursor-grabbing" : "cursor-grab"}`}
+              onMouseDown={startDrag}
+              onMouseMove={updateDrag}
+              onMouseUp={stopDrag}
+              onMouseLeave={stopDrag}
+              onWheel={zoomWithWheel}
+            >
+              <rect x="0" y="0" width="1000" height="680" fill="transparent" />
+              <defs>
+                <marker
+                  id="graph-arrow"
+                  viewBox="0 0 10 10"
+                  refX="8"
+                  refY="5"
+                  markerWidth="6"
+                  markerHeight="6"
+                  orient="auto-start-reverse"
+                >
+                  <path d="M 0 0 L 10 5 L 0 10 z" fill="rgba(255,255,255,0.45)" />
+                </marker>
+              </defs>
+
+              <g transform={`translate(${pan.x} ${pan.y}) scale(${zoom})`}>
+                {edges.map((edge) => renderEdge(edge, nodeById, zoom))}
+
+                {nodes.map((node) =>
+                  renderNode(node, {
+                    selected: node.id === selectedNoteId,
+                    onSelect: () => setSelectedNoteId(node.id),
+                    zoom,
+                  }),
+                )}
+              </g>
+            </svg>
+          </div>
+        )
+      }
+    >
+      {/* middle content is provided via the `middle` prop */}
+    </PageLayout>
+  );
+}
+
+function GraphRightPanel({
+  noteCount,
+  edgeCount,
+  selectedNode,
+  incomingCount,
+  outgoingCount,
+}: {
+  noteCount: number;
+  edgeCount: number;
+  selectedNode: GraphNode | null;
+  incomingCount: number;
+  outgoingCount: number;
+}) {
+  const summary = (
+    <div className="space-y-3 rounded-md border border-border/70 bg-card/50 p-3">
+      <div>
+        <h2 className="font-serif text-lg">Connections</h2>
+        <p className="mt-1 text-sm text-muted-foreground">
+          Arrows reflect explicit references in note text: @room and #tag.
+        </p>
+      </div>
+      <div className="flex items-center gap-3 text-sm text-muted-foreground">
+        <span>{noteCount} notes</span>
+        <span>{edgeCount} links</span>
+      </div>
+    </div>
+  );
+
+  if (!selectedNode) {
+    return (
+      <div className="page-layout-panel space-y-3">
+        {summary}
+        <p className="text-sm text-muted-foreground">Select a note node to inspect details.</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="page-layout-panel space-y-4">
+      {summary}
+
+      <div>
+        <h3 className="font-serif text-lg">{selectedNode.note.title}</h3>
+      </div>
+
+      <div className="space-y-2 rounded-md border border-border/70 bg-card/50 p-3">
+        <div className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+          Info
         </div>
-        <div className="text-xs text-muted-foreground">
-          {nodes.length} notes · {edges.length} links
+        <div className="space-y-2 text-base">
+          <div className="flex items-center gap-2">
+            <span className="w-18 text-sm text-muted-foreground">Type</span>
+            <Chip>{selectedNode.note.type}</Chip>
+          </div>
+
+          {selectedNode.note.room && (
+            <div className="flex items-center gap-2">
+              <span className="w-18 text-sm text-muted-foreground">Room</span>
+              <span>@{selectedNode.note.room}</span>
+            </div>
+          )}
+
+          {selectedNode.note.tags.length > 0 && (
+            <div className="flex items-start gap-2">
+              <span className="w-18 pt-1 text-sm text-muted-foreground">Tags</span>
+              <div className="flex flex-wrap gap-1.5">
+                {selectedNode.note.tags.map((tag) => (
+                  <Chip key={tag}>#{tag}</Chip>
+                ))}
+              </div>
+            </div>
+          )}
+
+          <div className="flex items-center gap-3 text-sm text-muted-foreground">
+            <span>Outgoing: {outgoingCount}</span>
+            <span>Incoming: {incomingCount}</span>
+          </div>
         </div>
       </div>
 
-      {nodes.length === 0 ? (
-        <EmptyState>No notes yet. Add notes to build your connection graph.</EmptyState>
-      ) : (
-        <div className="overflow-hidden rounded-lg border border-border bg-card/40 p-2">
-          <svg viewBox={GRAPH_VIEWBOX} className="h-[68vh] min-h-[420px] w-full">
-            <rect x="0" y="0" width="1000" height="680" fill="transparent" />
-            <defs>
-              <marker
-                id="graph-arrow"
-                viewBox="0 0 10 10"
-                refX="8"
-                refY="5"
-                markerWidth="6"
-                markerHeight="6"
-                orient="auto-start-reverse"
-              >
-                <path d="M 0 0 L 10 5 L 0 10 z" fill="rgba(255,255,255,0.45)" />
-              </marker>
-            </defs>
+      <div className="h-px bg-border/80" />
 
-            {edges.map((edge) => renderEdge(edge, nodeById))}
-
-            {nodes.map(renderNode)}
-          </svg>
+      <div className="space-y-1">
+        <div className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+          Details
         </div>
-      )}
-    </PageLayout>
+        {selectedNode.note.body.trim() ? (
+          <MarkdownPreview>{selectedNode.note.body}</MarkdownPreview>
+        ) : (
+          <p className="text-xs text-muted-foreground">No details written for this note yet.</p>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function renderNode(
+  node: GraphNode,
+  {
+    selected,
+    onSelect,
+    zoom,
+  }: {
+    selected: boolean;
+    onSelect: () => void;
+    zoom: number;
+  },
+) {
+  const stroke = selected ? "rgba(255,255,255,0.95)" : "rgba(0,0,0,0.35)";
+  const strokeWidth = selected ? 2 : 1;
+  const labelScale = labelScaleForZoom(zoom);
+
+  return (
+    <g
+      key={node.id}
+      role="button"
+      tabIndex={0}
+      className="cursor-pointer"
+      onClick={onSelect}
+      onKeyDown={(event) => {
+        if (event.key === "Enter" || event.key === " ") {
+          event.preventDefault();
+          onSelect();
+        }
+      }}
+    >
+      <circle
+        cx={node.x}
+        cy={node.y}
+        r={NODE_RADIUS}
+        fill={TYPE_COLOR[node.note.type]}
+        stroke={stroke}
+        strokeWidth={strokeWidth}
+      >
+        <title>{node.note.title}</title>
+      </circle>
+      <g transform={`translate(${node.x + 18} ${node.y + 5}) scale(${labelScale})`}>
+        <text fill="rgba(255,255,255,0.92)" fontSize="14" fontWeight="500">
+          {trim(node.note.title, 22)}
+        </text>
+      </g>
+    </g>
   );
 }
 
@@ -209,11 +472,9 @@ function extractReferences(note: Note): ReferenceSignals {
 
   const raw = `${note.title} ${note.body}`;
 
-  // Explicit #tag references in title/details.
   const hashMatches = raw.match(/#[\w-]+/g) ?? [];
   hashMatches.forEach((tok) => tags.add(normalizeTag(tok.slice(1))));
 
-  // Explicit @room_name references in title/details.
   const roomMatches = raw.match(/@[\w-]+/g) ?? [];
   roomMatches.forEach((tok) => rooms.add(normalizeRoom(tok.slice(1).replace(/_/g, " "))));
 
@@ -228,12 +489,13 @@ function indexNodes(nodes: GraphNode[]) {
   return map;
 }
 
-function renderEdge(edge: GraphEdge, nodeById: Map<string, GraphNode>) {
+function renderEdge(edge: GraphEdge, nodeById: Map<string, GraphNode>, zoom: number) {
   const from = nodeById.get(edge.from);
   const to = nodeById.get(edge.to);
   if (!from || !to) return null;
 
   const line = edgeGeometry(from, to, EDGE_NODE_PADDING);
+  const labelScale = labelScaleForZoom(zoom);
 
   return (
     <g key={`${edge.from}-${edge.to}`}>
@@ -246,42 +508,18 @@ function renderEdge(edge: GraphEdge, nodeById: Map<string, GraphNode>) {
         strokeWidth={Math.min(1 + edge.weight * 0.4, 3)}
         markerEnd="url(#graph-arrow)"
       />
-      <text
-        x={line.mx}
-        y={line.my - 4}
-        fill="rgba(255,255,255,0.7)"
-        fontSize="9"
-        textAnchor="middle"
-      >
-        {edge.relations.join("+")}
-      </text>
+      <g transform={`translate(${line.mx} ${line.my - 4}) scale(${labelScale})`}>
+        <text fill="rgba(255,255,255,0.7)" fontSize="9" textAnchor="middle">
+          {edge.relations.join("+")}
+        </text>
+      </g>
     </g>
   );
 }
 
-function renderNode(node: GraphNode) {
-  return (
-    <g key={node.id}>
-      <circle
-        cx={node.x}
-        cy={node.y}
-        r={NODE_RADIUS}
-        fill={TYPE_COLOR[node.note.type]}
-        stroke="rgba(0,0,0,0.35)"
-        strokeWidth={1}
-      >
-        <title>{node.note.title}</title>
-      </circle>
-      <text
-        x={node.x + 14}
-        y={node.y + 4}
-        fill="rgba(255,255,255,0.86)"
-        fontSize="11"
-      >
-        {trim(node.note.title, 24)}
-      </text>
-    </g>
-  );
+function labelScaleForZoom(zoom: number) {
+  const inverse = 1 / zoom;
+  return Math.max(MIN_LABEL_SCALE, Math.min(MAX_LABEL_SCALE, inverse));
 }
 
 function edgeGeometry(from: GraphNode, to: GraphNode, pad: number): LineGeometry {

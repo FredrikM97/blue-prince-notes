@@ -20,6 +20,20 @@
     @apply gap-3 sm:p-6;
   }
 
+  .notes-right-panel-shell {
+    @apply rounded-lg;
+    max-height: calc(100dvh - 7rem);
+    overflow-y: auto;
+    scrollbar-gutter: stable both-edges;
+  }
+
+  @media (min-width: 64rem) {
+    .notes-right-panel-shell {
+      height: calc(100dvh - 7rem);
+      overflow-y: scroll;
+    }
+  }
+
   .notes-filter-label {
     @apply mb-1.5 text-[11px] font-medium uppercase tracking-wider text-muted-foreground;
   }
@@ -43,6 +57,10 @@
 
   .capture-label {
     @apply mb-1 block text-[11px] font-medium uppercase tracking-wider text-muted-foreground;
+  }
+
+  .capture-label-row {
+    @apply mb-1 flex items-center justify-between gap-2;
   }
 
   .capture-suggestions {
@@ -112,5 +130,23 @@
 
   .notes-panel-preview-footer {
     @apply mt-3 flex justify-start border-t border-border pt-2;
+  }
+
+  /* Shared markdown surface styles with stronger table readability */
+  .markdown-preview-surface table {
+    @apply my-3 w-full border-collapse overflow-hidden rounded-md border border-border;
+  }
+
+  .markdown-preview-surface thead {
+    @apply bg-muted/40;
+  }
+
+  .markdown-preview-surface th,
+  .markdown-preview-surface td {
+    @apply border border-border px-2.5 py-1.5 text-left align-top;
+  }
+
+  .markdown-preview-surface tbody tr:nth-child(2n) {
+    @apply bg-muted/20;
   }
 }

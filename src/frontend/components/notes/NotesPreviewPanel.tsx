@@ -9,7 +9,7 @@ import {
 } from "@/frontend/components/common/dialog";
 import { MarkdownPreview } from "@/frontend/components/common/MarkdownPreview";
 
-export function NoteRowDetails({
+export function NotesPreviewPanel({
   note,
 }: {
   note: Note;

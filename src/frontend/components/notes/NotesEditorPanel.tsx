@@ -8,8 +8,9 @@ import { ImagePlus, X, HelpCircle } from "lucide-react";
 import { TYPE_LABEL } from "./constants";
 import { MarkdownEditor } from "@/frontend/components/common/MarkdownEditor";
 import { NotesShortcutHelp } from "@/frontend/components/notes/NotesShortcutHelp";
+import { formatAllMarkdownTables } from "@/frontend/components/common/markdown-table";
 
-export function NoteRowEditor({
+export function NotesEditorPanel({
   draft,
   setDraft,
   onSave,
@@ -59,11 +60,16 @@ export function NoteRowEditor({
         <MarkdownEditor
           value={draft.body}
           onChange={(v) => setDraft({ ...draft, body: v })}
+          onFormatTables={() => setDraft({ ...draft, body: formatAllMarkdownTables(draft.body) })}
           placeholder="Details (markdown supported)…"
-          rows={5}
+          rows={12}
           extraTools={shortcutToggle}
         />
-        {showHelp && <div className="mt-1"><NotesShortcutHelp /></div>}
+        {showHelp && (
+          <div className="mt-1">
+            <NotesShortcutHelp />
+          </div>
+        )}
       </div>
 
       <div className="note-editor-grid-2">
@@ -93,9 +99,9 @@ export function NoteRowEditor({
         <div>
           <label className="capture-label">Date</label>
           <input
-            type="date"
             value={draft.date ?? ""}
             onChange={(e) => setDraft({ ...draft, date: e.target.value || undefined })}
+            placeholder="Free text (e.g. Day 3, after library puzzle)"
             className={INPUT_BASE_CLASS}
           />
         </div>
@@ -185,7 +191,9 @@ export function NoteRowEditor({
 
       <div className="note-editor-footer">
         <GhostButton onClick={onCancel}>Cancel</GhostButton>
-        <BrassButton size="sm" onClick={onSave}>Save</BrassButton>
+        <BrassButton size="sm" onClick={onSave}>
+          Save
+        </BrassButton>
       </div>
     </div>
   );

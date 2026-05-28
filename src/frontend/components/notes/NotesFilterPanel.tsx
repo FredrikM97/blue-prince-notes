@@ -9,7 +9,7 @@ const TYPE_OPTIONS: { value: NoteType; label: string }[] = [
   { value: "story", label: "Stories" },
 ];
 
-export function NotesFiltersPanel({
+export function NotesFilterPanel({
   filterType,
   typeFilter,
   setTypeFilter,

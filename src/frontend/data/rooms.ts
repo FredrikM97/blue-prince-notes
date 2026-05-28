@@ -103,8 +103,6 @@ export const ROOMS_BY_CATEGORY: Record<RoomCategory, RoomDef[]> = ROOM_CATEGORIE
   {} as Record<RoomCategory, RoomDef[]>,
 );
 
-export type RoomStatus = "unknown" | "drafted" | "explored" | "cleared";
-
 // Mt. Holly map grid dimensions.
 export const GRID_COLS = 5;
 export const GRID_ROWS = 9;

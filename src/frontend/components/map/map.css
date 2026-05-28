@@ -1,25 +1,11 @@
 @layer components {
-  /* Left sidebar content */
-  .map-sidebar {
-    @apply rounded-lg border border-border bg-card/40 p-3 text-sm text-foreground;
-  }
-
-  /* Flex row: map grid on left, detail panel on right */
-  .map-layout {
-    @apply flex items-start gap-6;
-  }
-
-  /* Natural width — does NOT flex-fill so the map doesn't compress when panel opens */
+  /* Keep map centered in the middle content region */
   .map-layout-main {
-    @apply flex flex-col items-center;
+    @apply flex flex-col items-center pt-1;
   }
 
-  /* Inline detail panel — no fixed positioning, no layout shift */
   .map-panel {
-    @apply w-80 shrink-0 overflow-y-auto rounded-lg border border-border bg-card p-4;
-    max-height: calc(100dvh - 3.5rem - 3rem);
-    position: sticky;
-    top: calc(3.5rem + 1.5rem);
+    @apply rounded-lg border border-border bg-card p-4;
   }
 
   .map-panel-header {
@@ -31,7 +17,7 @@
   }
 
   .map-cell {
-    @apply flex aspect-square flex-col items-center justify-center gap-0.5 rounded-md border p-1.5 text-center transition hover:scale-[1.03] hover:border-brass;
+    @apply relative z-0 flex aspect-square flex-col items-center justify-center gap-0.5 rounded-md border p-1.5 text-center transition hover:z-10 hover:scale-[1.03] hover:border-brass;
   }
 
   .map-cell-neutral {

@@ -1,198 +1,293 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { EmptyState } from "@/frontend/components/common/EmptyState";
 import { useStore } from "@/frontend/data/store";
-import { Chip } from "@/frontend/components/common/Chip";
-import { Button, BrassButton, GhostButton } from "@/frontend/components/common/button";
-import { INPUT_BASE_CLASS } from "@/frontend/components/common/formClasses";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/frontend/components/common/dialog";
+import { Button, GhostButton } from "@/frontend/components/common/button";
 import { PageLayout } from "@/frontend/components/common/PageLayout";
-import { Download, Trash2, Copy } from "lucide-react";
-import { toast } from "sonner";
-import type { StoredImage } from "@/lib/types";
+import { MarkdownPreview } from "@/frontend/components/common/MarkdownPreview";
+import { StoredImageView } from "@/frontend/components/StoredImageView";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/frontend/components/common/dialog";
+import { Trash2, ChevronLeft, ChevronRight, Expand } from "lucide-react";
+import type { Note, StoredImage } from "@/lib/types";
 
 export function ImagesPage() {
   const images = useStore((s) => s.images);
+  const notes = useStore((s) => s.notes);
   const removeImage = useStore((s) => s.removeImage);
-  const updateImage = useStore((s) => s.updateImage);
   const search = useStore((s) => s.search);
-  const [selected, setSelected] = useState<StoredImage | null>(null);
+  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [previewOpen, setPreviewOpen] = useState(false);
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
     if (!q) return images;
-    return images.filter((i) =>
-      `${i.name} ${i.caption ?? ""} ${i.tags.join(" ")}`.toLowerCase().includes(q),
-    );
+    return images.filter((i) => `${i.name}`.toLowerCase().includes(q));
   }, [images, search]);
 
+  const selectedIndex = useMemo(
+    () => filtered.findIndex((img) => img.id === selectedId),
+    [filtered, selectedId],
+  );
+  const selected = selectedIndex >= 0 ? filtered[selectedIndex] : null;
+
+  const relatedNotes = useMemo(
+    () => (selected ? notes.filter((note) => note.imageIds.includes(selected.id)) : []),
+    [notes, selected],
+  );
+
+  useEffect(() => {
+    if (!selectedId) return;
+    if (!filtered.some((img) => img.id === selectedId)) {
+      setSelectedId(filtered[0]?.id ?? null);
+      setPreviewOpen(false);
+    }
+  }, [filtered, selectedId]);
+
+  const selectByOffset = useCallback(
+    (offset: number) => {
+      if (filtered.length === 0) return;
+      if (selectedIndex < 0) {
+        setSelectedId(filtered[0].id);
+        return;
+      }
+      const next = (selectedIndex + offset + filtered.length) % filtered.length;
+      setSelectedId(filtered[next].id);
+    },
+    [filtered, selectedIndex],
+  );
+
+  useEffect(() => {
+    function onKeyDown(e: KeyboardEvent) {
+      const target = e.target as HTMLElement | null;
+      const typing = target && /input|textarea|select|button/i.test(target.tagName);
+      if (typing) return;
+
+      if (e.key === "ArrowLeft") {
+        e.preventDefault();
+        selectByOffset(-1);
+      } else if (e.key === "ArrowRight") {
+        e.preventDefault();
+        selectByOffset(1);
+      } else if (e.key === "Enter") {
+        if (!selected) return;
+        e.preventDefault();
+        setPreviewOpen(true);
+      } else if (e.key === "Escape") {
+        setPreviewOpen(false);
+      }
+    }
+
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [selected, selectByOffset]);
+
   return (
-    <PageLayout>
-      <header className="images-page-header">
-        <h1>Images</h1>
-        <p>Upload images from note capture or note editing.</p>
-      </header>
-
-      {filtered.length === 0 ? (
-        <EmptyState>No images yet. Add one from note capture or from a note&apos;s editor.</EmptyState>
-      ) : (
-        <div className="images-grid">
-          {filtered.map((img) => (
-            <ImageThumb key={img.id} img={img} onClick={() => setSelected(img)} />
-          ))}
-        </div>
-      )}
-
-      <Dialog open={!!selected} onOpenChange={(o) => !o && setSelected(null)}>
-        <DialogContent className="images-dialog-content">
-          {selected && (
-            <ImageDetail
-              img={selected}
-              onUpdate={async (i) => {
-                await updateImage(i);
-                setSelected(i);
-              }}
-              onDelete={async () => {
-                if (confirm("Delete this image?")) {
-                  await removeImage(selected.id);
-                  setSelected(null);
-                }
-              }}
-            />
-          )}
-        </DialogContent>
-      </Dialog>
+    <PageLayout
+      leftSidebar={<ImagesLeftPanel total={filtered.length} />}
+      middle={
+        filtered.length === 0 ? (
+          <EmptyState>
+            No images yet. Add one from note capture or from a note&apos;s editor.
+          </EmptyState>
+        ) : (
+          <div className="images-grid">
+            {filtered.map((img) => (
+              <ImageThumb
+                key={img.id}
+                img={img}
+                selected={img.id === selectedId}
+                onClick={() => setSelectedId(img.id)}
+              />
+            ))}
+          </div>
+        )
+      }
+      rightSidebar={
+        <ImagesRightPanel
+          img={selected}
+          relatedNotes={relatedNotes}
+          previewOpen={previewOpen}
+          setPreviewOpen={setPreviewOpen}
+          onPrev={() => selectByOffset(-1)}
+          onNext={() => selectByOffset(1)}
+          onDelete={async () => {
+            if (!selected) return;
+            await removeImage(selected.id);
+            if (filtered.length <= 1) {
+              setSelectedId(null);
+              return;
+            }
+            selectByOffset(1);
+          }}
+        />
+      }
+    >
+      {/* middle content is provided via the `middle` prop */}
     </PageLayout>
   );
 }
 
-function ImageThumb({ img, onClick }: { img: StoredImage; onClick: () => void }) {
-  const [url, setUrl] = useState<string>();
-  useEffect(() => {
-    const u = URL.createObjectURL(img.blob);
-    setUrl(u);
-    return () => URL.revokeObjectURL(u);
-  }, [img.blob]);
+function ImagesLeftPanel({ total }: { total: number }) {
   return (
-    <button onClick={onClick} className="group images-thumb">
-      {url && <img src={url} alt={img.name} className="images-thumb-image" />}
+    <div className="page-layout-panel">
+      <h1 className="font-serif text-2xl">Images</h1>
+      <p className="mt-1 text-xs text-muted-foreground">{total} stored images</p>
+      <p className="mt-3 text-xs text-muted-foreground">
+        Click an image to open details in the right panel. Use the preview button there for full
+        size.
+      </p>
+    </div>
+  );
+}
+
+function ImageThumb({
+  img,
+  selected,
+  onClick,
+}: {
+  img: StoredImage;
+  selected: boolean;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      onClick={onClick}
+      className={`group images-thumb ${selected ? "images-thumb-selected" : ""}`}
+    >
+      <StoredImageView id={img.id} alt={img.name} className="images-thumb-image" />
       <div className="images-thumb-overlay">
         <div className="images-thumb-name">{img.name}</div>
-        {img.tags.length > 0 && (
-          <div className="images-thumb-tags">
-            {img.tags.slice(0, 3).map((t) => (
-              <span key={t} className="images-thumb-tag">
-                #{t}
-              </span>
-            ))}
-          </div>
-        )}
       </div>
     </button>
   );
 }
 
-function ImageDetail({
+function ImagesRightPanel({
   img,
-  onUpdate,
+  relatedNotes,
+  previewOpen,
+  setPreviewOpen,
+  onPrev,
+  onNext,
   onDelete,
 }: {
-  img: StoredImage;
-  onUpdate: (img: StoredImage) => void;
+  img: StoredImage | null;
+  relatedNotes: Note[];
+  previewOpen: boolean;
+  setPreviewOpen: React.Dispatch<React.SetStateAction<boolean>>;
+  onPrev: () => void;
+  onNext: () => void;
   onDelete: () => void;
 }) {
-  const [url, setUrl] = useState<string>();
-  const [caption, setCaption] = useState(img.caption ?? "");
-  const [tags, setTags] = useState(img.tags.join(" "));
-  const [name, setName] = useState(img.name);
-
-  useEffect(() => {
-    const u = URL.createObjectURL(img.blob);
-    setUrl(u);
-    return () => URL.revokeObjectURL(u);
-  }, [img.blob]);
-
-  function download() {
-    if (!url) return;
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = img.name;
-    a.click();
-  }
-
-  async function copy() {
-    try {
-      await navigator.clipboard.write([
-        new ClipboardItem({ [img.blob.type || "image/png"]: img.blob }),
-      ]);
-      toast.success("Image copied");
-    } catch {
-      toast.error("Couldn't copy image");
-    }
+  if (!img) {
+    return (
+      <div className="page-layout-panel images-right-panel text-muted-foreground">
+        Select an image to view details.
+      </div>
+    );
   }
 
   return (
+    <ImagesInspectorPanel
+      img={img}
+      relatedNotes={relatedNotes}
+      previewOpen={previewOpen}
+      setPreviewOpen={setPreviewOpen}
+      onPrev={onPrev}
+      onNext={onNext}
+      onDelete={onDelete}
+    />
+  );
+}
+
+function ImagesInspectorPanel({
+  img,
+  relatedNotes,
+  previewOpen,
+  setPreviewOpen,
+  onPrev,
+  onNext,
+  onDelete,
+}: {
+  img: StoredImage;
+  relatedNotes: Note[];
+  previewOpen: boolean;
+  setPreviewOpen: React.Dispatch<React.SetStateAction<boolean>>;
+  onPrev: () => void;
+  onNext: () => void;
+  onDelete: () => void;
+}) {
+  useEffect(() => {
+    setPreviewOpen(false);
+  }, [img, setPreviewOpen]);
+
+  return (
     <>
-      <DialogHeader>
-        <DialogTitle className="images-detail-title">{img.name}</DialogTitle>
-      </DialogHeader>
-      <div className="images-detail-preview">
-        {url && <img src={url} alt={img.name} className="images-detail-preview-image" />}
-      </div>
-      <div className="images-detail-form">
-        <input
-          className={INPUT_BASE_CLASS}
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          placeholder="Name"
-        />
-        <input
-          className={INPUT_BASE_CLASS}
-          value={caption}
-          onChange={(e) => setCaption(e.target.value)}
-          placeholder="Caption"
-        />
-        <input
-          className={INPUT_BASE_CLASS}
-          value={tags}
-          onChange={(e) => setTags(e.target.value)}
-          placeholder="Tags (space-separated)"
-        />
-        <div className="images-detail-tags">
-          {tags
-            .split(/\s+/)
-            .filter(Boolean)
-            .map((t) => (
-              <Chip key={t} className="images-detail-chip">
-                #{t}
-              </Chip>
-            ))}
+      <div className="page-layout-panel images-right-panel">
+        <div className="images-inspector-preview">
+          <div className="images-right-header">
+            <h2 className="images-detail-title">{img.name}</h2>
+            <div className="images-nav-buttons">
+              <Button variant="outline" size="icon" onClick={onPrev} aria-label="Previous image">
+                <ChevronLeft />
+              </Button>
+              <Button variant="outline" size="icon" onClick={onNext} aria-label="Next image">
+                <ChevronRight />
+              </Button>
+            </div>
+          </div>
+
+          <div className="images-detail-preview">
+            <StoredImageView id={img.id} alt={img.name} className="images-detail-preview-image" />
+          </div>
+        </div>
+
+        <div className="images-inspector-meta">
+          <h3 className="images-linked-notes-title">Details from notes</h3>
+          <div className="images-linked-notes-list">
+            {relatedNotes.length > 0 ? (
+              relatedNotes.slice(0, 3).map((note) => (
+                <div key={note.id} className="images-linked-note-item">
+                  <p className="images-linked-note-name">{note.title}</p>
+                  {note.body.trim() ? (
+                    <MarkdownPreview>{note.body}</MarkdownPreview>
+                  ) : (
+                    <p className="images-size-info">No details on this note yet.</p>
+                  )}
+                </div>
+              ))
+            ) : (
+              <p className="images-size-info">No notes currently reference this image.</p>
+            )}
+          </div>
+
+          <div className="images-detail-actions">
+            <Button variant="outline" size="sm" onClick={() => setPreviewOpen(true)}>
+              <Expand /> Open preview
+            </Button>
+            <div className="images-detail-actions-right">
+              <GhostButton className="text-destructive hover:text-destructive" onClick={onDelete}>
+                <Trash2 />
+              </GhostButton>
+            </div>
+          </div>
         </div>
       </div>
-      <div className="images-detail-actions">
-        <Button variant="outline" size="sm" onClick={download}>
-          <Download /> Download
-        </Button>
-        <Button variant="outline" size="sm" onClick={copy}>
-          <Copy /> Copy
-        </Button>
-        <BrassButton
-          size="sm"
-          className="ml-auto"
-          onClick={() =>
-            onUpdate({
-              ...img,
-              name,
-              caption: caption || undefined,
-              tags: tags.split(/\s+/).filter(Boolean),
-            })
-          }
-        >
-          Save
-        </BrassButton>
-        <GhostButton className="text-destructive hover:text-destructive" onClick={onDelete}>
-          <Trash2 />
-        </GhostButton>
-      </div>
+
+      <Dialog open={previewOpen} onOpenChange={setPreviewOpen}>
+        <DialogContent className="images-zoom-dialog">
+          <DialogHeader>
+            <DialogTitle>{img.name}</DialogTitle>
+          </DialogHeader>
+          <div className="images-zoom-preview">
+            <StoredImageView id={img.id} alt={img.name} className="images-zoom-image" />
+          </div>
+        </DialogContent>
+      </Dialog>
     </>
   );
 }

@@ -10,10 +10,10 @@ import {
   createRouter,
   useRouter,
 } from "@tanstack/react-router";
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { AppHeader } from "@/frontend/components/AppHeader";
-import { NotesPanel } from "@/frontend/components/notes/NotesPanel";
-import { NotesView } from "@/frontend/components/notes/NotesView";
+import { Button } from "@/frontend/components/common/button";
+import { NotesPage } from "@/frontend/components/notes/NotesPage";
 import { Toaster } from "@/frontend/components/common/sonner";
 import { useStore } from "@/frontend/data/store";
 import { SettingsPage } from "@/frontend/components/settings/SettingsPage";
@@ -52,7 +52,9 @@ const indexRoute = createRoute({
       { name: "description", content: "All your Blue Prince notes, clues, codes and theories." },
     ],
   }),
-  component: () => <NotesView title="Notes" emptyHint="No notes yet. Press N anywhere to add one." />,
+  component: () => (
+    <NotesPage title="Notes" emptyHint="No notes yet. Press N anywhere to add one." />
+  ),
 });
 
 const settingsRoute = createRoute({
@@ -89,7 +91,7 @@ function RootShell({ children }: { children: React.ReactNode }) {
     "try{const v=localStorage.getItem('bp-theme');const d=window.matchMedia('(prefers-color-scheme: dark)').matches;document.documentElement.classList.toggle('dark',v?v==='dark':d);}catch{}";
 
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
       <head>
         <script dangerouslySetInnerHTML={{ __html: themeScript }} />
         <HeadContent />
@@ -105,14 +107,48 @@ function RootShell({ children }: { children: React.ReactNode }) {
 function AppFrame({ children }: { children: React.ReactNode }) {
   const load = useStore((s) => s.load);
   const loaded = useStore((s) => s.loaded);
+  const [showBackupNotice, setShowBackupNotice] = useState(false);
+
   useEffect(() => {
     if (!loaded) void load();
   }, [load, loaded]);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    try {
+      const dismissed = window.localStorage.getItem("bp-backup-notice-dismissed") === "1";
+      if (!dismissed) setShowBackupNotice(true);
+    } catch {
+      setShowBackupNotice(true);
+    }
+  }, []);
+
+  function dismissBackupNotice() {
+    setShowBackupNotice(false);
+    try {
+      window.localStorage.setItem("bp-backup-notice-dismissed", "1");
+    } catch {
+      // Ignore localStorage failures and only dismiss for the current session.
+    }
+  }
+
   return (
-    <div className="min-h-screen bg-background pb-32 text-foreground">
+    <div className="min-h-screen bg-background pb-20 text-foreground sm:pb-32">
       <AppHeader />
+      {showBackupNotice && (
+        <div className="border-b border-brass/40 bg-brass/15">
+          <div className="mx-auto flex w-full max-w-7xl flex-wrap items-center justify-between gap-2 px-3 py-2 text-sm sm:px-4">
+            <p className="text-foreground">
+              Local-only storage: manually use Export all (ZIP) regularly. There is currently no
+              cloud backup.
+            </p>
+            <Button variant="outline" size="sm" onClick={dismissBackupNotice}>
+              Dismiss
+            </Button>
+          </div>
+        </div>
+      )}
       {children}
-      <NotesPanel />
       <Toaster />
     </div>
   );
@@ -193,5 +229,5 @@ function SectionPage() {
   if (section.builtin === "graph") return <GraphPage />;
   if (section.builtin === "images") return <ImagesPage />;
 
-  return <NotesView filterType={section.filter?.type} title={section.label} />;
+  return <NotesPage filterType={section.filter?.type} title={section.label} />;
 }

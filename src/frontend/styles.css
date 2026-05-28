@@ -7,7 +7,7 @@
 @import "./components/app-header.css";
 @import "./components/common/layout.css";
 @import "./components/notes/notes.css";
-@import "./components/note-row/note-row.css";
+@import "./components/notes/note-row.css";
 @import "./components/images/images.css";
 @import "./components/map/map.css";
 @import "./components/todos/todos.css";
@@ -180,11 +180,20 @@
   body {
     background-color: var(--color-background);
     color: var(--color-foreground);
-    font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    font-family:
+      ui-sans-serif,
+      system-ui,
+      -apple-system,
+      "Segoe UI",
+      Roboto,
+      sans-serif;
     line-height: 1.5;
   }
 
-  h1, h2, h3, .font-serif {
+  h1,
+  h2,
+  h3,
+  .font-serif {
     font-family: var(--font-serif);
     letter-spacing: -0.01em;
   }

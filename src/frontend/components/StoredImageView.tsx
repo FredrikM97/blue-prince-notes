@@ -1,5 +1,4 @@
 import { useEffect, useState } from "react";
-import type { StoredImage } from "@/lib/types";
 import { getImage } from "@/frontend/data/db";
 
 export function StoredImageView({
@@ -27,8 +26,4 @@ export function StoredImageView({
   }, [id]);
   if (!url) return <div className={`bg-muted ${className ?? ""}`} />;
   return <img src={url} alt={alt ?? ""} className={className} />;
-}
-
-export function imageUrl(img: StoredImage) {
-  return URL.createObjectURL(img.blob);
 }

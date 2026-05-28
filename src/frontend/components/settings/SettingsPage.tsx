@@ -2,7 +2,7 @@ import { useMemo, useRef } from "react";
 import type { ReactNode } from "react";
 import { useStore } from "@/frontend/data/store";
 import { Button, BrassButton } from "@/frontend/components/common/button";
-import { Kbd } from "@/frontend/components/common/kbd";
+import { KeyboardKey } from "@/frontend/components/common/KeyboardKey";
 import { PageLayout } from "@/frontend/components/common/PageLayout";
 import { exportAll, importAll } from "@/frontend/data/io";
 import { toast } from "sonner";
@@ -36,8 +36,12 @@ export function SettingsPage() {
 
       <SettingsSection title="Data">
         <div className="flex flex-wrap gap-2">
-          <BrassButton onClick={() => exportAll().then(() => toast.success("Exported"))}>Export ZIP</BrassButton>
-          <Button variant="outline" onClick={() => fileRef.current?.click()}>Import (merge)...</Button>
+          <BrassButton onClick={() => exportAll().then(() => toast.success("Exported"))}>
+            Export ZIP
+          </BrassButton>
+          <Button variant="outline" onClick={() => fileRef.current?.click()}>
+            Import (merge)...
+          </Button>
           <Button
             variant="outline"
             onClick={async () => {
@@ -90,9 +94,16 @@ export function SettingsPage() {
 
       <SettingsSection title="Keyboard">
         <ul className="space-y-1 text-sm text-muted-foreground">
-          <li><Kbd>N</Kbd> - open quick capture</li>
-          <li><Kbd>Esc</Kbd> - close capture</li>
-          <li><Kbd>Enter</Kbd> - save · <Kbd>Shift+Enter</Kbd> - save &amp; keep open</li>
+          <li>
+            <KeyboardKey>N</KeyboardKey> - open quick capture
+          </li>
+          <li>
+            <KeyboardKey>Esc</KeyboardKey> - close capture
+          </li>
+          <li>
+            <KeyboardKey>Ctrl+Enter</KeyboardKey> - save ·{" "}
+            <KeyboardKey>Ctrl+Shift+Enter</KeyboardKey> - save &amp; keep open
+          </li>
         </ul>
       </SettingsSection>
     </PageLayout>

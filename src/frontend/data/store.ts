@@ -63,6 +63,7 @@ interface State {
     kind?: "note" | "todo";
     prefill?: string;
     room?: string;
+    noteType?: NoteType;
     note?: Note;
     todo?: Todo;
   }) => void;
@@ -75,6 +76,7 @@ interface State {
       imageBlobs?: Blob[];
       body?: string;
       type?: NoteType;
+      date?: string;
       room?: string;
       tags?: string[];
       priority?: Priority;
@@ -103,9 +105,9 @@ interface State {
 const BUILTIN_SECTIONS: SectionDef[] = [
   { id: "notes", label: "Notes", builtin: "notes", order: 0 },
   { id: "todos", label: "Todo", builtin: "todos", order: 1 },
-  { id: "map", label: "Map", builtin: "map", order: 2 },
-  { id: "graph", label: "Graph", builtin: "graph", order: 3 },
-  { id: "books", label: "Story", filter: { type: "story" }, order: 4 },
+  { id: "books", label: "Story", filter: { type: "story" }, order: 2 },
+  { id: "map", label: "Map", builtin: "map", order: 3 },
+  { id: "graph", label: "Graph", builtin: "graph", order: 4 },
   { id: "images", label: "Images", builtin: "images", order: 5 },
 ];
 
@@ -139,10 +141,10 @@ async function ensureSeed(existing: SectionDef[]) {
     };
 
     const changed =
-      prev.label !== next.label
-      || prev.order !== next.order
-      || prev.builtin !== next.builtin
-      || prev.filter?.type !== next.filter?.type;
+      prev.label !== next.label ||
+      prev.order !== next.order ||
+      prev.builtin !== next.builtin ||
+      prev.filter?.type !== next.filter?.type;
 
     if (changed) await putSection(next);
   }
@@ -254,23 +256,24 @@ export const useStore = create<State>((set, get) => ({
       capturePrefillRoom: opts?.room,
       capturePrefillBody: "",
       capturePrefillTags: "",
-      capturePrefillType: undefined,
+      capturePrefillType: opts?.noteType,
       capturePrefillPriority: undefined,
       captureEditNoteId: undefined,
       captureEditTodoId: undefined,
     });
   },
-  closeCapture: () => set({
-    captureOpen: false,
-    capturePrefill: "",
-    capturePrefillRoom: undefined,
-    capturePrefillBody: "",
-    capturePrefillTags: "",
-    capturePrefillType: undefined,
-    capturePrefillPriority: undefined,
-    captureEditNoteId: undefined,
-    captureEditTodoId: undefined,
-  }),
+  closeCapture: () =>
+    set({
+      captureOpen: false,
+      capturePrefill: "",
+      capturePrefillRoom: undefined,
+      capturePrefillBody: "",
+      capturePrefillTags: "",
+      capturePrefillType: undefined,
+      capturePrefillPriority: undefined,
+      captureEditNoteId: undefined,
+      captureEditTodoId: undefined,
+    }),
 
   async createFromCapture(raw, opts) {
     const parsed = parseCapture(raw);
@@ -310,7 +313,7 @@ export const useStore = create<State>((set, get) => ({
       body: opts?.body?.trim() ?? "",
       room,
       tags,
-      date: parsed.date,
+      date: opts?.date?.trim() || parsed.date,
       status: parsed.status as NoteStatus,
       scope: parsed.scope as RunScope,
       imageIds,
@@ -422,9 +425,3 @@ export const useStore = create<State>((set, get) => ({
     set((s) => ({ gridCells: s.gridCells.filter((c) => c.id !== id) }));
   },
 }));
-
-// Hook for image blob URLs
-export function useImageUrl(image: StoredImage | undefined): string | undefined {
-  if (!image || typeof URL === "undefined") return undefined;
-  return URL.createObjectURL(image.blob);
-}

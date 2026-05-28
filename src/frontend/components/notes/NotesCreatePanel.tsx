@@ -4,13 +4,6 @@ import { INPUT_BASE_CLASS } from "@/frontend/components/common/formClasses";
 import { GhostButton, BrassButton, IconButton } from "@/frontend/components/common/button";
 import { Tabs, TabsList, TabsTrigger } from "@/frontend/components/common/tabs";
 import {
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-  DialogFooter,
-} from "@/frontend/components/common/dialog";
-import { SidebarPanel } from "@/frontend/components/common/sidebar-panel";
-import {
   Select,
   SelectContent,
   SelectItem,
@@ -25,6 +18,7 @@ import { NOTE_TYPES } from "@/frontend/components/notes/constants";
 import { NotesShortcutHelp } from "@/frontend/components/notes/NotesShortcutHelp";
 import { PendingImageList } from "@/frontend/components/notes/PendingImageList";
 import { MarkdownEditor } from "@/frontend/components/common/MarkdownEditor";
+import { formatAllMarkdownTables } from "@/frontend/components/common/markdown-table";
 
 interface NotesSuggestion {
   value: string;
@@ -37,16 +31,16 @@ type NotesFormState = ReturnType<typeof useNotesFormState>;
 function useNotesStoreSlice() {
   const open = useStore((s) => s.captureOpen);
   const close = useStore((s) => s.closeCapture);
-  const openCap = useStore((s) => s.openCapture);
   const kind = useStore((s) => s.captureDefault);
   const prefill = useStore((s) => s.capturePrefill);
   const prefillRoom = useStore((s) => s.capturePrefillRoom);
+  const prefillType = useStore((s) => s.capturePrefillType);
   const gridCells = useStore((s) => s.gridCells);
   const notes = useStore((s) => s.notes);
   const todos = useStore((s) => s.todos);
   const create = useStore((s) => s.createFromCapture);
 
-  return { open, close, openCap, kind, prefill, prefillRoom, gridCells, notes, todos, create };
+  return { open, close, kind, prefill, prefillRoom, prefillType, gridCells, notes, todos, create };
 }
 
 function useNotesFormState({
@@ -54,16 +48,21 @@ function useNotesFormState({
   kind,
   prefill,
   prefillRoom,
+  prefillType,
+  defaultNoteType,
 }: {
   open: boolean;
   kind: "note" | "todo";
   prefill: string;
   prefillRoom?: string;
+  prefillType?: NoteType;
+  defaultNoteType?: NoteType;
 }) {
   const [mode, setMode] = useState<"note" | "todo">(kind);
   const [title, setTitle] = useState("");
   const [type, setType] = useState<NoteType>("observation");
   const [room, setRoom] = useState<string>("");
+  const [dateInput, setDateInput] = useState("");
   const [roomFocused, setRoomFocused] = useState(false);
   const [tagsInput, setTagsInput] = useState("");
   const [priority, setPriority] = useState<Priority>("med");
@@ -77,8 +76,9 @@ function useNotesFormState({
     if (!open) return;
     setMode(kind);
     setTitle(prefill);
-    setType("observation");
+    setType(prefillType ?? defaultNoteType ?? "observation");
     setRoom(prefillRoom ?? "");
+    setDateInput("");
     setTagsInput("");
     setPriority("med");
     setBody("");
@@ -86,11 +86,12 @@ function useNotesFormState({
     setPendingImages([]);
     setCursorPos(prefill.length);
     setTimeout(() => inputRef.current?.focus(), 50);
-  }, [open, kind, prefill, prefillRoom]);
+  }, [open, kind, prefill, prefillRoom, prefillType, defaultNoteType]);
 
   function resetAfterSubmit() {
     setTitle("");
     setBody("");
+    setDateInput("");
     setPendingImages([]);
     setTimeout(() => inputRef.current?.focus(), 0);
   }
@@ -104,6 +105,8 @@ function useNotesFormState({
     setType,
     room,
     setRoom,
+    dateInput,
+    setDateInput,
     roomFocused,
     setRoomFocused,
     tagsInput,
@@ -244,16 +247,14 @@ function NotesRoomField({
   );
 }
 
-function NotesPanelHeader({ mode }: { mode: "note" | "todo" }) {
+function NotesCreateHeader({ mode }: { mode: "note" | "todo" }) {
   return (
-    <DialogHeader className="capture-header">
-      <DialogTitle className="font-serif text-lg">
-        New {mode === "todo" ? "todo" : "note"}
-      </DialogTitle>
-      <DialogDescription className="text-xs leading-4">
+    <div className="capture-header">
+      <h2 className="font-serif text-lg">New {mode === "todo" ? "todo" : "note"}</h2>
+      <p className="text-xs leading-4 text-muted-foreground">
         Fill in the fields below, or type commands like @room, #tag, and !todo.
-      </DialogDescription>
-    </DialogHeader>
+      </p>
+    </div>
   );
 }
 
@@ -286,6 +287,8 @@ function NotesMetaFields({
   setPriority,
   room,
   setRoom,
+  dateInput,
+  setDateInput,
   roomFocused,
   setRoomFocused,
   roomFieldSuggestions,
@@ -297,52 +300,68 @@ function NotesMetaFields({
   setPriority: React.Dispatch<React.SetStateAction<Priority>>;
   room: string;
   setRoom: React.Dispatch<React.SetStateAction<string>>;
+  dateInput: string;
+  setDateInput: React.Dispatch<React.SetStateAction<string>>;
   roomFocused: boolean;
   setRoomFocused: React.Dispatch<React.SetStateAction<boolean>>;
   roomFieldSuggestions: string[];
 }) {
   return (
-    <div className="capture-two-col">
-      {mode === "note" ? (
+    <>
+      <div className="capture-two-col">
+        {mode === "note" ? (
+          <div>
+            <label className="capture-label">Type / category</label>
+            <Select value={type} onValueChange={(v) => setType(v as NoteType)}>
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {NOTE_TYPES.map((noteType) => (
+                  <SelectItem key={noteType.value} value={noteType.value}>
+                    {noteType.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        ) : (
+          <div>
+            <label className="capture-label">Priority</label>
+            <Select value={priority} onValueChange={(v) => setPriority(v as Priority)}>
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="high">High</SelectItem>
+                <SelectItem value="med">Medium</SelectItem>
+                <SelectItem value="low">Low</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        )}
+
+        <NotesRoomField
+          room={room}
+          setRoom={setRoom}
+          roomFocused={roomFocused}
+          setRoomFocused={setRoomFocused}
+          roomFieldSuggestions={roomFieldSuggestions}
+        />
+      </div>
+
+      {mode === "note" && (
         <div>
-          <label className="capture-label">Type / category</label>
-          <Select value={type} onValueChange={(v) => setType(v as NoteType)}>
-            <SelectTrigger>
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {NOTE_TYPES.map((noteType) => (
-                <SelectItem key={noteType.value} value={noteType.value}>
-                  {noteType.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-      ) : (
-        <div>
-          <label className="capture-label">Priority</label>
-          <Select value={priority} onValueChange={(v) => setPriority(v as Priority)}>
-            <SelectTrigger>
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="high">High</SelectItem>
-              <SelectItem value="med">Medium</SelectItem>
-              <SelectItem value="low">Low</SelectItem>
-            </SelectContent>
-          </Select>
+          <label className="capture-label">Date</label>
+          <input
+            value={dateInput}
+            onChange={(e) => setDateInput(e.target.value)}
+            placeholder="Free text (e.g. Day 3, after library puzzle)"
+            className={INPUT_BASE_CLASS}
+          />
         </div>
       )}
-
-      <NotesRoomField
-        room={room}
-        setRoom={setRoom}
-        roomFocused={roomFocused}
-        setRoomFocused={setRoomFocused}
-        roomFieldSuggestions={roomFieldSuggestions}
-      />
-    </div>
+    </>
   );
 }
 
@@ -401,22 +420,29 @@ function NotesDetailsSection({
       <MarkdownEditor
         value={body}
         onChange={setBody}
+        onFormatTables={() => setBody(formatAllMarkdownTables(body))}
         placeholder={mode === "todo" ? "Details about this todo…" : "Longer note, paste evidence…"}
-        rows={6}
+        rows={12}
         extraTools={shortcutToggle}
       />
-      {showHelp && <div className="mt-1"><NotesShortcutHelp /></div>}
+      {showHelp && (
+        <div className="mt-1">
+          <NotesShortcutHelp />
+        </div>
+      )}
     </div>
   );
 }
 
-function NotesAttachmentsSection({
+function NotesFooterActions({
+  submit,
   setPendingImages,
 }: {
+  submit: (keepOpen: boolean) => void | Promise<void>;
   setPendingImages: React.Dispatch<React.SetStateAction<Blob[]>>;
 }) {
   return (
-    <div className="capture-actions-row">
+    <div className="capture-footer">
       <label className="capture-attach-label">
         <span className="inline-flex items-center gap-1">
           <ImagePlus className="h-3.5 w-3.5" /> Attach image
@@ -433,19 +459,11 @@ function NotesAttachmentsSection({
           }}
         />
       </label>
-    </div>
-  );
-}
-
-function NotesFooterActions({ submit }: { submit: (keepOpen: boolean) => void | Promise<void> }) {
-  return (
-    <DialogFooter className="capture-footer">
-      <p className="capture-footer-hint">Ctrl+Enter to save · Shift to stay open</p>
-      <div className="flex gap-2">
+      <div className="flex gap-2 sm:ml-auto">
         <GhostButton onClick={() => submit(true)}>Save &amp; add another</GhostButton>
         <BrassButton onClick={() => submit(false)}>Save</BrassButton>
       </div>
-    </DialogFooter>
+    </div>
   );
 }
 
@@ -502,26 +520,11 @@ function useNotesDerivedData({
 
 function useNotesGlobalEffects({
   open,
-  openCapture,
   setPendingImages,
 }: {
   open: boolean;
-  openCapture: () => void;
   setPendingImages: React.Dispatch<React.SetStateAction<Blob[]>>;
 }) {
-  useEffect(() => {
-    function onKey(e: KeyboardEvent) {
-      const tgt = e.target as HTMLElement;
-      const typing = tgt && /input|textarea|select/i.test(tgt.tagName);
-      if ((e.key === "n" || e.key === "N") && !typing && !e.metaKey && !e.ctrlKey && !open) {
-        e.preventDefault();
-        openCapture();
-      }
-    }
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, [open, openCapture]);
-
   useEffect(() => {
     function onPaste(e: ClipboardEvent) {
       if (!open) return;
@@ -555,6 +558,7 @@ function useNotesSubmit({
   body,
   type,
   room,
+  dateInput,
   tagsInput,
   priority,
   resetAfterSubmit,
@@ -567,6 +571,7 @@ function useNotesSubmit({
   body: NotesFormState["body"];
   type: NotesFormState["type"];
   room: NotesFormState["room"];
+  dateInput: NotesFormState["dateInput"];
   tagsInput: NotesFormState["tagsInput"];
   priority: NotesFormState["priority"];
   resetAfterSubmit: NotesFormState["resetAfterSubmit"];
@@ -581,6 +586,7 @@ function useNotesSubmit({
       imageBlobs: pendingImages,
       body,
       type: mode === "note" ? type : undefined,
+      date: mode === "note" ? dateInput || undefined : undefined,
       room: room || undefined,
       tags,
       priority: mode === "todo" ? priority : undefined,
@@ -594,13 +600,15 @@ function useNotesSubmit({
   };
 }
 
-export function NotesPanel() {
+export function NotesCreatePanel({ defaultNoteType }: { defaultNoteType?: NoteType }) {
   const store = useNotesStoreSlice();
   const form = useNotesFormState({
     open: store.open,
     kind: store.kind,
     prefill: store.prefill,
     prefillRoom: store.prefillRoom,
+    prefillType: store.prefillType,
+    defaultNoteType,
   });
   const derived = useNotesDerivedData({
     gridCells: store.gridCells,
@@ -613,7 +621,6 @@ export function NotesPanel() {
 
   useNotesGlobalEffects({
     open: store.open,
-    openCapture: store.openCap,
     setPendingImages: form.setPendingImages,
   });
 
@@ -626,14 +633,15 @@ export function NotesPanel() {
     body: form.body,
     type: form.type,
     room: form.room,
+    dateInput: form.dateInput,
     tagsInput: form.tagsInput,
     priority: form.priority,
     resetAfterSubmit: form.resetAfterSubmit,
   });
 
-  return (
-    <SidebarPanel open={store.open} onClose={store.close} className="capture-panel">
-      <NotesPanelHeader mode={form.mode} />
+  const content = (
+    <>
+      <NotesCreateHeader mode={form.mode} />
       <NotesModeTabs mode={form.mode} setMode={form.setMode} />
 
       <div className="capture-form-stack">
@@ -649,6 +657,14 @@ export function NotesPanel() {
           onSubmit={submit}
         />
 
+        <NotesDetailsSection
+          mode={form.mode}
+          body={form.body}
+          setBody={form.setBody}
+          showHelp={form.showHelp}
+          setShowHelp={form.setShowHelp}
+        />
+
         <NotesMetaFields
           mode={form.mode}
           type={form.type}
@@ -657,6 +673,8 @@ export function NotesPanel() {
           setPriority={form.setPriority}
           room={form.room}
           setRoom={form.setRoom}
+          dateInput={form.dateInput}
+          setDateInput={form.setDateInput}
           roomFocused={form.roomFocused}
           setRoomFocused={form.setRoomFocused}
           roomFieldSuggestions={derived.roomFieldSuggestions}
@@ -664,20 +682,28 @@ export function NotesPanel() {
 
         <NotesTagsField tagsInput={form.tagsInput} setTagsInput={form.setTagsInput} />
 
-        <NotesDetailsSection mode={form.mode} body={form.body} setBody={form.setBody} showHelp={form.showHelp} setShowHelp={form.setShowHelp} />
-
-        <NotesAttachmentsSection
-          setPendingImages={form.setPendingImages}
-        />
-
         <PendingImageList
           images={form.pendingImages}
           onRemove={(index) => form.setPendingImages((p) => p.filter((_, j) => j !== index))}
         />
       </div>
 
-      <NotesFooterActions submit={submit} />
-    </SidebarPanel>
+      <NotesFooterActions submit={submit} setPendingImages={form.setPendingImages} />
+    </>
+  );
+
+  if (!store.open) {
+    return (
+      <div className="page-layout-panel text-muted-foreground">
+        Press N or use the add button to create a note.
+      </div>
+    );
+  }
+
+  return (
+    <div className="notes-view-panel capture-panel rounded-lg border border-border bg-card p-4 sm:p-6">
+      {content}
+    </div>
   );
 }
 
@@ -733,9 +759,7 @@ function buildSuggestions(
 
   if (token.startsWith(">")) {
     const today = new Date().toISOString().slice(0, 10);
-    return [
-      { value: `>${today}`, hint: "date" },
-    ];
+    return [{ value: `>${today}`, hint: "date" }];
   }
 
   return [];

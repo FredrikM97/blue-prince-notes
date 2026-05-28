@@ -1,31 +1,45 @@
 import type { ReactNode } from "react";
-import { cn } from "@/lib/utils";
 
 /**
- * Standard page wrapper with optional left sidebar slot.
- * The right side panel (SidebarPanel) is always portaled and doesn't need a slot here.
+ * Standard page wrapper with optional left and right sidebars.
  *
- * - `sidebar` — sticky left column (filters, nav). Triggers a 2-column grid layout.
- * - `panelOpen` — when true, adds right padding to make room for the SidebarPanel overlay.
- * - `className` — forwarded to the root element; use tailwind-merge-safe overrides (e.g. `max-w-2xl`).
+ * - `leftSidebar` — sticky left column (filters, context, nav).
+ * - `middle` — explicit middle content slot (preferred for consistency).
+ * - `rightSidebar` — sticky right column (detail/edit panels).
+ * - `className` — forwarded to the root element.
  */
 export function PageLayout({
-  sidebar,
+  leftSidebar,
+  middle,
+  rightSidebar,
   children,
-  panelOpen = false,
   className,
 }: {
-  sidebar?: ReactNode;
-  children: ReactNode;
-  panelOpen?: boolean;
+  leftSidebar?: ReactNode;
+  middle?: ReactNode;
+  rightSidebar?: ReactNode;
+  children?: ReactNode;
   className?: string;
 }) {
+  const layoutClass = [
+    "page-layout",
+    leftSidebar && rightSidebar
+      ? "page-layout-three-column"
+      : leftSidebar
+        ? "page-layout-two-column-left"
+        : rightSidebar
+          ? "page-layout-two-column-right"
+          : "",
+    className ?? "",
+  ]
+    .filter(Boolean)
+    .join(" ");
+
   return (
-    <div className={cn("page-layout", sidebar && "page-layout-grid", className)}>
-      {sidebar && <aside className="page-layout-sidebar">{sidebar}</aside>}
-      <main className={cn("page-layout-content", panelOpen && "page-layout-content-offset")}>
-        {children}
-      </main>
+    <div className={layoutClass}>
+      {leftSidebar && <aside className="page-layout-sidebar">{leftSidebar}</aside>}
+      <main className="page-layout-content">{middle ?? children}</main>
+      {rightSidebar && <aside className="page-layout-rightbar">{rightSidebar}</aside>}
     </div>
   );
 }
