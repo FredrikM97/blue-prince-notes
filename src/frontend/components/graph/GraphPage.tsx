@@ -1,5 +1,6 @@
 import { useMemo } from "react";
 import { EmptyState } from "@/frontend/components/common/EmptyState";
+import { PageLayout } from "@/frontend/components/common/PageLayout";
 import { useStore } from "@/frontend/data/store";
 import type { Note } from "@/lib/types";
 
@@ -53,7 +54,7 @@ const TYPE_COLOR: Record<Note["type"], string> = {
   code: "#8cc8ff",
   observation: "#9de6b0",
   theory: "#d8b3ff",
-  book: "#f4a7a7",
+  story: "#f4a7a7",
   task: "#f0e68c",
 };
 
@@ -64,7 +65,7 @@ export function GraphPage() {
   const nodeById = useMemo(() => indexNodes(nodes), [nodes]);
 
   return (
-    <div className="mx-auto max-w-7xl px-4 py-6">
+    <PageLayout>
       <div className="mb-4 flex items-baseline justify-between">
         <div>
           <h1 className="font-serif text-2xl">Connections</h1>
@@ -103,7 +104,7 @@ export function GraphPage() {
           </svg>
         </div>
       )}
-    </div>
+    </PageLayout>
   );
 }
 

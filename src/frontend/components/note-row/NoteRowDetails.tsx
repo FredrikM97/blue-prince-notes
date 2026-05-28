@@ -6,7 +6,7 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
-} from "@/frontend/components/ui/dialog";
+} from "@/frontend/components/common/dialog";
 import { MarkdownPreview } from "@/frontend/components/common/MarkdownPreview";
 
 export function NoteRowDetails({
@@ -18,6 +18,12 @@ export function NoteRowDetails({
 
   return (
     <>
+      {note.date && (
+        <p className="mb-3 text-xs text-muted-foreground">
+          <span className="font-medium uppercase tracking-wider">Date</span>{" "}
+          {note.date}
+        </p>
+      )}
       {note.body && <MarkdownPreview>{note.body}</MarkdownPreview>}
       {note.imageIds.length > 0 && (
         <section className="note-details-images">

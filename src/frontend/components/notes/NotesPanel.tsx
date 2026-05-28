@@ -1,29 +1,29 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useStore } from "@/frontend/data/store";
 import { INPUT_BASE_CLASS } from "@/frontend/components/common/formClasses";
-import { GhostButton, BrassButton } from "@/frontend/components/ui/button";
-import { Tabs, TabsList, TabsTrigger } from "@/frontend/components/ui/tabs";
+import { GhostButton, BrassButton, IconButton } from "@/frontend/components/common/button";
+import { Tabs, TabsList, TabsTrigger } from "@/frontend/components/common/tabs";
 import {
   DialogHeader,
   DialogTitle,
   DialogDescription,
   DialogFooter,
-} from "@/frontend/components/ui/dialog";
-import { SidebarPanel } from "@/frontend/components/ui/sidebar-panel";
+} from "@/frontend/components/common/dialog";
+import { SidebarPanel } from "@/frontend/components/common/sidebar-panel";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/frontend/components/ui/select";
+} from "@/frontend/components/common/select";
 import { toast } from "sonner";
-import { ImagePlus, Info } from "lucide-react";
+import { ImagePlus, HelpCircle } from "lucide-react";
 import type { NoteType, Priority } from "@/lib/types";
 import { DEFAULT_ROOMS } from "@/frontend/data/rooms";
-import { NOTE_TYPES } from "@/frontend/components/quick-note/constants";
-import { NotesShortcutHelp } from "@/frontend/components/quick-note/NotesShortcutHelp";
-import { PendingImageList } from "@/frontend/components/quick-note/PendingImageList";
+import { NOTE_TYPES } from "@/frontend/components/notes/constants";
+import { NotesShortcutHelp } from "@/frontend/components/notes/NotesShortcutHelp";
+import { PendingImageList } from "@/frontend/components/notes/PendingImageList";
 import { MarkdownEditor } from "@/frontend/components/common/MarkdownEditor";
 
 interface NotesSuggestion {
@@ -373,11 +373,26 @@ function NotesDetailsSection({
   mode,
   body,
   setBody,
+  showHelp,
+  setShowHelp,
 }: {
   mode: "note" | "todo";
   body: string;
   setBody: React.Dispatch<React.SetStateAction<string>>;
+  showHelp: boolean;
+  setShowHelp: React.Dispatch<React.SetStateAction<boolean>>;
 }) {
+  const shortcutToggle = (
+    <IconButton
+      aria-label="Toggle shortcut help"
+      title="Shortcuts"
+      className="h-7 w-7"
+      onClick={() => setShowHelp((v) => !v)}
+    >
+      <HelpCircle className="h-3.5 w-3.5" />
+    </IconButton>
+  );
+
   return (
     <div>
       <label className="capture-label">
@@ -388,53 +403,44 @@ function NotesDetailsSection({
         onChange={setBody}
         placeholder={mode === "todo" ? "Details about this todo…" : "Longer note, paste evidence…"}
         rows={6}
+        extraTools={shortcutToggle}
       />
+      {showHelp && <div className="mt-1"><NotesShortcutHelp /></div>}
     </div>
   );
 }
 
 function NotesAttachmentsSection({
   setPendingImages,
-  showHelp,
-  setShowHelp,
 }: {
   setPendingImages: React.Dispatch<React.SetStateAction<Blob[]>>;
-  showHelp: boolean;
-  setShowHelp: React.Dispatch<React.SetStateAction<boolean>>;
 }) {
   return (
-    <>
-      <div className="capture-actions-row">
-        <label className="capture-attach-label">
-          <span className="inline-flex items-center gap-1">
-            <ImagePlus className="h-3.5 w-3.5" /> Attach image
-          </span>
-          <input
-            type="file"
-            accept="image/*"
-            multiple
-            className="hidden"
-            onChange={(e) => {
-              const files = Array.from(e.target.files ?? []);
-              setPendingImages((pending) => [...pending, ...files]);
-              e.target.value = "";
-            }}
-          />
-        </label>
-        <button type="button" onClick={() => setShowHelp((v) => !v)} className="capture-help-btn">
-          <Info className="h-3 w-3" /> Shortcuts
-        </button>
-      </div>
-
-      {showHelp && <NotesShortcutHelp />}
-    </>
+    <div className="capture-actions-row">
+      <label className="capture-attach-label">
+        <span className="inline-flex items-center gap-1">
+          <ImagePlus className="h-3.5 w-3.5" /> Attach image
+        </span>
+        <input
+          type="file"
+          accept="image/*"
+          multiple
+          className="hidden"
+          onChange={(e) => {
+            const files = Array.from(e.target.files ?? []);
+            setPendingImages((pending) => [...pending, ...files]);
+            e.target.value = "";
+          }}
+        />
+      </label>
+    </div>
   );
 }
 
 function NotesFooterActions({ submit }: { submit: (keepOpen: boolean) => void | Promise<void> }) {
   return (
     <DialogFooter className="capture-footer">
-      <p className="capture-footer-hint">⌘/Ctrl+Enter to save · Shift to keep open</p>
+      <p className="capture-footer-hint">Ctrl+Enter to save · Shift to stay open</p>
       <div className="flex gap-2">
         <GhostButton onClick={() => submit(true)}>Save &amp; add another</GhostButton>
         <BrassButton onClick={() => submit(false)}>Save</BrassButton>
@@ -658,12 +664,10 @@ export function NotesPanel() {
 
         <NotesTagsField tagsInput={form.tagsInput} setTagsInput={form.setTagsInput} />
 
-        <NotesDetailsSection mode={form.mode} body={form.body} setBody={form.setBody} />
+        <NotesDetailsSection mode={form.mode} body={form.body} setBody={form.setBody} showHelp={form.showHelp} setShowHelp={form.setShowHelp} />
 
         <NotesAttachmentsSection
           setPendingImages={form.setPendingImages}
-          showHelp={form.showHelp}
-          setShowHelp={form.setShowHelp}
         />
 
         <PendingImageList
@@ -720,11 +724,18 @@ function buildSuggestions(
   }
 
   if (token.startsWith("!")) {
-    const typeCommands = ["!clue", "!code", "!observation", "!theory", "!book", "!todo"];
+    const typeCommands = ["!clue", "!code", "!observation", "!theory", "!story", "!todo"];
     const q = token.toLowerCase();
     return typeCommands
       .filter((cmd) => cmd.includes(q))
       .map((cmd) => ({ value: cmd, hint: "type" }));
+  }
+
+  if (token.startsWith(">")) {
+    const today = new Date().toISOString().slice(0, 10);
+    return [
+      { value: `>${today}`, hint: "date" },
+    ];
   }
 
   return [];

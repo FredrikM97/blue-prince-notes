@@ -1,11 +1,11 @@
-import { Key, Book, Lightbulb, Eye, Sparkles, ListTodo } from "lucide-react";
+import { Key, BookOpen, Lightbulb, Eye, Sparkles, ListTodo } from "lucide-react";
 
 export const TYPE_ICON = {
   clue: Lightbulb,
   code: Key,
   observation: Eye,
   theory: Sparkles,
-  book: Book,
+  story: BookOpen,
   task: ListTodo,
 } as const;
 
@@ -14,7 +14,7 @@ export const TYPE_LABEL = {
   code: "Code",
   observation: "Obs.",
   theory: "Theory",
-  book: "Book",
+  story: "Story",
   task: "Todo",
 } as const;
 

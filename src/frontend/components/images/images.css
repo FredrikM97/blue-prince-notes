@@ -1,0 +1,73 @@
+@layer components {
+  .images-page-header {
+    @apply mb-4 flex items-baseline justify-between;
+  }
+
+  .images-page-header h1 {
+    @apply font-serif text-2xl;
+  }
+
+  .images-page-header p {
+    @apply text-xs text-muted-foreground;
+  }
+
+  .images-grid {
+    @apply grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5;
+  }
+
+  .images-dialog-content {
+    @apply max-w-3xl;
+  }
+
+  .images-thumb {
+    @apply relative aspect-square overflow-hidden rounded border border-border bg-card hover:border-brass;
+  }
+
+  .images-thumb-image {
+    @apply h-full w-full object-cover;
+  }
+
+  .images-thumb-overlay {
+    @apply pointer-events-none absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 to-transparent p-2 text-left;
+  }
+
+  .images-thumb-name {
+    @apply truncate text-xs text-white;
+  }
+
+  .images-thumb-tags {
+    @apply mt-0.5 flex gap-1;
+  }
+
+  .images-thumb-tag {
+    @apply text-[10px] text-white/70;
+  }
+
+  .images-detail-title {
+    @apply font-serif;
+  }
+
+  .images-detail-preview {
+    @apply max-h-[60vh] overflow-hidden rounded border border-border bg-black/50;
+  }
+
+  .images-detail-preview-image {
+    @apply mx-auto max-h-[60vh];
+  }
+
+  .images-detail-form {
+    @apply grid gap-2;
+  }
+
+  .images-detail-tags {
+    @apply flex flex-wrap gap-1;
+  }
+
+  .images-detail-chip {
+    @apply border-border bg-secondary text-foreground;
+  }
+
+  .images-detail-actions {
+    @apply flex flex-wrap items-center gap-2;
+  }
+}

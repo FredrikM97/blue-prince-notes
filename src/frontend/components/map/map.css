@@ -1,0 +1,122 @@
+@layer components {
+  /* Left sidebar content */
+  .map-sidebar {
+    @apply rounded-lg border border-border bg-card/40 p-3 text-sm text-foreground;
+  }
+
+  /* Flex row: map grid on left, detail panel on right */
+  .map-layout {
+    @apply flex items-start gap-6;
+  }
+
+  /* Natural width — does NOT flex-fill so the map doesn't compress when panel opens */
+  .map-layout-main {
+    @apply flex flex-col items-center;
+  }
+
+  /* Inline detail panel — no fixed positioning, no layout shift */
+  .map-panel {
+    @apply w-80 shrink-0 overflow-y-auto rounded-lg border border-border bg-card p-4;
+    max-height: calc(100dvh - 3.5rem - 3rem);
+    position: sticky;
+    top: calc(3.5rem + 1.5rem);
+  }
+
+  .map-panel-header {
+    @apply mb-4 flex items-start justify-between gap-2;
+  }
+
+  .map-grid {
+    @apply mx-auto grid gap-2;
+  }
+
+  .map-cell {
+    @apply flex aspect-square flex-col items-center justify-center gap-0.5 rounded-md border p-1.5 text-center transition hover:scale-[1.03] hover:border-brass;
+  }
+
+  .map-cell-neutral {
+    @apply bg-card border-border text-muted-foreground;
+  }
+
+  .map-cell-cleared {
+    @apply bg-brass border-brass text-brass-foreground;
+  }
+
+  .map-cell-room-name {
+    @apply font-serif text-[11px] leading-tight sm:text-xs;
+  }
+
+  .map-cell-meta {
+    @apply text-[9px] opacity-80;
+  }
+
+  .map-cell-coord {
+    @apply text-[10px] opacity-50;
+  }
+
+  /* Map cell editor panel */
+  .map-sheet-title {
+    @apply font-serif text-xl;
+  }
+
+  .map-sheet-body {
+    @apply mt-4 space-y-4;
+  }
+
+  .map-field-label {
+    @apply mb-1 block text-[11px] font-medium uppercase tracking-wider text-muted-foreground;
+  }
+
+  .map-comment-help {
+    @apply mt-1 text-[11px] text-muted-foreground;
+  }
+
+  .map-comment-preview-card {
+    @apply mt-2 rounded-md border border-border bg-card/60 p-3;
+  }
+
+  .map-comment-preview-title {
+    @apply mb-2 text-[11px] font-medium uppercase tracking-wider text-muted-foreground;
+  }
+
+  .map-sheet-action-row {
+    @apply flex gap-2;
+  }
+
+  .map-sheet-clear-row {
+    @apply flex gap-2 border-t border-border pt-3;
+  }
+
+  /* Map room notes/todos lists */
+  .map-list-title {
+    @apply mb-2 text-[11px] font-medium uppercase tracking-wider text-muted-foreground;
+  }
+
+  .map-note-list {
+    @apply space-y-2;
+  }
+
+  .map-note-item {
+    @apply rounded border border-border bg-card p-2 text-sm;
+  }
+
+  .map-note-item-title {
+    @apply font-medium;
+  }
+
+  .map-note-chip-row {
+    @apply mt-1 flex flex-wrap gap-1;
+  }
+
+  .map-note-chip {
+    @apply border-border text-foreground;
+  }
+
+  .map-todo-list {
+    @apply space-y-1 text-sm;
+  }
+
+  .map-todo-done {
+    @apply text-muted-foreground line-through;
+  }
+}

@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Moon, Sun } from "lucide-react";
-import { IconButton } from "@/frontend/components/ui/button";
+import { IconButton } from "@/frontend/components/common/button";
 
 type Theme = "light" | "dark";
 

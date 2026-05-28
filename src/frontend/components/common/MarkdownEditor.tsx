@@ -3,7 +3,7 @@ import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { Bold, Italic, Table, List, ListOrdered, Eye, EyeOff } from "lucide-react";
 import { TEXTAREA_BASE_CLASS } from "@/frontend/components/common/formClasses";
-import { IconButton } from "@/frontend/components/ui/button";
+import { IconButton } from "@/frontend/components/common/button";
 
 // ── local styles ─────────────────────────────────────────────────
 const TOOLBAR_CLASS =
@@ -92,12 +92,14 @@ export function MarkdownEditor({
   placeholder,
   rows = 6,
   className,
+  extraTools,
 }: {
   value: string;
   onChange: (v: string) => void;
   placeholder?: string;
   rows?: number;
   className?: string;
+  extraTools?: React.ReactNode;
 }) {
   const [preview, setPreview] = useState(false);
   const ref = useRef<HTMLTextAreaElement>(null);
@@ -117,6 +119,8 @@ export function MarkdownEditor({
           </IconButton>
         ))}
         <div className={TOOLBAR_DIVIDER_CLASS} />
+        {extraTools}
+        {extraTools && <div className={TOOLBAR_DIVIDER_CLASS} />}
         <IconButton
           aria-label={preview ? "Hide preview" : "Show preview"}
           title={preview ? "Hide preview" : "Show preview"}

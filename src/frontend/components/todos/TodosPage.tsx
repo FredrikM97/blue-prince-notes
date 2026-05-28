@@ -1,10 +1,11 @@
 import { useMemo, useState } from "react";
 import { useStore } from "@/frontend/data/store";
 import { Chip } from "@/frontend/components/common/Chip";
-import { BrassButton } from "@/frontend/components/ui/button";
+import { BrassButton } from "@/frontend/components/common/button";
 import { TODO_STATUS_COLUMNS, groupTodosByStatus } from "@/frontend/components/todos/constants";
 import { TodoScopeFilter } from "@/frontend/components/todos/TodoScopeFilter";
 import { TodoItem } from "@/frontend/components/todos/TodoItem";
+import { PageLayout } from "@/frontend/components/common/PageLayout";
 import type { Todo } from "@/lib/types";
 
 /** Quick summary card showing open "this-run" todos at a glance. */
@@ -104,22 +105,32 @@ export function TodosPage() {
     thisRunOpen.length > 0 && scopeFilter !== "cross-run" && scopeFilter !== "someday";
 
   return (
-    <div className="todos-page">
+    <PageLayout
+      sidebar={
+        <div className="space-y-4">
+          <div>
+            <p className="todos-sidebar-label">Scope</p>
+            <TodoScopeFilter value={scopeFilter} onChange={setScopeFilter} />
+          </div>
+          {showRunCard && (
+            <div>
+              <p className="todos-sidebar-label">This run</p>
+              <TodoRunCard todos={thisRunOpen} onToggleDone={(id) => toggle(id, "done")} />
+            </div>
+          )}
+        </div>
+      }
+    >
       <div className="todos-page-header">
         <h1 className="todos-page-title">Todo</h1>
-        <div className="todos-page-header-actions">
-          <TodoScopeFilter value={scopeFilter} onChange={setScopeFilter} />
-          <BrassButton
-            size="sm"
-            className="todos-add-button"
-            onClick={() => openCapture({ kind: "todo" })}
-          >
-            Add todo
-          </BrassButton>
-        </div>
+        <BrassButton
+          size="sm"
+          className="todos-add-button"
+          onClick={() => openCapture({ kind: "todo" })}
+        >
+          Add todo
+        </BrassButton>
       </div>
-
-      {showRunCard && <TodoRunCard todos={thisRunOpen} onToggleDone={(id) => toggle(id, "done")} />}
 
       <div className="todos-columns-grid">
         {TODO_STATUS_COLUMNS.map((col) => (
@@ -136,6 +147,6 @@ export function TodosPage() {
           />
         ))}
       </div>
-    </div>
+    </PageLayout>
   );
 }

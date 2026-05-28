@@ -1,6 +1,6 @@
 import type { Note } from "@/lib/types";
 import { NoteRowSummary } from "@/frontend/components/note-row/NoteRowSummary";
-import { IconButton } from "@/frontend/components/ui/button";
+import { IconButton } from "@/frontend/components/common/button";
 import { ChevronRight, Pencil, Trash2 } from "lucide-react";
 
 export function NotesRow({

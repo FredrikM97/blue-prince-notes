@@ -12,15 +12,15 @@ import {
 } from "@tanstack/react-router";
 import { useEffect, useMemo } from "react";
 import { AppHeader } from "@/frontend/components/AppHeader";
-import { NotesPanel } from "@/frontend/components/quick-note/NotesPanel";
-import { NotesView } from "@/frontend/components/quick-note/NotesView";
-import { Toaster } from "@/frontend/components/ui/sonner";
+import { NotesPanel } from "@/frontend/components/notes/NotesPanel";
+import { NotesView } from "@/frontend/components/notes/NotesView";
+import { Toaster } from "@/frontend/components/common/sonner";
 import { useStore } from "@/frontend/data/store";
-import { SettingsPage } from "@/frontend/components/pages/SettingsPage";
-import { TodosPage } from "@/frontend/components/pages/TodosPage";
-import { MapPage } from "@/frontend/components/pages/MapPage";
-import { ImagesPage } from "@/frontend/components/pages/ImagesPage";
-import { GraphPage } from "@/frontend/components/pages/GraphPage";
+import { SettingsPage } from "@/frontend/components/settings/SettingsPage";
+import { TodosPage } from "@/frontend/components/todos/TodosPage";
+import { MapPage } from "@/frontend/components/map/MapPage";
+import { ImagesPage } from "@/frontend/components/images/ImagesPage";
+import { GraphPage } from "@/frontend/components/graph/GraphPage";
 import appCss from "./styles.css?url";
 
 const rootRoute = createRootRouteWithContext<{ queryClient: QueryClient }>()({

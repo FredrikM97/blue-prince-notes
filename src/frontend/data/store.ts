@@ -105,7 +105,7 @@ const BUILTIN_SECTIONS: SectionDef[] = [
   { id: "todos", label: "Todo", builtin: "todos", order: 1 },
   { id: "map", label: "Map", builtin: "map", order: 2 },
   { id: "graph", label: "Graph", builtin: "graph", order: 3 },
-  { id: "books", label: "Books", filter: { type: "book" }, order: 4 },
+  { id: "books", label: "Story", filter: { type: "story" }, order: 4 },
   { id: "images", label: "Images", builtin: "images", order: 5 },
 ];
 
@@ -310,6 +310,7 @@ export const useStore = create<State>((set, get) => ({
       body: opts?.body?.trim() ?? "",
       room,
       tags,
+      date: parsed.date,
       status: parsed.status as NoteStatus,
       scope: parsed.scope as RunScope,
       imageIds,

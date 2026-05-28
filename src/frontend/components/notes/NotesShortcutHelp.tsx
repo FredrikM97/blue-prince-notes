@@ -5,9 +5,10 @@ export function NotesShortcutHelp() {
       <div className="mt-1 flex flex-wrap gap-1">
         <code className="rounded bg-accent px-1">#tag</code> add a tag
         <code className="rounded bg-accent px-1">@room_name</code> set room
-        <code className="rounded bg-accent px-1">room:Entrance_Hall</code> set room
+        <code className="rounded bg-accent px-1">&gt;2025-05-28</code> set date
         <code className="rounded bg-accent px-1">!clue</code> /
         <code className="rounded bg-accent px-1">!code</code> /
+        <code className="rounded bg-accent px-1">!story</code> /
         <code className="rounded bg-accent px-1">!todo</code> set type
         <code className="rounded bg-accent px-1">this-run</code> or
         <code className="rounded bg-accent px-1">cross-run</code> set scope

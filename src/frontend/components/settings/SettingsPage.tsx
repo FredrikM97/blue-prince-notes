@@ -1,8 +1,9 @@
 import { useMemo, useRef } from "react";
 import type { ReactNode } from "react";
 import { useStore } from "@/frontend/data/store";
-import { Button, BrassButton } from "@/frontend/components/ui/button";
-import { Kbd } from "@/frontend/components/ui/kbd";
+import { Button, BrassButton } from "@/frontend/components/common/button";
+import { Kbd } from "@/frontend/components/common/kbd";
+import { PageLayout } from "@/frontend/components/common/PageLayout";
 import { exportAll, importAll } from "@/frontend/data/io";
 import { toast } from "sonner";
 
@@ -25,7 +26,7 @@ export function SettingsPage() {
   const fileRef = useRef<HTMLInputElement>(null);
 
   return (
-    <div className="mx-auto max-w-2xl space-y-8 px-4 py-8">
+    <PageLayout className="max-w-2xl space-y-8">
       <header>
         <h1 className="font-serif text-3xl">Settings</h1>
         <p className="text-sm text-muted-foreground">
@@ -94,6 +95,6 @@ export function SettingsPage() {
           <li><Kbd>Enter</Kbd> - save · <Kbd>Shift+Enter</Kbd> - save &amp; keep open</li>
         </ul>
       </SettingsSection>
-    </div>
+    </PageLayout>
   );
 }

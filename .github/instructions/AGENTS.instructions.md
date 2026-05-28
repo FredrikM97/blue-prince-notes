@@ -93,3 +93,62 @@ description: Describe when these instructions should be loaded by the agent base
 - Continuously update this instructions file when the user provides new project-wide preferences that should persist.
 - When new guidance is reusable across files, add or adjust rules in this file in the same task, not later.
 - Keep instruction updates concise and non-conflicting with existing rules.
+
+## Folder Structure (Current)
+
+```
+src/
+  lib/                  # Shared between server and frontend — do NOT move to frontend/.
+                        # types.ts / utils.ts (both sides), error-page.ts / error-capture.ts (server-only).
+  frontend/
+    components/
+      common/           # ALL shared components and Radix UI wrappers live here.
+                        # Replaces the old `ui/` folder (removed). No separate ui/ folder.
+      notes/            # Notes feature (was quick-note/): NotesView, NotesPanel (capture),
+                        # NotesDetailPanel, NotesFiltersPanel, NotesRow, etc. + notes.css
+      note-row/         # NoteRowSummary, NoteRowEditor, NoteRowDetails + note-row.css
+      map/              # MapPage, MapPanel + map.css
+      graph/            # GraphPage
+      images/           # ImagesPage + images.css
+      todos/            # TodosPage + TodoItem + TodoScopeFilter + todos.css
+      settings/         # SettingsPage
+      AppHeader.tsx     # + app-header.css (co-located)
+    data/               # store, db, io, parse, rooms
+    styles.css          # Global CSS entry point — tokens only. Per-feature CSS is @imported.
+```
+
+## Three-Zone Page Layout
+
+Pages use a consistent three-zone structure managed by `PageLayout` (in `common/`):
+- **Left** — `page-layout-sidebar`: sticky filter/navigation column. Provided via the `sidebar` prop.
+- **Middle / content** — `page-layout-content`: main content area. Receives `children`.
+  - CSS class `page-layout-content-offset` adds right padding when a SidebarPanel is open (`panelOpen` prop).
+  - A 200ms `padding-right` transition prevents jarring shifts when panels open/close.
+- **Right** — `SidebarPanel` (from `common/SidebarPanel.tsx`): fixed right overlay, slides in.
+  - Map uses an **inline** right panel (`MapPanel`) instead of SidebarPanel to eliminate layout shift.
+
+Use `<PageLayout className="max-w-2xl">` etc. to override the default `max-w-7xl` per page.
+
+## Per-Feature CSS Co-location
+
+Each feature folder owns its own CSS file (e.g. `map/map.css`, `notes/notes.css`).
+- Each file contains a single `@layer components { ... }` block.
+- All feature CSS files are `@import`-ed by `src/frontend/styles.css`.
+- `styles.css` contains only: @imports, @custom-variant, @theme tokens, `:root` variables, and global `html {}` styles.
+- Do NOT add component classes directly to `styles.css`.
+
+## lib/ Purpose
+
+The `src/lib/` folder is the **server-and-frontend shared boundary**:
+- `types.ts` — domain types (`Note`, `Todo`, `GridCell`, etc.) used by both frontend and server/db layers.
+- `utils.ts` — the `cn()` helper (clsx + tailwind-merge). Imported widely by component files.
+- `error-page.ts` — renders the HTML fallback error page; used by `src/start.ts` (server only).
+- `error-capture.ts` — captures errors out-of-band for server recovery; used by `src/start.ts`.
+
+Do not move `lib/` files into `frontend/` — the server-side files (`start.ts`, routes) depend on them.
+
+## Security
+
+- A CodeQL workflow (`.github/workflows/codeql.yml`) runs on push/PR to `main` and weekly.
+  Uses `security-extended` queries for OWASP Top 10 coverage.
+- All code should be free of OWASP Top 10 vulnerabilities (injection, XSS, insecure deserialization, etc.).

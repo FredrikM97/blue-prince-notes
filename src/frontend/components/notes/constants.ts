@@ -5,7 +5,7 @@ export const NOTE_TYPES: { value: NoteType; label: string }[] = [
   { value: "clue", label: "Clue" },
   { value: "code", label: "Code" },
   { value: "theory", label: "Theory" },
-  { value: "book", label: "Book" },
+  { value: "story", label: "Story" },
 ];
 
 export const ROOM_NONE_VALUE = "__none__";

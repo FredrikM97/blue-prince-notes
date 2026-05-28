@@ -52,3 +52,23 @@ export function BrassButton({ size = "default", className, ...props }: ButtonPro
 export function GhostButton({ size = "sm", className, ...props }: ButtonProps) {
   return <button {...props} className={cn(BASE, VARIANT.ghost, SIZE[size], className)} />;
 }
+
+/** Toggle/filter button — shows a distinct active state. Used for filter chips and section selectors. */
+export function SelectButton({
+  active,
+  className,
+  ...props
+}: ButtonHTMLAttributes<HTMLButtonElement> & { active?: boolean }) {
+  return (
+    <button
+      type="button"
+      {...props}
+      className={cn(
+        BASE,
+        "h-auto rounded px-2 py-0.5 text-xs",
+        active ? "bg-accent font-medium text-accent-foreground" : "text-muted-foreground hover:bg-accent hover:text-accent-foreground",
+        className,
+      )}
+    />
+  );
+}

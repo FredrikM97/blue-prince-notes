@@ -1,10 +1,14 @@
+import { useState } from "react";
 import type { Note } from "@/lib/types";
-import { INPUT_BASE_CLASS, TEXTAREA_BASE_CLASS } from "@/frontend/components/common/formClasses";
-import { BrassButton, GhostButton } from "@/frontend/components/ui/button";
+import { INPUT_BASE_CLASS } from "@/frontend/components/common/formClasses";
+import { BrassButton, GhostButton, IconButton } from "@/frontend/components/common/button";
 import { StoredImageView } from "@/frontend/components/StoredImageView";
 import { useStore } from "@/frontend/data/store";
-import { ImagePlus, X } from "lucide-react";
-import { TYPE_LABEL } from "./constants";import { MarkdownEditor } from "@/frontend/components/common/MarkdownEditor";
+import { ImagePlus, X, HelpCircle } from "lucide-react";
+import { TYPE_LABEL } from "./constants";
+import { MarkdownEditor } from "@/frontend/components/common/MarkdownEditor";
+import { NotesShortcutHelp } from "@/frontend/components/notes/NotesShortcutHelp";
+
 export function NoteRowEditor({
   draft,
   setDraft,
@@ -17,36 +21,110 @@ export function NoteRowEditor({
   onCancel: () => void;
 }) {
   const addImage = useStore((s) => s.addImage);
+  const [showHelp, setShowHelp] = useState(false);
+
+  const shortcutToggle = (
+    <IconButton
+      aria-label="Toggle shortcut help"
+      title="Shortcuts"
+      className="h-7 w-7"
+      onClick={() => setShowHelp((v) => !v)}
+    >
+      <HelpCircle className="h-3.5 w-3.5" />
+    </IconButton>
+  );
 
   return (
     <div className="note-editor-wrap">
-      <input
-        value={draft.title}
-        onChange={(e) => setDraft({ ...draft, title: e.target.value })}
-        placeholder="Title"
-        className={INPUT_BASE_CLASS}
-      />
-      <MarkdownEditor
-        value={draft.body}
-        onChange={(v) => setDraft({ ...draft, body: v })}
-        placeholder="Details (markdown supported)…"
-        rows={5}
-      />
+      <div>
+        <label className="capture-label">Title</label>
+        <input
+          value={draft.title}
+          onChange={(e) => setDraft({ ...draft, title: e.target.value })}
+          onKeyDown={(e) => {
+            if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
+              e.preventDefault();
+              onSave();
+            }
+          }}
+          placeholder="Title"
+          className={INPUT_BASE_CLASS}
+        />
+      </div>
+
+      <div>
+        <label className="capture-label">
+          Details <span className="text-muted-foreground/70 normal-case">(optional)</span>
+        </label>
+        <MarkdownEditor
+          value={draft.body}
+          onChange={(v) => setDraft({ ...draft, body: v })}
+          placeholder="Details (markdown supported)…"
+          rows={5}
+          extraTools={shortcutToggle}
+        />
+        {showHelp && <div className="mt-1"><NotesShortcutHelp /></div>}
+      </div>
+
       <div className="note-editor-grid-2">
-        <input
-          value={draft.room ?? ""}
-          onChange={(e) => setDraft({ ...draft, room: e.target.value || undefined })}
-          placeholder="Room"
-          className={INPUT_BASE_CLASS}
-        />
-        <input
-          value={draft.tags.join(" ")}
-          onChange={(e) =>
-            setDraft({ ...draft, tags: e.target.value.split(/\s+/).filter(Boolean) })
-          }
-          placeholder="tags (space-sep)"
-          className={INPUT_BASE_CLASS}
-        />
+        <div>
+          <label className="capture-label">Room</label>
+          <input
+            value={draft.room ?? ""}
+            onChange={(e) => setDraft({ ...draft, room: e.target.value || undefined })}
+            placeholder="No room"
+            className={INPUT_BASE_CLASS}
+          />
+        </div>
+        <div>
+          <label className="capture-label">Tags</label>
+          <input
+            value={draft.tags.join(" ")}
+            onChange={(e) =>
+              setDraft({ ...draft, tags: e.target.value.split(/\s+/).filter(Boolean) })
+            }
+            placeholder="tag1 tag2"
+            className={INPUT_BASE_CLASS}
+          />
+        </div>
+      </div>
+
+      <div className="note-editor-grid-3">
+        <div>
+          <label className="capture-label">Date</label>
+          <input
+            type="date"
+            value={draft.date ?? ""}
+            onChange={(e) => setDraft({ ...draft, date: e.target.value || undefined })}
+            className={INPUT_BASE_CLASS}
+          />
+        </div>
+        <div>
+          <label className="capture-label">Type</label>
+          <select
+            className="note-editor-select w-full"
+            value={draft.type}
+            onChange={(e) => setDraft({ ...draft, type: e.target.value as Note["type"] })}
+          >
+            {Object.keys(TYPE_LABEL).map((k) => (
+              <option key={k} value={k}>
+                {TYPE_LABEL[k as keyof typeof TYPE_LABEL]}
+              </option>
+            ))}
+          </select>
+        </div>
+        <div>
+          <label className="capture-label">Status</label>
+          <select
+            className="note-editor-select w-full"
+            value={draft.status}
+            onChange={(e) => setDraft({ ...draft, status: e.target.value as Note["status"] })}
+          >
+            <option value="open">open</option>
+            <option value="solved">solved</option>
+            <option value="stale">stale</option>
+          </select>
+        </div>
       </div>
 
       <div className="note-editor-images-card">
@@ -105,39 +183,9 @@ export function NoteRowEditor({
         )}
       </div>
 
-      <div className="note-editor-selects-row">
-        <select
-          className="note-editor-select"
-          value={draft.type}
-          onChange={(e) => setDraft({ ...draft, type: e.target.value as Note["type"] })}
-        >
-          {Object.keys(TYPE_LABEL).map((k) => (
-            <option key={k} value={k}>
-              {TYPE_LABEL[k as keyof typeof TYPE_LABEL]}
-            </option>
-          ))}
-        </select>
-        <select
-          className="note-editor-select"
-          value={draft.status}
-          onChange={(e) => setDraft({ ...draft, status: e.target.value as Note["status"] })}
-        >
-          <option value="open">open</option>
-          <option value="solved">solved</option>
-          <option value="stale">stale</option>
-        </select>
-        <select
-          className="note-editor-select"
-          value={draft.scope}
-          onChange={(e) => setDraft({ ...draft, scope: e.target.value as Note["scope"] })}
-        >
-          <option value="cross-run">cross-run</option>
-          <option value="this-run">this-run</option>
-        </select>
-        <BrassButton size="sm" className="ml-auto" onClick={onSave}>
-          Save
-        </BrassButton>
+      <div className="note-editor-footer">
         <GhostButton onClick={onCancel}>Cancel</GhostButton>
+        <BrassButton size="sm" onClick={onSave}>Save</BrassButton>
       </div>
     </div>
   );

@@ -6,7 +6,8 @@ const TYPE_MAP: Record<string, NoteType> = {
   obs: "observation",
   observation: "observation",
   theory: "theory",
-  book: "book",
+  story: "story",
+  book: "story",
   task: "task",
   todo: "task",
 };
@@ -17,6 +18,7 @@ export interface ParsedCapture {
   isTodo: boolean;
   room?: string;
   tags: string[];
+  date?: string;
   status: "open" | "solved";
   scope: RunScope;
   priority?: "low" | "med" | "high";
@@ -37,6 +39,7 @@ export function parseCapture(input: string): ParsedCapture {
   let type: NoteType = "clue";
   let isTodo = false;
   let room: string | undefined;
+  let date: string | undefined;
   let status: "open" | "solved" = "open";
   let scope: RunScope = "cross-run";
   let priority: "low" | "med" | "high" | undefined;
@@ -67,6 +70,8 @@ export function parseCapture(input: string): ParsedCapture {
       room = tok.slice(5).replace(/_/g, " ");
     } else if (tok.startsWith("@") && tok.length > 1) {
       room = tok.slice(1).replace(/_/g, " ");
+    } else if (/^>\d{4}-\d{2}-\d{2}$/.test(tok)) {
+      date = tok.slice(1);
     } else if (/^(high|med|medium|low)$/i.test(tok)) {
       const p = tok.toLowerCase();
       priority = p === "medium" ? "med" : (p as "low" | "med" | "high");
@@ -85,6 +90,7 @@ export function parseCapture(input: string): ParsedCapture {
     isTodo,
     room,
     tags,
+    date,
     status,
     scope,
     priority,

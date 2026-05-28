@@ -2,9 +2,10 @@ import { useEffect, useMemo, useState } from "react";
 import { EmptyState } from "@/frontend/components/common/EmptyState";
 import { useStore } from "@/frontend/data/store";
 import { Chip } from "@/frontend/components/common/Chip";
-import { Button, BrassButton, GhostButton } from "@/frontend/components/ui/button";
+import { Button, BrassButton, GhostButton } from "@/frontend/components/common/button";
 import { INPUT_BASE_CLASS } from "@/frontend/components/common/formClasses";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/frontend/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/frontend/components/common/dialog";
+import { PageLayout } from "@/frontend/components/common/PageLayout";
 import { Download, Trash2, Copy } from "lucide-react";
 import { toast } from "sonner";
 import type { StoredImage } from "@/lib/types";
@@ -25,7 +26,7 @@ export function ImagesPage() {
   }, [images, search]);
 
   return (
-    <div className="images-page">
+    <PageLayout>
       <header className="images-page-header">
         <h1>Images</h1>
         <p>Upload images from note capture or note editing.</p>
@@ -60,7 +61,7 @@ export function ImagesPage() {
           )}
         </DialogContent>
       </Dialog>
-    </div>
+    </PageLayout>
   );
 }
 

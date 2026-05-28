@@ -3,7 +3,7 @@ export type NoteType =
   | "code"
   | "observation"
   | "theory"
-  | "book"
+  | "story"
   | "task";
 
 export type NoteStatus = "open" | "solved" | "stale";
@@ -16,6 +16,7 @@ export interface Note {
   body: string;
   room?: string;
   tags: string[];
+  date?: string;
   status: NoteStatus;
   scope: RunScope;
   imageIds: string[];

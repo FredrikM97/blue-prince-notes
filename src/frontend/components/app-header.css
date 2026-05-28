@@ -1,0 +1,77 @@
+@layer components {
+  .app-header {
+    @apply sticky top-0 z-40 border-b border-border/70 bg-background/90 backdrop-blur;
+  }
+
+  .app-header-inner {
+    @apply mx-auto flex w-full max-w-7xl flex-wrap items-center gap-2 px-4 py-2;
+  }
+
+  .app-brand-link {
+    @apply mr-2 inline-flex items-center gap-2 rounded-md px-1.5 py-1 hover:bg-accent;
+  }
+
+  .app-brand-badge {
+    @apply inline-flex h-7 w-7 items-center justify-center rounded bg-brass text-xs font-semibold text-brass-foreground;
+  }
+
+  .app-brand-title {
+    @apply whitespace-nowrap font-serif text-base;
+  }
+
+  .app-nav {
+    @apply flex min-w-0 flex-1 flex-wrap items-center gap-1;
+  }
+
+  .app-nav-link {
+    @apply rounded px-2 py-1 text-sm text-muted-foreground hover:bg-accent hover:text-foreground;
+  }
+
+  .app-nav-link-active {
+    @apply bg-secondary text-foreground;
+  }
+
+  .app-header-controls {
+    @apply ml-auto flex items-center gap-1.5;
+  }
+
+  .app-icon-button {
+    @apply h-8 w-8;
+  }
+
+  .app-icon-sm {
+    @apply h-4 w-4;
+  }
+
+  .app-search-wrap {
+    @apply relative hidden sm:block;
+  }
+
+  .app-search-icon {
+    @apply pointer-events-none absolute left-2.5 top-1/2 z-10 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground;
+  }
+
+  .app-search-input {
+    @apply h-8 w-44 pl-8;
+  }
+
+  .app-add-button {
+    @apply bg-brass text-brass-foreground hover:bg-brass/90;
+  }
+
+  .app-add-icon {
+    @apply h-4 w-4;
+  }
+
+  .app-add-shortcut {
+    @apply rounded border border-black/15 px-1 py-0 text-[10px] leading-4 opacity-70;
+  }
+
+  .app-menu-icon {
+    @apply mr-1 h-4 w-4;
+  }
+
+  .app-hidden-file-input {
+    @apply hidden;
+  }
+}

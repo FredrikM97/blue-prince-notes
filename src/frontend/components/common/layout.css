@@ -1,0 +1,56 @@
+@layer components {
+  /**
+   * Three-zone page layout:
+   *   .page-layout-sidebar  — left sticky column (filters, navigation)
+   *   .page-layout-content  — main content area (the "middle")
+   *   SidebarPanel          — right overlay panel (see SidebarPanel.tsx)
+   */
+
+  /* Outer wrapper — centers content, limits max width */
+  .page-layout {
+    @apply mx-auto w-full max-w-7xl px-4 py-6;
+  }
+
+  /* Two-column grid activated when a sidebar slot is provided */
+  .page-layout-grid {
+    @apply grid gap-6 lg:grid-cols-[240px_1fr];
+  }
+
+  /* Left sticky sidebar column */
+  .page-layout-sidebar {
+    @apply lg:sticky lg:self-start;
+    top: calc(3.5rem + 1.5rem); /* header height + page top padding */
+  }
+
+  /* Main content area ("middle"). Smooth transition prevents jarring shift when panel opens. */
+  .page-layout-content {
+    min-width: 0;
+    transition: padding-right 200ms ease;
+  }
+
+  /* Adds right padding so content isn't hidden behind an open SidebarPanel overlay */
+  .page-layout-content-offset {
+    padding-right: clamp(
+      1rem,
+      calc(var(--sidebar-panel-width) - (100vw - 80rem) / 2),
+      var(--sidebar-panel-width)
+    );
+  }
+
+  @media (max-width: 39.999rem) {
+    .page-layout-content-offset {
+      padding-right: 0;
+    }
+  }
+
+  /* SidebarPanel — fixed right overlay, slides in from the right edge */
+  .sidebar-panel-content {
+    @apply fixed right-0 top-14 z-50 flex h-[calc(100dvh-3.5rem)] w-full max-w-none flex-col gap-2 overflow-y-auto rounded-none border-l bg-background p-4 shadow-lg duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:slide-out-to-right data-[state=open]:slide-in-from-right sm:p-5;
+  }
+
+  @media (min-width: 40rem) {
+    .sidebar-panel-content {
+      width: var(--sidebar-panel-width);
+    }
+  }
+}

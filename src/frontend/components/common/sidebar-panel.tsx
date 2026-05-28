@@ -1,7 +1,7 @@
 import * as React from "react";
 import * as DialogPrimitive from "@radix-ui/react-dialog";
 import { X } from "lucide-react";
-import { Dialog, DialogPortal } from "@/frontend/components/ui/dialog";
+import { Dialog, DialogPortal } from "@/frontend/components/common/dialog";
 import { cn } from "@/lib/utils";
 
 interface SidebarPanelProps {

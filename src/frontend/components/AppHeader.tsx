@@ -4,8 +4,8 @@ import { useEffect, useRef } from "react";
 import { useStore } from "@/frontend/data/store";
 import { exportAll, importAll } from "@/frontend/data/io";
 import { INPUT_BASE_CLASS } from "@/frontend/components/common/formClasses";
-import { Button, IconButton } from "@/frontend/components/ui/button";
-import { ThemeToggle } from "@/frontend/components/ui/ThemeToggle";
+import { Button, IconButton } from "@/frontend/components/common/button";
+import { ThemeToggle } from "@/frontend/components/common/ThemeToggle";
 import { toast } from "sonner";
 import {
   DropdownMenu,
@@ -13,7 +13,7 @@ import {
   DropdownMenuItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "@/frontend/components/ui/dropdown-menu";
+} from "@/frontend/components/common/dropdown-menu";
 
 export function AppHeader() {
   const sections = useStore((s) => s.sections);
