@@ -23,9 +23,9 @@ const rooms = {
   replaceCustomRooms: vi.fn(),
 };
 
-vi.mock("../../src/data/db", () => db);
-vi.mock("../../src/data/rooms", () => rooms);
-vi.mock("../../src/data/imageNames", () => ({
+vi.mock("@/data/db", () => db);
+vi.mock("@/data/rooms", () => rooms);
+vi.mock("@/data/imageNames", () => ({
   buildUniqueFileName: vi.fn((_: string[], name: string) => `${name}-file`),
 }));
 
@@ -93,7 +93,7 @@ describe("sync boundaries", () => {
 
   it("loads and persists sync mode", async () => {
     db.getMeta.mockResolvedValueOnce("manual");
-    const sync = await import("../../src/data/sync");
+    const sync = await import("@/data/sync");
 
     const mode = await sync.loadSyncMode();
     expect(mode).toBe("manual");
@@ -103,7 +103,7 @@ describe("sync boundaries", () => {
   });
 
   it("returns null when picking folder is aborted", async () => {
-    const sync = await import("../../src/data/sync");
+    const sync = await import("@/data/sync");
     vi.stubGlobal("window", {
       showDirectoryPicker: vi.fn(async () => {
         throw new DOMException("cancel", "AbortError");
@@ -115,7 +115,7 @@ describe("sync boundaries", () => {
   });
 
   it("restores handle only with granted permission", async () => {
-    const sync = await import("../../src/data/sync");
+    const sync = await import("@/data/sync");
     const deniedHandle = {
       queryPermission: vi.fn(async () => "denied"),
       requestPermission: vi.fn(async () => "denied"),
@@ -127,7 +127,7 @@ describe("sync boundaries", () => {
   });
 
   it("writes manifest when scheduled in auto mode", async () => {
-    const sync = await import("../../src/data/sync");
+    const sync = await import("@/data/sync");
     const { handle, files } = createMemoryDirHandle("SyncFolder");
     vi.stubGlobal("window", { showDirectoryPicker: vi.fn(async () => handle) });
 
@@ -142,7 +142,7 @@ describe("sync boundaries", () => {
   });
 
   it("does not auto-write in manual mode, but saveSyncNow works", async () => {
-    const sync = await import("../../src/data/sync");
+    const sync = await import("@/data/sync");
     const { handle, files } = createMemoryDirHandle("SyncFolder");
     vi.stubGlobal("window", { showDirectoryPicker: vi.fn(async () => handle) });
 
@@ -161,7 +161,7 @@ describe("sync boundaries", () => {
   });
 
   it("imports sync manifest boundary into db layer", async () => {
-    const sync = await import("../../src/data/sync");
+    const sync = await import("@/data/sync");
     await sync.importSyncManifest({
       manifest: {
         app: "blue-prince-notes",

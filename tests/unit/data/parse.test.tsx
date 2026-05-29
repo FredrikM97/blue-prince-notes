@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { parseCapture } from "../../src/data/parse";
+import { parseCapture } from "@/data/parse";
 
 describe("parseCapture", () => {
   it("parses tags, room, date, type and title", () => {

@@ -26,37 +26,37 @@ vi.mock("@tanstack/react-router", async (importOriginal) => {
   };
 });
 
-vi.mock("../../../src/data/store", () => ({
+vi.mock("@/data/store", () => ({
   useStore: (selector: (state: typeof mockStoreState) => unknown) => selector(mockStoreState),
 }));
 
-vi.mock("../../../src/components/notes/NotesPage", () => ({
+vi.mock("@/components/notes/NotesPage", () => ({
   NotesPage: (props: Record<string, unknown>) => (
     <div data-testid="notes-page">notes:{JSON.stringify(props)}</div>
   ),
 }));
 
-vi.mock("../../../src/components/settings/SettingsPage", () => ({
+vi.mock("@/components/settings/SettingsPage", () => ({
   SettingsPage: () => <div data-testid="settings-page">settings</div>,
 }));
 
-vi.mock("../../../src/components/todos/TodosPage", () => ({
+vi.mock("@/components/todos/TodosPage", () => ({
   TodosPage: () => <div data-testid="todos-page">todos</div>,
 }));
 
-vi.mock("../../../src/components/map/MapPage", () => ({
+vi.mock("@/components/map/MapPage", () => ({
   MapPage: () => <div data-testid="map-page">map</div>,
 }));
 
-vi.mock("../../../src/components/images/ImagesPage", () => ({
+vi.mock("@/components/images/ImagesPage", () => ({
   ImagesPage: () => <div data-testid="images-page">images</div>,
 }));
 
-vi.mock("../../../src/components/graph/GraphPage", () => ({
+vi.mock("@/components/graph/GraphPage", () => ({
   GraphPage: () => <div data-testid="graph-page">graph</div>,
 }));
 
-import { NotFoundView, NotesIndexView, SectionView } from "../../../src/router";
+import { NotFoundView, NotesIndexView, SectionView } from "@/router";
 
 describe("route views smoke snapshots", () => {
   beforeEach(() => {

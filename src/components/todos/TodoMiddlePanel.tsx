@@ -1,4 +1,4 @@
-import { TODO_STATUS_COLUMNS } from "./constants";
+import { TODO_STATUS_COLUMNS } from "./Constants";
 import { TodoItem } from "./TodoItem";
 import type { Todo, TodoStatus } from "@/lib/types";
 

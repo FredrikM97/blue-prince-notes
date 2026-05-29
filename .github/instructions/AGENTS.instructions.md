@@ -12,6 +12,14 @@ description: Describe when these instructions should be loaded by the agent base
 - When refactoring, prefer replacing old APIs/components directly instead of preserving legacy names.
 - If backward compatibility is required for a specific change, that requirement must be stated in the task.
 
+## Less Is More
+
+- Default to the smallest solution that fully solves the problem.
+- Prefer reducing complexity over adding abstraction layers.
+- Remove redundant code, duplicate helpers, and low-value indirection when touching related areas.
+- Keep folders, APIs, and test utilities intentionally small and purpose-driven.
+- Before adding a new file, helper, or test, check whether the existing structure can be simplified instead.
+
 ## Formatting And Lint Hygiene
 
 - Treat formatter/lint diagnostics as part of done criteria for touched files.
@@ -20,6 +28,12 @@ description: Describe when these instructions should be loaded by the agent base
 - After edits, re-check diagnostics for all changed files and resolve remaining actionable issues.
 - Do not add blanket file-level disables such as `/* eslint-disable ... */` unless there is no viable structural fix.
 - If a lint disable is truly unavoidable, keep it scoped to the smallest possible line/block and add a short reason.
+
+## Import Placement
+
+- Keep all `import` statements at the top of the file.
+- Do not place `import` statements inside functions, conditionals, loops, or mid-file blocks.
+- Prefer static top-level imports over dynamic imports unless lazy-loading behavior is explicitly required.
 
 ## Type Safety
 

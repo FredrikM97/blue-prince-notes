@@ -1,16 +1,19 @@
 import { fireEvent, render, screen } from "@testing-library/react";
+import type { ReactElement } from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { ThemeToggle } from "../../../src/components/common/ThemeToggle";
-import { Toaster } from "../../../src/components/common/Sonner";
+import { ThemeToggle } from "@/components/common/ThemeToggle";
+import { Toaster } from "@/components/common/Sonner";
 import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuSeparator,
   DropdownMenuSubContent,
   DropdownMenuSubTrigger,
-} from "../../../src/components/common/dropdowns/DropdownMenu";
+} from "@/components/common/dropdowns/DropdownMenu";
 
-const sonnerSpy = vi.fn(() => <div data-testid="sonner" />);
+const sonnerSpy = vi.fn<(props: unknown) => ReactElement>((_props) => (
+  <div data-testid="sonner" />
+));
 
 vi.mock("sonner", () => ({
   Toaster: (props: unknown) => {

@@ -1,11 +1,13 @@
-import { QueryClient } from "@tanstack/react-query";
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { fireEvent, screen, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { renderRootLayoutWithProviders } from "../../helpers/renderWithProviders";
 
 const ctx = vi.hoisted(() => ({
   sync: {
-    restoreSyncHandle: vi.fn(async () => null),
-    readFromSyncFolder: vi.fn(async () => null),
+    restoreSyncHandle: vi.fn<() => Promise<{ name: string } | null>>(async () => null),
+    readFromSyncFolder: vi.fn<
+      () => Promise<{ manifest: { app: string }; images: unknown[] } | null>
+    >(async () => null),
     importSyncManifest: vi.fn(async () => {}),
     getActiveSyncFolderName: vi.fn(() => null as string | null),
   },
@@ -24,44 +26,44 @@ const ctx = vi.hoisted(() => ({
   },
 }));
 
-vi.mock("../../src/data/store", () => {
+vi.mock("@/data/store", () => {
   const useStore = ((selector: (state: typeof ctx.state) => unknown) =>
-    selector(ctx.state)) as typeof import("../../src/data/store").useStore;
+    selector(ctx.state)) as typeof import("@/data/store").useStore;
   useStore.getState = () => ctx.state as never;
   return { useStore };
 });
-vi.mock("../../src/data/sync", () => ctx.sync);
-vi.mock("../../src/components/AppHeader", () => ({
+vi.mock("@/data/sync", () => ctx.sync);
+vi.mock("@/components/AppHeader", () => ({
   AppHeader: () => <div data-testid="app-header" />,
 }));
-vi.mock("../../src/components/common/Sonner", () => ({
+vi.mock("@/components/common/Sonner", () => ({
   Toaster: () => <div data-testid="toaster" />,
 }));
-vi.mock("../../src/components/notes/NotesPage", () => ({
+vi.mock("@/components/notes/NotesPage", () => ({
   NotesPage: () => <div data-testid="notes-page" />,
 }));
-vi.mock("../../src/components/settings/SettingsPage", () => ({
+vi.mock("@/components/settings/SettingsPage", () => ({
   SettingsPage: () => <div data-testid="settings-page" />,
 }));
-vi.mock("../../src/components/todos/TodosPage", () => ({
+vi.mock("@/components/todos/TodosPage", () => ({
   TodosPage: () => <div data-testid="todos-page" />,
 }));
-vi.mock("../../src/components/map/MapPage", () => ({
+vi.mock("@/components/map/MapPage", () => ({
   MapPage: () => <div data-testid="map-page" />,
 }));
-vi.mock("../../src/components/images/ImagesPage", () => ({
+vi.mock("@/components/images/ImagesPage", () => ({
   ImagesPage: () => <div data-testid="images-page" />,
 }));
-vi.mock("../../src/components/graph/GraphPage", () => ({
+vi.mock("@/components/graph/GraphPage", () => ({
   GraphPage: () => <div data-testid="graph-page" />,
 }));
-vi.mock("../../src/hooks/useSuggestionSources", () => ({
+vi.mock("@/hooks/useSuggestionSources", () => ({
   SuggestionSourcesContext: {
     Provider: ({ children }: { children: React.ReactNode }) => <>{children}</>,
   },
   useSuggestionSources: () => ({ roomSuggestions: [], tagSuggestions: [] }),
 }));
-vi.mock("../../src/components/WelcomeScreen", () => ({
+vi.mock("@/components/WelcomeScreen", () => ({
   WelcomeScreen: ({
     onDone,
     onContinue,
@@ -97,8 +99,6 @@ vi.mock("@tanstack/react-router", async (importOriginal) => {
   };
 });
 
-import { RootLayoutView } from "../../src/router";
-
 describe("router boot and welcome gating", () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -109,7 +109,7 @@ describe("router boot and welcome gating", () => {
   });
 
   it("shows welcome screen for fresh users", async () => {
-    render(<RootLayoutView queryClient={new QueryClient()} />);
+    renderRootLayoutWithProviders();
 
     await waitFor(() => {
       expect(screen.getByTestId("welcome-screen")).toBeInTheDocument();
@@ -119,7 +119,7 @@ describe("router boot and welcome gating", () => {
   it("renders outlet when user already welcomed", async () => {
     localStorage.setItem("bp-welcomed", "1");
 
-    render(<RootLayoutView queryClient={new QueryClient()} />);
+    renderRootLayoutWithProviders();
 
     await waitFor(() => {
       expect(screen.getByTestId("router-outlet")).toBeInTheDocument();
@@ -133,7 +133,7 @@ describe("router boot and welcome gating", () => {
       images: [],
     });
 
-    render(<RootLayoutView queryClient={new QueryClient()} />);
+    renderRootLayoutWithProviders();
 
     await waitFor(() => {
       expect(ctx.state.setSyncFolderName).toHaveBeenCalledWith("RecoveredSync");
@@ -143,7 +143,7 @@ describe("router boot and welcome gating", () => {
   });
 
   it("transitions from welcome to ready on continue", async () => {
-    render(<RootLayoutView queryClient={new QueryClient()} />);
+    renderRootLayoutWithProviders();
 
     await waitFor(() => {
       expect(screen.getByTestId("welcome-screen")).toBeInTheDocument();
@@ -157,7 +157,7 @@ describe("router boot and welcome gating", () => {
   });
 
   it("handles onboarding done callback and stores welcome flag", async () => {
-    render(<RootLayoutView queryClient={new QueryClient()} />);
+    renderRootLayoutWithProviders();
 
     await waitFor(() => {
       expect(screen.getByTestId("welcome-screen")).toBeInTheDocument();

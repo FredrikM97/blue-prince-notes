@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { buildUniqueFileName } from "../../src/data/imageNames";
+import { buildUniqueFileName } from "@/data/imageNames";
 
 describe("buildUniqueFileName", () => {
   it("keeps unique candidate names", () => {

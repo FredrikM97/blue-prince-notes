@@ -10,11 +10,11 @@ const ctx = vi.hoisted(() => ({
   catalog: [{ name: "Entrance Hall" }, { name: "Parlor" }],
 }));
 
-vi.mock("../../src/data/store", () => ({
+vi.mock("@/data/store", () => ({
   useStore: (selector: (state: typeof ctx.state) => unknown) => selector(ctx.state),
 }));
 
-vi.mock("../../src/data/rooms", () => ({
+vi.mock("@/data/rooms", () => ({
   getRoomCatalog: () => ctx.catalog,
 }));
 
@@ -23,7 +23,7 @@ import {
   useScopedSuggestionSources,
   useSuggestionSources,
   useSuggestionSourcesContext,
-} from "../../src/hooks/useSuggestionSources";
+} from "@/hooks/useSuggestionSources";
 
 describe("useSuggestionSources", () => {
   beforeEach(() => {

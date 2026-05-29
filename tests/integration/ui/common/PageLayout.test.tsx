@@ -1,6 +1,6 @@
 import { fireEvent, render } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
-import { PageLayout } from "../../src/components/common/PageLayout";
+import { PageLayout } from "@/components/common/PageLayout";
 
 describe("PageLayout", () => {
   it("matches snapshot for three-column layout", () => {

@@ -8,7 +8,7 @@ import {
   replaceCustomRooms,
   ROOM_GROUPS,
   cellId,
-} from "../../src/data/rooms";
+} from "@/data/rooms";
 
 describe("rooms custom catalog", () => {
   beforeEach(() => {

@@ -1,8 +1,13 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { AppHeader } from "../../src/components/AppHeader";
+import { AppHeader } from "@/components/AppHeader";
 
 const mockNavigate = vi.fn();
+const hoisted = vi.hoisted(() => ({
+  mockExportAll: vi.fn(async () => {}),
+  mockImportAll: vi.fn(async () => {}),
+}));
+
 const mockState = {
   sections: [
     { id: "notes", label: "Notes", builtin: "notes" },
@@ -21,8 +26,6 @@ const mockState = {
   pathname: "/",
 };
 
-const mockExportAll = vi.fn(async () => {});
-const mockImportAll = vi.fn(async () => {});
 const toastSuccess = vi.fn();
 const toastError = vi.fn();
 
@@ -37,13 +40,13 @@ vi.mock("@tanstack/react-router", () => ({
     select({ location: { pathname: mockState.pathname } }),
 }));
 
-vi.mock("../../src/data/store", () => ({
+vi.mock("@/data/store", () => ({
   useStore: (selector: (state: typeof mockState) => unknown) => selector(mockState),
 }));
 
-vi.mock("../../src/data/io", () => ({
-  exportAll: () => mockExportAll(),
-  importAll: (...args: unknown[]) => mockImportAll(...args),
+vi.mock("@/data/io", () => ({
+  exportAll: hoisted.mockExportAll,
+  importAll: hoisted.mockImportAll,
 }));
 
 vi.mock("sonner", () => ({
@@ -53,11 +56,11 @@ vi.mock("sonner", () => ({
   },
 }));
 
-vi.mock("../../src/components/common/ThemeToggle", () => ({
+vi.mock("@/components/common/ThemeToggle", () => ({
   ThemeToggle: () => <button type="button">theme-toggle</button>,
 }));
 
-vi.mock("../../src/components/common/dropdowns/DropdownMenu", () => ({
+vi.mock("@/components/common/dropdowns/DropdownMenu", () => ({
   DropdownMenu: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
   DropdownMenuTrigger: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
   DropdownMenuContent: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
@@ -86,8 +89,8 @@ describe("AppHeader", () => {
     mockState.closeCapture.mockClear();
     mockState.load.mockClear();
     mockNavigate.mockClear();
-    mockExportAll.mockClear();
-    mockImportAll.mockClear();
+    hoisted.mockExportAll.mockClear();
+    hoisted.mockImportAll.mockClear();
     toastSuccess.mockClear();
     toastError.mockClear();
   });
@@ -162,14 +165,14 @@ describe("AppHeader", () => {
     fireEvent.change(fileInput, { target: { files: [file] } });
 
     await waitFor(() => {
-      expect(mockImportAll).toHaveBeenCalledWith(file, "merge");
+      expect(hoisted.mockImportAll).toHaveBeenCalledWith(file, "merge");
       expect(mockState.load).toHaveBeenCalled();
       expect(toastSuccess).toHaveBeenCalledWith("Imported");
     });
   });
 
   it("handles import error and shows toast", async () => {
-    mockImportAll.mockRejectedValueOnce(new Error("bad import"));
+    hoisted.mockImportAll.mockRejectedValueOnce(new Error("bad import"));
     render(<AppHeader />);
 
     const file = new File(["bad"], "bad.json", { type: "application/json" });

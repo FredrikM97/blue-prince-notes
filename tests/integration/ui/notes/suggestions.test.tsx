@@ -3,7 +3,7 @@ import {
   applySuggestionToValue,
   buildSuggestions,
   getActiveToken,
-} from "../../../src/components/common/inputs/tokenSuggestions";
+} from "@/components/common/inputs/TokenSuggestions";
 
 describe("notes suggestions", () => {
   it("builds room suggestions from @ token", () => {

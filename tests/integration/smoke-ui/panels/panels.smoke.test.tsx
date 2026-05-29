@@ -1,14 +1,14 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
-import { NotesView } from "../../../src/components/notes/NotesView";
-import { MapLeftPanel } from "../../../src/components/map/MapLeftPanel";
-import { MapMiddlePanel } from "../../../src/components/map/MapMiddlePanel";
-import { ImagesLeftPanel } from "../../../src/components/images/ImagesLeftPanel";
-import { GraphRightPanel } from "../../../src/components/graph/GraphRightPanel";
-import { TodoLeftPanel } from "../../../src/components/todos/TodoLeftPanel";
-import type { Note, Todo } from "../../../src/lib/types";
+import { NotesView } from "@/components/notes/NotesView";
+import { MapLeftPanel } from "@/components/map/MapLeftPanel";
+import { MapMiddlePanel } from "@/components/map/MapMiddlePanel";
+import { ImagesLeftPanel } from "@/components/images/ImagesLeftPanel";
+import { GraphRightPanel } from "@/components/graph/GraphRightPanel";
+import { TodoLeftPanel } from "@/components/todos/TodoLeftPanel";
+import type { Note, Todo } from "@/lib/types";
 
-vi.mock("../../../src/components/common/AttachedImagesGallery", () => ({
+vi.mock("@/components/common/AttachedImagesGallery", () => ({
   AttachedImagesGallery: () => <div data-testid="attached-images-gallery" />,
 }));
 

@@ -1,4 +1,11 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import {
+  buildGridCell,
+  buildNote,
+  buildSection,
+  buildStoredImage,
+  buildTodo,
+} from "../../fixtures/domainBuilders";
 
 type UpgradeFn = (
   db: { createObjectStore: (name: string) => { createIndex: (...args: unknown[]) => unknown } },
@@ -7,10 +14,10 @@ type UpgradeFn = (
 
 const ctx = vi.hoisted(() => {
   const db = {
-    getAllFromIndex: vi.fn(async () => []),
-    getAll: vi.fn(async () => []),
+    getAllFromIndex: vi.fn<(...args: unknown[]) => Promise<unknown[]>>(async () => []),
+    getAll: vi.fn<(...args: unknown[]) => Promise<unknown[]>>(async () => []),
     put: vi.fn(async () => {}),
-    get: vi.fn(async () => undefined),
+    get: vi.fn<(...args: unknown[]) => Promise<unknown>>(async () => undefined),
     delete: vi.fn(async () => {}),
     transaction: vi.fn(() => ({
       objectStore: () => ({ clear: vi.fn(async () => {}) }),
@@ -35,21 +42,6 @@ const ctx = vi.hoisted(() => {
 
 vi.mock("idb", () => ({ openDB: ctx.openDB }));
 
-function sampleNote(id: string) {
-  return {
-    id,
-    type: "clue",
-    title: `Note ${id}`,
-    body: "",
-    tags: [],
-    status: "open",
-    scope: "this-run",
-    imageIds: [],
-    createdAt: 1,
-    updatedAt: 2,
-  };
-}
-
 describe("db boundaries", () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -67,7 +59,7 @@ describe("db boundaries", () => {
   });
 
   it("reports browser availability", async () => {
-    const db = await import("../../src/data/db");
+    const db = await import("@/data/db");
     expect(db.isBrowser()).toBe(true);
 
     // @ts-expect-error test mutation
@@ -77,22 +69,13 @@ describe("db boundaries", () => {
 
   it("lists notes/todos in reverse updated order", async () => {
     ctx.db.getAllFromIndex
-      .mockResolvedValueOnce([sampleNote("1"), sampleNote("2")])
       .mockResolvedValueOnce([
-        {
-          id: "t1",
-          title: "todo",
-          tags: [],
-          status: "open",
-          priority: "med",
-          scope: "this-run",
-          linkedNoteIds: [],
-          createdAt: 1,
-          updatedAt: 2,
-        },
-      ]);
+        buildNote({ id: "1", title: "Note 1", updatedAt: 1 }),
+        buildNote({ id: "2", title: "Note 2", updatedAt: 2 }),
+      ])
+      .mockResolvedValueOnce([buildTodo({ id: "t1", title: "todo", updatedAt: 2 })]);
 
-    const db = await import("../../src/data/db");
+    const db = await import("@/data/db");
     const notes = await db.listNotes();
     const todos = await db.listTodos();
 
@@ -101,30 +84,13 @@ describe("db boundaries", () => {
   });
 
   it("persists and deletes note/todo/image/section/grid/meta records", async () => {
-    const db = await import("../../src/data/db");
+    const db = await import("@/data/db");
 
-    await db.putNote(sampleNote("n1") as never);
-    await db.putTodo({
-      id: "t1",
-      title: "todo",
-      tags: [],
-      status: "open",
-      priority: "med",
-      scope: "this-run",
-      linkedNoteIds: [],
-      createdAt: 1,
-      updatedAt: 1,
-    } as never);
-    await db.putImage({
-      id: "i1",
-      name: "img",
-      tags: [],
-      mime: "image/png",
-      blob: new Blob(["x"], { type: "image/png" }),
-      createdAt: 1,
-    } as never);
-    await db.putSection({ id: "s1", label: "x", order: 0 } as never);
-    await db.putGridCell({ id: "0,0", row: 0, col: 0, status: "unknown", updatedAt: 1 } as never);
+    await db.putNote(buildNote({ id: "n1", title: "Note n1" }));
+    await db.putTodo(buildTodo({ id: "t1", title: "todo" }));
+    await db.putImage(buildStoredImage({ id: "i1", name: "img" }));
+    await db.putSection(buildSection({ id: "s1", label: "x" }));
+    await db.putGridCell(buildGridCell({ row: 0, col: 0 }));
     await db.setMeta("sync", { a: 1 });
 
     await db.deleteNote("n1");
@@ -141,7 +107,7 @@ describe("db boundaries", () => {
   it("reads image/meta and clears content stores", async () => {
     ctx.db.get.mockResolvedValueOnce({ id: "img" }).mockResolvedValueOnce("meta-value");
 
-    const db = await import("../../src/data/db");
+    const db = await import("@/data/db");
     const img = await db.getImage("img");
     const meta = await db.getMeta("k");
 
@@ -159,7 +125,7 @@ describe("db boundaries", () => {
     // @ts-expect-error test mutation
     delete globalThis.indexedDB;
 
-    const db = await import("../../src/data/db");
+    const db = await import("@/data/db");
     await expect(db.listNotes()).rejects.toThrow("IndexedDB unavailable");
   });
 
@@ -181,7 +147,7 @@ describe("db boundaries", () => {
     );
 
     vi.doMock("idb", () => ({ openDB }));
-    const db = await import("../../src/data/db");
+    const db = await import("@/data/db");
 
     await db.listSections();
 

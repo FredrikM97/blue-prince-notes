@@ -1,12 +1,14 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import type { GridCell, Note, RoomState, SectionDef, StoredImage, Todo } from "@/lib/types";
+import { buildNote, buildStoredImage, buildTodo } from "../../fixtures/domainBuilders";
 
 const db = {
-  listNotes: vi.fn(async () => []),
-  listTodos: vi.fn(async () => []),
-  listImages: vi.fn(async () => []),
-  listRoomStates: vi.fn(async () => []),
-  listSections: vi.fn(async () => []),
-  listGridCells: vi.fn(async () => []),
+  listNotes: vi.fn<() => Promise<Note[]>>(async () => []),
+  listTodos: vi.fn<() => Promise<Todo[]>>(async () => []),
+  listImages: vi.fn<() => Promise<StoredImage[]>>(async () => []),
+  listRoomStates: vi.fn<() => Promise<RoomState[]>>(async () => []),
+  listSections: vi.fn<() => Promise<SectionDef[]>>(async () => []),
+  listGridCells: vi.fn<() => Promise<GridCell[]>>(async () => []),
   putNote: vi.fn(async () => {}),
   putTodo: vi.fn(async () => {}),
   putImage: vi.fn(async () => {}),
@@ -61,8 +63,8 @@ class FakeZip {
   }
 }
 
-vi.mock("../../src/data/db", () => db);
-vi.mock("../../src/data/rooms", () => rooms);
+vi.mock("@/data/db", () => db);
+vi.mock("@/data/rooms", () => rooms);
 vi.mock("jszip", () => ({ default: FakeZip }));
 
 describe("io boundaries", () => {
@@ -78,18 +80,10 @@ describe("io boundaries", () => {
   });
 
   it("exports data into zip and triggers download", async () => {
-    db.listNotes.mockResolvedValueOnce([{ id: "n1" }]);
-    db.listTodos.mockResolvedValueOnce([{ id: "t1" }]);
+    db.listNotes.mockResolvedValueOnce([buildNote({ id: "n1", title: "note" })]);
+    db.listTodos.mockResolvedValueOnce([buildTodo({ id: "t1", title: "todo" })]);
     db.listImages.mockResolvedValueOnce([
-      {
-        id: "img-1",
-        name: "image.png",
-        caption: "c",
-        tags: [],
-        mime: "image/png",
-        blob: new Blob(["img"], { type: "image/png" }),
-        createdAt: 1,
-      },
+      buildStoredImage({ id: "img-1", name: "image.png", caption: "c" }),
     ]);
 
     const click = vi.fn();
@@ -99,7 +93,7 @@ describe("io boundaries", () => {
       download: "",
     } as unknown as HTMLAnchorElement);
 
-    const io = await import("../../src/data/io");
+    const io = await import("@/data/io");
     await io.exportAll();
 
     lastZipInstance = FakeZip.latest;
@@ -109,7 +103,7 @@ describe("io boundaries", () => {
   });
 
   it("imports legacy json data", async () => {
-    const io = await import("../../src/data/io");
+    const io = await import("@/data/io");
     const legacyJson = JSON.stringify({
       app: "blue-prince-notes",
       version: 2,
@@ -161,7 +155,7 @@ describe("io boundaries", () => {
     loadedZipInstance.file("manifest.json", JSON.stringify(manifest));
     loadedZipInstance.file("images/img-1", new Blob(["img"], { type: "image/png" }));
 
-    const io = await import("../../src/data/io");
+    const io = await import("@/data/io");
     const zipFile = {
       name: "backup.zip",
       type: "application/zip",

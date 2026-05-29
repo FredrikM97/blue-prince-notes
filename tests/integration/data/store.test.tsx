@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import type { GridCell, Note, Todo } from "../../src/lib/types";
+import type { GridCell, Note, Todo } from "@/lib/types";
+import { buildNote, buildTodo } from "../../fixtures/domainBuilders";
 
 const mockCtx = vi.hoisted(() => ({
   nanoidMock: vi.fn(),
@@ -29,23 +30,23 @@ const mockCtx = vi.hoisted(() => ({
 }));
 
 vi.mock("nanoid", () => ({ nanoid: () => mockCtx.nanoidMock() }));
-vi.mock("../../src/data/db", () => mockCtx.db);
-vi.mock("../../src/data/parse", () => ({
+vi.mock("@/data/db", () => mockCtx.db);
+vi.mock("@/data/parse", () => ({
   parseCapture: (...args: unknown[]) => mockCtx.parseCaptureMock(...args),
 }));
-vi.mock("../../src/data/sync", () => ({
+vi.mock("@/data/sync", () => ({
   disconnectSyncFolder: vi.fn(async () => {}),
   scheduleSyncWrite: () => mockCtx.scheduleSyncWriteMock(),
 }));
-vi.mock("../../src/data/rooms", () => ({
+vi.mock("@/data/rooms", () => ({
   cellId: (row: number, col: number) => `${row},${col}`,
   clearCustomRooms: vi.fn(),
 }));
-vi.mock("../../src/data/imageNames", () => ({
+vi.mock("@/data/imageNames", () => ({
   buildUniqueFileName: vi.fn(() => "image-unique.png"),
 }));
 
-import { useStore } from "../../src/data/store";
+import { useStore } from "@/data/store";
 
 describe("store flows", () => {
   beforeEach(() => {
@@ -78,19 +79,13 @@ describe("store flows", () => {
   });
 
   it("opens capture from note and closes cleanly", () => {
-    const note: Note = {
+    const note: Note = buildNote({
       id: "n1",
-      type: "clue",
       title: "Door code",
       body: "check room",
       room: "Parlor",
       tags: ["tag1"],
-      status: "open",
-      scope: "this-run",
-      imageIds: [],
-      createdAt: 1,
-      updatedAt: 1,
-    };
+    });
 
     useStore.getState().openCapture({ note, returnTo: "/section/map" });
 
@@ -155,29 +150,8 @@ describe("store flows", () => {
   });
 
   it("saves and removes note/todo records", async () => {
-    const existingNote: Note = {
-      id: "n1",
-      type: "story",
-      title: "Old",
-      body: "",
-      tags: [],
-      status: "open",
-      scope: "this-run",
-      imageIds: [],
-      createdAt: 1,
-      updatedAt: 1,
-    };
-    const existingTodo: Todo = {
-      id: "t1",
-      title: "Todo",
-      tags: [],
-      status: "open",
-      priority: "med",
-      scope: "this-run",
-      linkedNoteIds: [],
-      createdAt: 1,
-      updatedAt: 1,
-    };
+    const existingNote: Note = buildNote({ id: "n1", type: "story", title: "Old" });
+    const existingTodo: Todo = buildTodo({ id: "t1", title: "Todo" });
 
     useStore.setState({ notes: [existingNote], todos: [existingTodo] });
 

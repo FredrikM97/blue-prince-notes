@@ -1,33 +1,38 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { WelcomeScreen } from "../../src/components/WelcomeScreen";
+import { WelcomeScreen } from "@/components/WelcomeScreen";
+
+const hoisted = vi.hoisted(() => ({
+  mockImportAll: vi.fn(async () => {}),
+  mockPickSyncFolder: vi.fn<() => Promise<{ name: string } | null>>(async () => null),
+  mockReadFromSyncFolder: vi.fn<
+    () => Promise<{ manifest: { app: string }; images: unknown[] } | null>
+  >(async () => null),
+  mockImportSyncManifest: vi.fn<(payload: unknown) => Promise<void>>(async () => {}),
+  mockGetActiveSyncFolderName: vi.fn(() => null as string | null),
+}));
 
 const mockStore = {
   load: vi.fn(async () => {}),
   startFresh: vi.fn(async () => {}),
 };
 
-const mockImportAll = vi.fn(async () => {});
-const mockPickSyncFolder = vi.fn(async () => null);
-const mockReadFromSyncFolder = vi.fn(async () => null);
-const mockImportSyncManifest = vi.fn(async () => {});
-const mockGetActiveSyncFolderName = vi.fn(() => null as string | null);
 const toastSuccess = vi.fn();
 const toastError = vi.fn();
 
-vi.mock("../../src/data/store", () => ({
+vi.mock("@/data/store", () => ({
   useStore: (selector: (state: typeof mockStore) => unknown) => selector(mockStore),
 }));
 
-vi.mock("../../src/data/io", () => ({
-  importAll: (...args: unknown[]) => mockImportAll(...args),
+vi.mock("@/data/io", () => ({
+  importAll: hoisted.mockImportAll,
 }));
 
-vi.mock("../../src/data/sync", () => ({
-  pickSyncFolder: () => mockPickSyncFolder(),
-  readFromSyncFolder: (...args: unknown[]) => mockReadFromSyncFolder(...args),
-  importSyncManifest: (...args: unknown[]) => mockImportSyncManifest(...args),
-  getActiveSyncFolderName: () => mockGetActiveSyncFolderName(),
+vi.mock("@/data/sync", () => ({
+  pickSyncFolder: hoisted.mockPickSyncFolder,
+  readFromSyncFolder: hoisted.mockReadFromSyncFolder,
+  importSyncManifest: hoisted.mockImportSyncManifest,
+  getActiveSyncFolderName: hoisted.mockGetActiveSyncFolderName,
 }));
 
 vi.mock("sonner", () => ({
@@ -41,11 +46,11 @@ describe("WelcomeScreen", () => {
   beforeEach(() => {
     mockStore.load.mockClear();
     mockStore.startFresh.mockClear();
-    mockImportAll.mockClear();
-    mockPickSyncFolder.mockClear();
-    mockReadFromSyncFolder.mockClear();
-    mockImportSyncManifest.mockClear();
-    mockGetActiveSyncFolderName.mockClear();
+    hoisted.mockImportAll.mockClear();
+    hoisted.mockPickSyncFolder.mockClear();
+    hoisted.mockReadFromSyncFolder.mockClear();
+    hoisted.mockImportSyncManifest.mockClear();
+    hoisted.mockGetActiveSyncFolderName.mockClear();
     toastSuccess.mockClear();
     toastError.mockClear();
   });
@@ -84,8 +89,8 @@ describe("WelcomeScreen", () => {
 
   it("connects folder with existing manifest and imports data", async () => {
     const onDone = vi.fn();
-    mockPickSyncFolder.mockResolvedValueOnce({ name: "SyncDir" });
-    mockReadFromSyncFolder.mockResolvedValueOnce({
+    hoisted.mockPickSyncFolder.mockResolvedValueOnce({ name: "SyncDir" });
+    hoisted.mockReadFromSyncFolder.mockResolvedValueOnce({
       manifest: { app: "blue-prince-notes" },
       images: [],
     });
@@ -94,7 +99,7 @@ describe("WelcomeScreen", () => {
     fireEvent.click(screen.getByRole("button", { name: /Sync folder/i }));
 
     await waitFor(() => {
-      expect(mockImportSyncManifest).toHaveBeenCalled();
+      expect(hoisted.mockImportSyncManifest).toHaveBeenCalled();
       expect(mockStore.load).toHaveBeenCalled();
       expect(toastSuccess).toHaveBeenCalledWith('Loaded data from "SyncDir"');
       expect(onDone).toHaveBeenCalledWith("SyncDir");
@@ -103,9 +108,9 @@ describe("WelcomeScreen", () => {
 
   it("connects folder without existing manifest", async () => {
     const onDone = vi.fn();
-    mockPickSyncFolder.mockResolvedValueOnce({ name: "SyncDir" });
-    mockReadFromSyncFolder.mockResolvedValueOnce(null);
-    mockGetActiveSyncFolderName.mockReturnValueOnce("ActiveFolder");
+    hoisted.mockPickSyncFolder.mockResolvedValueOnce({ name: "SyncDir" });
+    hoisted.mockReadFromSyncFolder.mockResolvedValueOnce(null);
+    hoisted.mockGetActiveSyncFolderName.mockReturnValueOnce("ActiveFolder");
 
     render(<WelcomeScreen onDone={onDone} />);
     fireEvent.click(screen.getByRole("button", { name: /Sync folder/i }));
@@ -119,7 +124,7 @@ describe("WelcomeScreen", () => {
   });
 
   it("handles restricted folder error", async () => {
-    mockPickSyncFolder.mockRejectedValueOnce(new Error("Sensitive system files"));
+    hoisted.mockPickSyncFolder.mockRejectedValueOnce(new Error("Sensitive system files"));
     render(<WelcomeScreen onDone={vi.fn()} />);
 
     fireEvent.click(screen.getByRole("button", { name: /Sync folder/i }));
@@ -140,7 +145,7 @@ describe("WelcomeScreen", () => {
     fireEvent.change(fileInput, { target: { files: [file] } });
 
     await waitFor(() => {
-      expect(mockImportAll).toHaveBeenCalledWith(file, "replace");
+      expect(hoisted.mockImportAll).toHaveBeenCalledWith(file, "replace");
       expect(mockStore.load).toHaveBeenCalled();
       expect(toastSuccess).toHaveBeenCalledWith("Data imported");
       expect(onDone).toHaveBeenCalled();
@@ -148,7 +153,7 @@ describe("WelcomeScreen", () => {
   });
 
   it("handles import error message", async () => {
-    mockImportAll.mockRejectedValueOnce(new Error("zip invalid"));
+    hoisted.mockImportAll.mockRejectedValueOnce(new Error("zip invalid"));
     render(<WelcomeScreen onDone={vi.fn()} />);
 
     const file = new File(["bad"], "backup.json", { type: "application/json" });
