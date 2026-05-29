@@ -1,0 +1,125 @@
+name: Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      bump:
+        description: "Version bump"
+        required: true
+        type: choice
+        options:
+          - patch
+          - minor
+          - major
+        default: patch
+      dry_run:
+        description: "Dry run — preview release notes without creating a release"
+        required: false
+        type: boolean
+        default: false
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    if: github.repository == 'FredrikM97/blue-prince-notes' && github.repository_owner == 'FredrikM97'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout (full history)
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      # ── Compute previous and next version tags ────────────────────────────
+      - name: Compute next version
+        id: version
+        shell: bash
+        run: |
+          PREV_TAG=$(git describe --tags --abbrev=0 2>/dev/null || true)
+
+          if [[ -z "$PREV_TAG" ]]; then
+            BASE="0.0.0"
+          else
+            BASE="${PREV_TAG#v}"
+          fi
+
+          IFS='.' read -r MAJ MIN PAT <<< "$BASE"
+
+          case "${{ inputs.bump }}" in
+            major) MAJ=$((MAJ + 1)); MIN=0; PAT=0 ;;
+            minor) MIN=$((MIN + 1)); PAT=0 ;;
+            patch) PAT=$((PAT + 1)) ;;
+          esac
+
+          NEXT="v${MAJ}.${MIN}.${PAT}"
+
+          echo "prev_tag=${PREV_TAG}" >> "$GITHUB_OUTPUT"
+          echo "next_tag=${NEXT}"     >> "$GITHUB_OUTPUT"
+
+      # ── Collect commits since previous tag ────────────────────────────────
+      - name: Build release notes
+        shell: bash
+        run: |
+          PREV="${{ steps.version.outputs.prev_tag }}"
+          NEXT="${{ steps.version.outputs.next_tag }}"
+
+          if [[ -n "$PREV" ]]; then
+            RANGE="${PREV}..HEAD"
+          else
+            RANGE="HEAD"
+          fi
+
+          COMMITS=$(git log "$RANGE" --no-merges --pretty=format:"- %s (%h)")
+
+          if [[ -z "$COMMITS" ]]; then
+            COMMITS="- No changes since ${PREV:-the beginning of history}"
+          fi
+
+          {
+            echo "## What's Changed"
+            echo ""
+            echo "$COMMITS"
+            if [[ -n "$PREV" ]]; then
+              echo ""
+              echo "**Full changelog:** \`${PREV}...${NEXT}\`"
+            fi
+          } > /tmp/release_notes.md
+
+      # ── Dry-run: print preview and exit ───────────────────────────────────
+      - name: Preview release notes (dry run)
+        if: inputs.dry_run == true
+        shell: bash
+        run: |
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          echo "  DRY RUN — no tag or release will be created"
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          echo ""
+          echo "  Previous tag : ${{ steps.version.outputs.prev_tag || '(none — first release)' }}"
+          echo "  Next tag     : ${{ steps.version.outputs.next_tag }}"
+          echo "  Bump type    : ${{ inputs.bump }}"
+          echo ""
+          echo "━━━━━━ Release notes preview ━━━━━━━━━━━━━━━━━━━"
+          cat /tmp/release_notes.md
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+
+      # ── Real release: tag → GitHub Release (triggers pages deploy) ────────
+      - name: Create tag and GitHub release
+        if: inputs.dry_run == false
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        shell: bash
+        run: |
+          NEXT="${{ steps.version.outputs.next_tag }}"
+
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git config user.name  "github-actions[bot]"
+          git tag -a "$NEXT" -m "Release $NEXT"
+          git push origin "$NEXT"
+
+          # Creating a published release automatically triggers deploy-pages.yml
+          gh release create "$NEXT" \
+            --title "$NEXT" \
+            --notes-file /tmp/release_notes.md \
+            --latest
