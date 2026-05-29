@@ -63,32 +63,37 @@ export function MarkdownShortcutHelp() {
         <HelpCircle className="h-3.5 w-3.5" />
       </IconButton>
 
-      {open && popupPos && createPortal(
-        <div
-          ref={popupRef}
-          style={{ position: "fixed", top: popupPos.top, right: popupPos.right, zIndex: 9999 }}
-          className="w-72 rounded-md border border-border bg-popover p-3 shadow-lg text-[11px]"
-        >
-          <p className="mb-2 text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">
-            Token shortcuts
-          </p>
-          <div className="grid grid-cols-[auto_1fr] items-start gap-x-3 gap-y-1.5">
-            {SHORTCUTS.map(({ tokens, desc }) => (
-              <Fragment key={desc}>
-                <div className="flex flex-wrap gap-1">
-                  {tokens.map((t) => (
-                    <code key={t} className="rounded bg-accent px-1 py-0.5 font-mono text-foreground">
-                      {t}
-                    </code>
-                  ))}
-                </div>
-                <span className="pt-0.5 leading-tight text-muted-foreground">{desc}</span>
-              </Fragment>
-            ))}
-          </div>
-        </div>,
-        document.body,
-      )}
+      {open &&
+        popupPos &&
+        createPortal(
+          <div
+            ref={popupRef}
+            style={{ position: "fixed", top: popupPos.top, right: popupPos.right, zIndex: 9999 }}
+            className="w-72 rounded-md border border-border bg-popover p-3 shadow-lg text-[11px]"
+          >
+            <p className="mb-2 text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">
+              Token shortcuts
+            </p>
+            <div className="grid grid-cols-[auto_1fr] items-start gap-x-3 gap-y-1.5">
+              {SHORTCUTS.map(({ tokens, desc }) => (
+                <Fragment key={desc}>
+                  <div className="flex flex-wrap gap-1">
+                    {tokens.map((t) => (
+                      <code
+                        key={t}
+                        className="rounded bg-accent px-1 py-0.5 font-mono text-foreground"
+                      >
+                        {t}
+                      </code>
+                    ))}
+                  </div>
+                  <span className="pt-0.5 leading-tight text-muted-foreground">{desc}</span>
+                </Fragment>
+              ))}
+            </div>
+          </div>,
+          document.body,
+        )}
     </div>
   );
 }

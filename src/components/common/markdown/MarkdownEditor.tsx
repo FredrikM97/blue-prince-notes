@@ -1,5 +1,15 @@
 import { useRef, useState, type RefObject } from "react";
-import { Bold, Italic, Table, List, ListOrdered, Eye, EyeOff, WandSparkles } from "lucide-react";
+import {
+  Bold,
+  Eye,
+  EyeOff,
+  Italic,
+  List,
+  ListOrdered,
+  Maximize2,
+  Table,
+  WandSparkles,
+} from "lucide-react";
 import { TEXTAREA_BASE_CLASS } from "@/components/common/FormClasses";
 import { IconButton } from "@/components/common/Button";
 import { MarkdownPreview } from "@/components/common/markdown/MarkdownPreview";
@@ -9,6 +19,7 @@ import {
   formatTableMarkdown,
   formatAllMarkdownTables,
 } from "@/components/common/markdown/MarkdownTables";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/common/Dialog";
 
 // ── toolbar actions ───────────────────────────────────────────────
 type WrapMode = "inline" | "block-line";
@@ -175,6 +186,66 @@ function findTableCellJump(value: string, cursor: number, reverse: boolean) {
   return null;
 }
 
+/**
+ * Handles Enter inside a list item.
+ * - Empty item (just the prefix): removes the prefix and ends the list.
+ * - Non-empty item: inserts a new item on the next line with the same prefix
+ *   (or the next sequential number for ordered lists).
+ * Returns true when the event was fully handled.
+ */
+function continueListOnEnter(
+  textarea: HTMLTextAreaElement,
+  setValue: (v: string) => void,
+): boolean {
+  const { selectionStart: start, selectionEnd: end, value } = textarea;
+
+  const lineStart = value.lastIndexOf("\n", start - 1) + 1;
+  const lineEndIdx = value.indexOf("\n", start);
+  const lineText = value.slice(lineStart, lineEndIdx === -1 ? value.length : lineEndIdx);
+
+  // bullet: optional indent + (- | * | +) + one-or-more spaces
+  const bulletMatch = /^(\s*)([-*+])( +)/.exec(lineText);
+  // numbered: optional indent + digits + ". "
+  const numberedMatch = /^(\s*)(\d+)(\. )/.exec(lineText);
+
+  const m = bulletMatch ?? numberedMatch;
+  if (!m) return false;
+
+  const prefixLen = m[0].length;
+  const contentAfterPrefix = lineText.slice(prefixLen);
+
+  if (!contentAfterPrefix.trim()) {
+    // Empty item — terminate the list by stripping the prefix
+    const nextVal = value.slice(0, lineStart) + value.slice(lineStart + prefixLen);
+    setValue(nextVal);
+    const newPos = lineStart;
+    requestAnimationFrame(() => {
+      textarea.focus();
+      textarea.setSelectionRange(newPos, newPos);
+    });
+    return true;
+  }
+
+  // Build the prefix for the next line
+  let nextPrefix: string;
+  if (numberedMatch) {
+    const [, indent, num, sep] = numberedMatch;
+    nextPrefix = `${indent}${parseInt(num, 10) + 1}${sep}`;
+  } else {
+    nextPrefix = m[0]; // same bullet marker + spacing
+  }
+
+  const insert = `\n${nextPrefix}`;
+  const nextVal = value.slice(0, start) + insert + value.slice(end);
+  const newPos = start + insert.length;
+  setValue(nextVal);
+  requestAnimationFrame(() => {
+    textarea.focus();
+    textarea.setSelectionRange(newPos, newPos);
+  });
+  return true;
+}
+
 function insertTabAtCursor(textarea: HTMLTextAreaElement, setValue: (v: string) => void) {
   const { selectionStart: start, selectionEnd: end, value } = textarea;
   const next = `${value.slice(0, start)}\t${value.slice(end)}`;
@@ -197,6 +268,8 @@ export function MarkdownEditor({
   rows = 6,
   className,
   textareaRef,
+  allowExpand = true,
+  defaultPreview = false,
 }: {
   value: string;
   onChange: (v: string) => void;
@@ -207,8 +280,11 @@ export function MarkdownEditor({
   rows?: number;
   className?: string;
   textareaRef?: RefObject<HTMLTextAreaElement | null>;
+  allowExpand?: boolean;
+  defaultPreview?: boolean;
 }) {
-  const [preview, setPreview] = useState(false);
+  const [preview, setPreview] = useState(defaultPreview);
+  const [expanded, setExpanded] = useState(false);
   const localRef = useRef<HTMLTextAreaElement>(null);
   const ref = textareaRef ?? localRef;
 
@@ -254,6 +330,19 @@ export function MarkdownEditor({
         >
           {preview ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
         </IconButton>
+        {allowExpand && (
+          <>
+            <div className="mx-1 h-4 w-px bg-border" />
+            <IconButton
+              aria-label={preview ? "Expand preview" : "Expand editor"}
+              title={preview ? "Expand preview" : "Expand editor"}
+              className="h-7 w-7"
+              onClick={() => setExpanded(true)}
+            >
+              <Maximize2 className="h-3.5 w-3.5" />
+            </IconButton>
+          </>
+        )}
       </div>
 
       {preview ? (
@@ -275,6 +364,13 @@ export function MarkdownEditor({
             const handled = onTextKeyDown?.(e);
             if (handled || e.defaultPrevented) {
               return;
+            }
+
+            if (e.key === "Enter" && !e.shiftKey && !e.metaKey && !e.ctrlKey && ref.current) {
+              if (continueListOnEnter(ref.current, onChange)) {
+                e.preventDefault();
+                return;
+              }
             }
 
             if (e.key === "Tab" && !e.metaKey && !e.ctrlKey && !e.altKey && ref.current) {
@@ -300,6 +396,25 @@ export function MarkdownEditor({
           rows={rows}
           className={`${TEXTAREA_BASE_CLASS} rounded-t-none rounded-b-md border-t-0 font-mono text-[13px] leading-6 [font-variant-numeric:tabular-nums]`}
         />
+      )}
+      {allowExpand && (
+        <Dialog open={expanded} onOpenChange={setExpanded}>
+          <DialogContent className="flex max-h-[90vh] w-[90vw] max-w-5xl flex-col gap-3 p-4">
+            <DialogHeader>
+              <DialogTitle>{preview ? "Preview" : "Edit details"}</DialogTitle>
+            </DialogHeader>
+            <div className="min-h-0 flex-1 overflow-auto">
+              <MarkdownEditor
+                value={value}
+                onChange={onChange}
+                placeholder={placeholder}
+                rows={28}
+                allowExpand={false}
+                defaultPreview={preview}
+              />
+            </div>
+          </DialogContent>
+        </Dialog>
       )}
     </div>
   );

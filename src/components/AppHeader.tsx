@@ -38,6 +38,7 @@ export function AppHeader() {
   const pathname = useRouterState({ select: (r) => r.location.pathname });
   const navigate = useNavigate();
   const fileRef = useRef<HTMLInputElement>(null);
+  const searchInputRef = useRef<HTMLInputElement>(null);
 
   const activeSection = useMemo(() => {
     const match = pathname.match(/^\/section\/([^/]+)$/);
@@ -67,7 +68,7 @@ export function AppHeader() {
   useEffect(() => {
     function onKey(e: KeyboardEvent) {
       const tgt = e.target as HTMLElement;
-      const typing = tgt && /input|textarea|select/i.test(tgt.tagName);
+      const typing = (tgt && /input|textarea|select/i.test(tgt.tagName)) || tgt?.isContentEditable;
       if (typing || e.metaKey || e.ctrlKey || e.altKey) return;
       if (e.key !== "n" && e.key !== "N" && e.key !== "+") return;
       e.preventDefault();
@@ -84,6 +85,27 @@ export function AppHeader() {
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
   }, [openCapture, canCreateInPlace, defaultCaptureNoteType, navigate, pathname]);
+
+  useEffect(() => {
+    function onKey(e: KeyboardEvent) {
+      const tgt = e.target as HTMLElement;
+      const typing = (tgt && /input|textarea|select/i.test(tgt.tagName)) || tgt?.isContentEditable;
+      if (typing || e.metaKey || e.altKey) return;
+
+      // Ctrl+K or bare "/" focuses the search bar
+      const isCtrlK = (e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "k";
+      const isSlash = !e.ctrlKey && e.key === "/";
+      if (!isCtrlK && !isSlash) return;
+
+      e.preventDefault();
+      const input = searchInputRef.current;
+      if (!input) return;
+      input.focus();
+      input.select();
+    }
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, []);
 
   function hrefFor(s: { id: string; builtin?: string; filter?: { type?: string } }) {
     if (s.builtin === "notes") return "/";
@@ -135,9 +157,16 @@ export function AppHeader() {
           <div className="app-search-wrap">
             {!searchInput && <Search className="app-search-icon" />}
             <input
+              ref={searchInputRef}
               value={searchInput}
               onChange={(e) => setSearchInput(e.target.value)}
-              placeholder="Search…"
+              onKeyDown={(e) => {
+                if (e.key === "Escape") {
+                  setSearchInput("");
+                  searchInputRef.current?.blur();
+                }
+              }}
+              placeholder="Search… (/)"
               aria-label="Search notes"
               className={`${INPUT_BASE_CLASS} h-8 w-44 transition-[padding] ${searchInput ? "pl-3" : "pl-8"}`}
             />

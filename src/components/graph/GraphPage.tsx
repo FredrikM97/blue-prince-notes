@@ -11,7 +11,7 @@ const GRAPH_VIEWBOX = "0 0 1000 680";
 const LAYOUT_CENTER_X = 500;
 const LAYOUT_CENTER_Y = 340;
 const CLUSTER_ORBIT_RADIUS = 210; // distance from canvas center to each cluster center
-const CLUSTER_NODE_SCALE = 9;    // multiply by note count to get mini-cluster radius
+const CLUSTER_NODE_SCALE = 9; // multiply by note count to get mini-cluster radius
 const CLUSTER_MIN_NODE_RADIUS = 35;
 const CLUSTER_MAX_NODE_RADIUS = 85;
 const NODE_RADIUS = 13;
@@ -178,7 +178,11 @@ export function GraphPage() {
     // Pinch gesture (ctrlKey=true) fires many small-delta events; regular scroll fires fewer large ones.
     // Normalise both to a comparable scale before applying the exponential factor.
     const isPinch = event.ctrlKey;
-    const rawDelta = isPinch ? event.deltaY : (event.deltaMode === 0 ? event.deltaY / 120 : event.deltaY);
+    const rawDelta = isPinch
+      ? event.deltaY
+      : event.deltaMode === 0
+        ? event.deltaY / 120
+        : event.deltaY;
     const sensitivity = isPinch ? 0.04 : 0.18;
     const clamped = Math.max(-2, Math.min(2, rawDelta));
     const factor = Math.exp(-clamped * sensitivity);
@@ -239,7 +243,7 @@ export function GraphPage() {
                 {(
                   [
                     { id: "room", fill: "rgba(224, 150, 40, 0.85)" },
-                    { id: "tag",  fill: "rgba(70, 150, 210, 0.85)" },
+                    { id: "tag", fill: "rgba(70, 150, 210, 0.85)" },
                     { id: "both", fill: "rgba(140, 100, 210, 0.85)" },
                     { id: "note", fill: "rgba(50, 190, 100, 0.85)" },
                   ] as const
@@ -266,7 +270,10 @@ export function GraphPage() {
                   return (
                     <line
                       key={key}
-                      x1={x1} y1={y1} x2={x2} y2={y2}
+                      x1={x1}
+                      y1={y1}
+                      x2={x2}
+                      y2={y2}
                       stroke={stroke}
                       strokeWidth={Math.min(1 + weight * 0.4, 2.5)}
                       markerEnd={marker}
@@ -287,12 +294,15 @@ export function GraphPage() {
               <span className="font-medium uppercase tracking-wide">Links:</span>
               {[
                 { color: "rgba(224,150,40,0.85)", label: "room" },
-                { color: "rgba(70,150,210,0.85)",  label: "tag" },
+                { color: "rgba(70,150,210,0.85)", label: "tag" },
                 { color: "rgba(140,100,210,0.85)", label: "room + tag" },
-                { color: "rgba(50,190,100,0.85)",  label: "note" },
+                { color: "rgba(50,190,100,0.85)", label: "note" },
               ].map(({ color, label }) => (
                 <span key={label} className="flex items-center gap-1.5 uppercase tracking-wide">
-                  <span style={{ background: color }} className="inline-block h-0.5 w-6 rounded-full" />
+                  <span
+                    style={{ background: color }}
+                    className="inline-block h-0.5 w-6 rounded-full"
+                  />
                   {label}
                 </span>
               ))}
@@ -420,7 +430,12 @@ function buildClusteredLayout(notes: Note[]): { nodes: GraphNode[]; clusters: Gr
 
     const n = roomNotes.length;
     const miniR =
-      n === 1 ? 0 : Math.min(CLUSTER_MAX_NODE_RADIUS, Math.max(CLUSTER_MIN_NODE_RADIUS, n * CLUSTER_NODE_SCALE));
+      n === 1
+        ? 0
+        : Math.min(
+            CLUSTER_MAX_NODE_RADIUS,
+            Math.max(CLUSTER_MIN_NODE_RADIUS, n * CLUSTER_NODE_SCALE),
+          );
 
     roomNotes.forEach((note, ni) => {
       const noteAngle = n === 1 ? 0 : (2 * Math.PI * ni) / n - Math.PI / 2;
@@ -595,10 +610,12 @@ function indexNodes(nodes: GraphNode[]) {
 }
 
 function edgeAppearance(relations: string[]): { stroke: string; marker: string } {
-  if (relations.includes("note")) return { stroke: "rgba(50,190,100,0.70)", marker: "url(#graph-arrow-note)" };
+  if (relations.includes("note"))
+    return { stroke: "rgba(50,190,100,0.70)", marker: "url(#graph-arrow-note)" };
   const hasRoom = relations.includes("room");
   const hasTag = relations.includes("tag");
-  if (hasRoom && hasTag) return { stroke: "rgba(140,100,210,0.55)", marker: "url(#graph-arrow-both)" };
+  if (hasRoom && hasTag)
+    return { stroke: "rgba(140,100,210,0.55)", marker: "url(#graph-arrow-both)" };
   if (hasRoom) return { stroke: "rgba(224,150,40,0.60)", marker: "url(#graph-arrow-room)" };
   return { stroke: "rgba(70,150,210,0.60)", marker: "url(#graph-arrow-tag)" };
 }
@@ -721,7 +738,10 @@ function normalizeRoom(value: string) {
 
 /** Converts a note title to a URL-safe slug used in ^ tokens (e.g. "The Parlor" → "the-parlor"). */
 function normalizeNoteSlug(title: string): string {
-  return title.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
+  return title
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
 }
 
 function intersectCount(a: Set<string>, b: Set<string>) {

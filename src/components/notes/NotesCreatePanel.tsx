@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { useNavigate } from "@tanstack/react-router";
 import { useStore } from "@/data/store";
 import { INPUT_BASE_CLASS } from "@/components/common/FormClasses";
@@ -7,6 +7,7 @@ import { RoomDropdown } from "@/components/common/dropdown/RoomDropdown";
 import { Tabs, TabsList, TabsTrigger } from "@/components/common/Tabs";
 import { DropdownSelect } from "@/components/common/dropdown/DropdownSelect";
 import { toast } from "sonner";
+import { usePasteImages } from "@/hooks/usePasteImages";
 import { ImagePlus } from "lucide-react";
 import type { NoteType, Priority } from "@/lib/types";
 import { NOTE_TYPES } from "@/lib/noteMetadata";
@@ -273,21 +274,10 @@ function useNotesGlobalEffects({
   open: boolean;
   setPendingImages: React.Dispatch<React.SetStateAction<Blob[]>>;
 }) {
-  useEffect(() => {
-    function onPaste(e: ClipboardEvent) {
-      if (!open) return;
-      const items = e.clipboardData?.items;
-      if (!items) return;
-      for (const item of items) {
-        if (item.type.startsWith("image/")) {
-          const f = item.getAsFile();
-          if (f) setPendingImages((p) => [...p, f]);
-        }
-      }
-    }
-    window.addEventListener("paste", onPaste);
-    return () => window.removeEventListener("paste", onPaste);
-  }, [open, setPendingImages]);
+  usePasteImages({
+    enabled: open,
+    onImages: (files) => setPendingImages((p) => [...p, ...files]),
+  });
 }
 
 function parseTags(tagsInput: string) {

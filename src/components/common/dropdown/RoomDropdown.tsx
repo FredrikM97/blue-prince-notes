@@ -4,8 +4,8 @@
  * Typing in the search box flattens results across all groups.
  */
 
-import { memo, useRef, useState } from "react";
-import { ChevronDown } from "lucide-react";
+import { memo, useMemo, useRef, useState } from "react";
+import { ChevronDown, Plus } from "lucide-react";
 import { Button } from "@/components/common/Button";
 import {
   DropdownMenu,
@@ -16,7 +16,11 @@ import {
   DropdownMenuSubTrigger,
   DropdownMenuTrigger,
 } from "@/components/common/dropdown/DropdownMenu";
-import { getGroupedRoomCatalog, ROOM_GROUPS, type RoomCategory } from "@/data/rooms";
+import { addCustomRoom, getAllRoomGroups, getGroupedRoomCatalog } from "@/data/rooms";
+
+function toTitleCase(s: string) {
+  return s.toLowerCase().replace(/(?:^|\s)\S/g, (c) => c.toUpperCase());
+}
 
 function RoomDropdownComponent({
   value,
@@ -30,30 +34,63 @@ function RoomDropdownComponent({
   clearLabel?: string;
 }) {
   const [query, setQuery] = useState("");
+  const [catalogVersion, setCatalogVersion] = useState(0);
   const searchRef = useRef<HTMLInputElement>(null);
-  const groupedRooms = getGroupedRoomCatalog();
-  const roomCategoryByName = new Map<string, RoomCategory>();
-  ROOM_GROUPS.forEach((group) => {
-    groupedRooms[group].forEach((room) => {
-      if (!roomCategoryByName.has(room.name)) {
-        roomCategoryByName.set(room.name, group);
-      }
+  const { groupedRooms, allGroups } = useMemo(() => {
+    // catalogVersion is intentionally used to bust the module-level cache after
+    // addCustomRoom mutates localStorage (the functions read fresh data each call).
+    void catalogVersion;
+    return { groupedRooms: getGroupedRoomCatalog(), allGroups: getAllRoomGroups() };
+  }, [catalogVersion]);
+  const roomCategoryByName = useMemo(() => {
+    const map = new Map<string, string>();
+    allGroups.forEach((group) => {
+      groupedRooms[group]?.forEach((room) => {
+        if (!map.has(room.name)) map.set(room.name, group);
+      });
     });
-  });
+    return map;
+  }, [groupedRooms, allGroups]);
 
   const activeRoom = value?.trim() ? value.trim() : "";
   const activeCategory = activeRoom ? (roomCategoryByName.get(activeRoom) ?? null) : null;
+
+  // Slash syntax: "group/room" scopes the search and sets the target group for new rooms.
+  const slashIdx = query.indexOf("/");
+  const hasSlash = slashIdx !== -1;
+  const groupRaw = hasSlash ? query.slice(0, slashIdx).trim() : "";
+  const roomRaw = hasSlash ? query.slice(slashIdx + 1).trim() : query.trim();
+  const groupQuery = groupRaw.toLowerCase();
+  const roomQuery = roomRaw.toLowerCase();
   const normalizedQuery = query.trim().toLowerCase();
 
-  const searchResults: Array<{ name: string; category: RoomCategory }> = [];
+  const searchResults: Array<{ name: string; category: string }> = [];
   if (normalizedQuery) {
-    ROOM_GROUPS.forEach((group) => {
-      groupedRooms[group].forEach((room) => {
-        if (room.name.toLowerCase().includes(normalizedQuery)) {
+    allGroups.forEach((group) => {
+      if (hasSlash && groupQuery && !group.toLowerCase().includes(groupQuery)) return;
+      const term = hasSlash ? roomQuery : normalizedQuery;
+      groupedRooms[group]?.forEach((room) => {
+        if (!term || room.name.toLowerCase().includes(term)) {
           searchResults.push({ name: room.name, category: group });
         }
       });
     });
+  }
+
+  const targetGroup = hasSlash ? toTitleCase(groupRaw) || "Custom Rooms" : "Custom Rooms";
+  const targetRoom = roomRaw;
+  const exactMatchExists = targetRoom
+    ? allGroups.some((g) =>
+        groupedRooms[g]?.some((r) => r.name.toLowerCase() === targetRoom.toLowerCase()),
+      )
+    : true;
+  const showAddOption = targetRoom.length > 0 && !exactMatchExists;
+
+  function handleAddCustomRoom() {
+    if (!targetRoom) return;
+    addCustomRoom(targetRoom, targetGroup);
+    setCatalogVersion((v) => v + 1);
+    onValueChange(targetRoom);
   }
 
   return (
@@ -97,8 +134,8 @@ function RoomDropdownComponent({
         </DropdownMenuItem>
 
         {normalizedQuery ? (
-          searchResults.length > 0 ? (
-            searchResults.map((room) => (
+          <>
+            {searchResults.map((room) => (
               <DropdownMenuItem
                 key={`${room.category}-${room.name}`}
                 className={room.name === activeRoom ? "bg-accent" : undefined}
@@ -109,35 +146,43 @@ function RoomDropdownComponent({
                   <span className="truncate text-xs text-muted-foreground">{room.category}</span>
                 </div>
               </DropdownMenuItem>
-            ))
-          ) : (
-            <div className="px-2 py-1.5 text-sm text-muted-foreground">No matching rooms</div>
-          )
+            ))}
+            {showAddOption ? (
+              <DropdownMenuItem onSelect={handleAddCustomRoom} className="text-muted-foreground">
+                <Plus className="mr-2 h-4 w-4 shrink-0" />
+                Add "{targetRoom}" to {targetGroup}
+              </DropdownMenuItem>
+            ) : searchResults.length === 0 ? (
+              <div className="px-2 py-1.5 text-sm text-muted-foreground">No matching rooms</div>
+            ) : null}
+          </>
         ) : (
-          ROOM_GROUPS.map((group) => (
-            <DropdownMenuSub key={group}>
-              <DropdownMenuSubTrigger>
-                <div className="flex min-w-0 flex-col">
-                  <span>{group}</span>
-                  {activeCategory === group && activeRoom && (
-                    <span className="truncate text-xs text-muted-foreground">{activeRoom}</span>
-                  )}
-                </div>
-              </DropdownMenuSubTrigger>
+          allGroups
+            .filter((group) => (groupedRooms[group]?.length ?? 0) > 0)
+            .map((group) => (
+              <DropdownMenuSub key={group}>
+                <DropdownMenuSubTrigger>
+                  <div className="flex min-w-0 flex-col">
+                    <span>{group}</span>
+                    {activeCategory === group && activeRoom && (
+                      <span className="truncate text-xs text-muted-foreground">{activeRoom}</span>
+                    )}
+                  </div>
+                </DropdownMenuSubTrigger>
 
-              <DropdownMenuSubContent className="max-h-72 min-w-56">
-                {groupedRooms[group].map((room) => (
-                  <DropdownMenuItem
-                    key={room.name}
-                    className={room.name === activeRoom ? "bg-accent" : undefined}
-                    onSelect={() => onValueChange(room.name)}
-                  >
-                    {room.name}
-                  </DropdownMenuItem>
-                ))}
-              </DropdownMenuSubContent>
-            </DropdownMenuSub>
-          ))
+                <DropdownMenuSubContent className="max-h-72 min-w-56">
+                  {groupedRooms[group]?.map((room) => (
+                    <DropdownMenuItem
+                      key={room.name}
+                      className={room.name === activeRoom ? "bg-accent" : undefined}
+                      onSelect={() => onValueChange(room.name)}
+                    >
+                      {room.name}
+                    </DropdownMenuItem>
+                  ))}
+                </DropdownMenuSubContent>
+              </DropdownMenuSub>
+            ))
         )}
       </DropdownMenuContent>
     </DropdownMenu>

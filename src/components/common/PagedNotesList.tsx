@@ -41,7 +41,7 @@ export function PagedNotesList({
               variant="outline"
               size="icon"
               className="h-7 w-7"
-              onClick={() => setIndex((i) => ((i - 1) % total + total) % total)}
+              onClick={() => setIndex((i) => (((i - 1) % total) + total) % total)}
               aria-label="Previous note"
             >
               <ChevronLeft className="h-3.5 w-3.5" />

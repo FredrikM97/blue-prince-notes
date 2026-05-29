@@ -7,7 +7,7 @@ test("map smoke: open and edit a cell panel", async ({ page }) => {
 
   await page.goto("/section/map");
 
-  await expect(page.getByRole("heading", { name: "Mt. Holly Map" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "House Map" })).toBeVisible();
   await expect(page.locator(".map-cell")).toHaveCount(45);
 
   await page.locator(".map-cell").first().click();

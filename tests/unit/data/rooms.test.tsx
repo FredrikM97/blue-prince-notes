@@ -16,14 +16,17 @@ describe("rooms custom catalog", () => {
     clearCustomRooms();
   });
 
-  it("deduplicates and normalizes rooms on replace", () => {
+  it("deduplicates, normalizes, and accepts arbitrary custom groups", () => {
     const next = replaceCustomRooms([
       { name: "  Puzzle Room  ", category: "Secret Rooms" },
       { name: "puzzle   room", category: "Secret Rooms" },
-      { name: "Ignored", category: "not-a-group" as never },
+      { name: "Basement", category: "Underground" },
     ]);
 
-    expect(next).toEqual([{ name: "puzzle room", category: "Secret Rooms", custom: true }]);
+    expect(next).toEqual([
+      { name: "Basement", category: "Underground", custom: true },
+      { name: "puzzle room", category: "Secret Rooms", custom: true },
+    ]);
   });
 
   it("adds unique room case-insensitively and removes by name", () => {

@@ -7,6 +7,7 @@ import { KeyboardKey } from "@/components/common/KeyboardKey";
 import { PageLayout } from "@/components/common/PageLayout";
 import {
   addCustomRoom,
+  getAllRoomGroups,
   listCustomRooms,
   removeCustomRoom,
   ROOM_GROUPS,
@@ -38,8 +39,6 @@ import {
 } from "@/data/steamImport";
 import { toast } from "sonner";
 
-const ROOM_CATEGORY_OPTIONS = ROOM_GROUPS.map((group) => ({ value: group, label: group }));
-
 function SettingsSection({ title, children }: { title: string; children: ReactNode }) {
   return (
     <section className="space-y-5">
@@ -60,13 +59,20 @@ export function SettingsPage() {
   const [newRoomCategory, setNewRoomCategory] = useState<RoomCategory>(ROOM_GROUPS[0]);
 
   const customRoomsByCategory = useMemo(() => {
-    const grouped = new Map<RoomCategory, string[]>();
-    ROOM_GROUPS.forEach((group) => grouped.set(group, []));
+    const allGroups = getAllRoomGroups();
+    const grouped = new Map<string, string[]>();
+    allGroups.forEach((group) => grouped.set(group, []));
     customRooms.forEach((room) => {
-      grouped.get(room.category)?.push(room.name);
+      if (!grouped.has(room.category)) grouped.set(room.category, []);
+      grouped.get(room.category)!.push(room.name);
     });
     return grouped;
   }, [customRooms]);
+
+  const categoryOptions = useMemo(
+    () => [...customRoomsByCategory.keys()].map((g) => ({ value: g, label: g })),
+    [customRoomsByCategory],
+  );
 
   function addRoom() {
     const roomName = newRoomName.trim();
@@ -170,7 +176,7 @@ export function SettingsPage() {
                 <DropdownSelect
                   value={newRoomCategory}
                   onValueChange={(value) => setNewRoomCategory(value as RoomCategory)}
-                  options={ROOM_CATEGORY_OPTIONS}
+                  options={categoryOptions}
                 />
 
                 <Button variant="outline" onClick={addRoom}>
@@ -179,8 +185,7 @@ export function SettingsPage() {
               </div>
 
               <div className="space-y-3 rounded-md border border-border p-3">
-                {ROOM_GROUPS.map((group) => {
-                  const rooms = customRoomsByCategory.get(group) ?? [];
+                {[...customRoomsByCategory.entries()].map(([group, rooms]) => {
                   if (rooms.length === 0) return null;
 
                   return (

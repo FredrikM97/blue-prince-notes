@@ -40,7 +40,9 @@ function highlightTokensInText(text: string): React.ReactNode {
 function processChildren(children: React.ReactNode): React.ReactNode {
   if (typeof children === "string") return highlightTokensInText(children);
   if (Array.isArray(children)) {
-    return children.map((child) => (typeof child === "string" ? highlightTokensInText(child) : child));
+    return children.map((child) =>
+      typeof child === "string" ? highlightTokensInText(child) : child,
+    );
   }
   return children;
 }

@@ -13,6 +13,7 @@ import { useEffect, useMemo, useState } from "react";
 import appCss from "../styles.css?url";
 import { AppHeader } from "@/components/AppHeader";
 import { Toaster } from "@/components/common/Sonner";
+import { toast } from "sonner";
 import { WelcomeScreen } from "@/components/WelcomeScreen";
 import { NotesPage } from "@/components/notes/NotesPage";
 import { SettingsPage } from "@/components/settings/SettingsPage";
@@ -103,6 +104,22 @@ function AppFrame({ children }: { children: React.ReactNode }) {
     }
     window.addEventListener("bp:show-welcome", showWelcome);
     return () => window.removeEventListener("bp:show-welcome", showWelcome);
+  }, []);
+
+  // When a new version of the app is deployed, chunk URLs change. Instead of
+  // crashing or silently breaking, show a persistent notification so users can
+  // reload at their own convenience.
+  useEffect(() => {
+    function onPreloadError(e: Event) {
+      e.preventDefault(); // prevent Vite from propagating the error
+      toast("A new version is available", {
+        description: "Reload the page to get the latest updates.",
+        duration: Infinity,
+        action: { label: "Reload", onClick: () => window.location.reload() },
+      });
+    }
+    window.addEventListener("vite:preloadError", onPreloadError);
+    return () => window.removeEventListener("vite:preloadError", onPreloadError);
   }, []);
 
   const shouldAutoDismissWelcome =

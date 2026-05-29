@@ -96,7 +96,10 @@ function suggestNotes(token: string, noteTitles: string[]): TokenSuggestion[] {
   const q = normalizeTokenValue(token.slice(1));
   const out: TokenSuggestion[] = [];
   for (const title of noteTitles) {
-    const slug = title.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
+    const slug = title
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/^-+|-+$/g, "");
     if (!slug.includes(q)) continue;
     out.push({ value: `^${slug}`, hint: "note" });
     if (out.length >= 8) break;
@@ -108,9 +111,10 @@ const TYPE_COMMANDS = ["!code", "!observation", "!theory", "!story", "!todo"] as
 
 function suggestTypes(token: string): TokenSuggestion[] {
   const q = token.toLowerCase();
-  return TYPE_COMMANDS
-    .filter((cmd) => cmd.includes(q))
-    .map((cmd) => ({ value: cmd, hint: "type" }));
+  return TYPE_COMMANDS.filter((cmd) => cmd.includes(q)).map((cmd) => ({
+    value: cmd,
+    hint: "type",
+  }));
 }
 
 function suggestDate(): TokenSuggestion[] {
@@ -168,11 +172,27 @@ function measureTokenAnchorPx(
   const mirror = document.createElement("div");
 
   const copiedProperties = [
-    "boxSizing", "fontFamily", "fontSize", "fontStyle", "fontWeight",
-    "letterSpacing", "lineHeight", "paddingTop", "paddingRight", "paddingBottom",
-    "paddingLeft", "borderTopWidth", "borderRightWidth", "borderBottomWidth",
-    "borderLeftWidth", "textTransform", "textIndent", "textAlign",
-    "tabSize", "whiteSpace", "wordBreak",
+    "boxSizing",
+    "fontFamily",
+    "fontSize",
+    "fontStyle",
+    "fontWeight",
+    "letterSpacing",
+    "lineHeight",
+    "paddingTop",
+    "paddingRight",
+    "paddingBottom",
+    "paddingLeft",
+    "borderTopWidth",
+    "borderRightWidth",
+    "borderBottomWidth",
+    "borderLeftWidth",
+    "textTransform",
+    "textIndent",
+    "textAlign",
+    "tabSize",
+    "whiteSpace",
+    "wordBreak",
   ] as const;
 
   mirror.style.position = "absolute";
@@ -213,6 +233,7 @@ function useDropdownStyle({
   value: string;
   tokenStart: number;
 }): CSSProperties {
+  // eslint-disable-next-line react-hooks/refs -- intentional: detects element type for layout, ref is always populated before this path is reached
   const isMultiline = inputRef.current instanceof HTMLTextAreaElement;
 
   const tokenAnchor = useMemo(() => {
@@ -222,8 +243,9 @@ function useDropdownStyle({
   }, [tokenStart, value]);
 
   const tokenAnchorPx = useMemo(
+    // eslint-disable-next-line react-hooks/refs -- intentional: DOM measurement in memo, ref is populated before suggestions are shown
     () => measureTokenAnchorPx(inputRef.current, value, tokenStart),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+
     [inputRef, tokenStart, value],
   );
 
@@ -311,7 +333,15 @@ function useSuggestionController({
     return false;
   }
 
-  return { suggestions, isOpen, apply, tokenStart: activeToken.start, activeIndex: boundedIndex, setActiveIndex, onKeyDown };
+  return {
+    suggestions,
+    isOpen,
+    apply,
+    tokenStart: activeToken.start,
+    activeIndex: boundedIndex,
+    setActiveIndex,
+    onKeyDown,
+  };
 }
 
 // ── Visual list ────────────────────────────────────────────────────────────────
@@ -333,7 +363,12 @@ function SuggestionItems({
 }) {
   if (!isOpen || suggestions.length === 0) return null;
   return (
-    <div className="capture-suggestion-dropdown" role="listbox" aria-label="Token suggestions" style={style}>
+    <div
+      className="capture-suggestion-dropdown"
+      role="listbox"
+      aria-label="Token suggestions"
+      style={style}
+    >
       {suggestions.map((suggestion, index) => (
         <button
           key={suggestion.value}
@@ -396,7 +431,8 @@ export function SuggestionsDropdown({
   function writeToInput(nextValue: string) {
     const el = inputElRef.current;
     if (!el) return;
-    const proto = el instanceof HTMLInputElement ? HTMLInputElement.prototype : HTMLTextAreaElement.prototype;
+    const proto =
+      el instanceof HTMLInputElement ? HTMLInputElement.prototype : HTMLTextAreaElement.prototype;
     const nativeSet = Object.getOwnPropertyDescriptor(proto, "value")?.set;
     nativeSet?.call(el, nextValue);
     el.dispatchEvent(new Event("input", { bubbles: true }));
@@ -428,11 +464,12 @@ export function SuggestionsDropdown({
   return (
     <div
       className="capture-suggestion-field"
-      onChange={(e) => syncFromEl(e.target)}   // value+cursor in one update → fixes @ lag
-      onKeyUp={(e) => syncFromEl(e.target)}     // catches cursor moves (arrow keys)
-      onClick={(e) => syncFromEl(e.target)}     // catches click-to-reposition cursor
+      onChange={(e) => syncFromEl(e.target)} // value+cursor in one update → fixes @ lag
+      onKeyUp={(e) => syncFromEl(e.target)} // catches cursor moves (arrow keys)
+      onClick={(e) => syncFromEl(e.target)} // catches click-to-reposition cursor
       onKeyDownCapture={(e) => {
-        if (!(e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement)) return;
+        if (!(e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement))
+          return;
         inputElRef.current = e.target;
         if (controller.onKeyDown(e)) return;
         if (onSubmitShortcut && e.key === "Enter" && (e.metaKey || e.ctrlKey)) {

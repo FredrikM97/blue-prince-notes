@@ -135,11 +135,7 @@ export function MapRightPanel({
         </div>
 
         {activeNotes.length > 0 && (
-          <PagedNotesList
-            key={`${row}-${col}`}
-            notes={activeNotes}
-            title="Notes in this room"
-          />
+          <PagedNotesList key={`${row}-${col}`} notes={activeNotes} title="Notes in this room" />
         )}
         {activeTodos.length > 0 && <MapRoomTodos todos={activeTodos} />}
       </div>

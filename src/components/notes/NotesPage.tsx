@@ -1,8 +1,8 @@
-import { useCallback, useDeferredValue, useMemo } from "react";
+import { useCallback, useDeferredValue, useMemo, useState } from "react";
 import { useStore } from "@/data/store";
 import type { Note, NoteType, Todo } from "@/lib/types";
 import { PageLayout } from "@/components/common/PageLayout";
-import { Button, GhostButton } from "@/components/common/Button";
+import { Button, GhostButton, IconButton } from "@/components/common/Button";
 import {
   Dialog,
   DialogContent,
@@ -10,6 +10,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/common/Dialog";
+import { Maximize2 } from "lucide-react";
 import { NotesCreatePanel } from "./NotesCreatePanel";
 import { NotesEditorPanel } from "./NotesEditorPanel";
 import { NotesFilterPanel } from "./NotesFilterPanel";
@@ -322,6 +323,8 @@ function NotesRightPanel({
   onSave: () => Promise<void>;
   onClose: () => void;
 }) {
+  const [previewExpanded, setPreviewExpanded] = useState(false);
+
   if (!activeNote) {
     return (
       <div className="page-layout-panel text-muted-foreground">
@@ -336,10 +339,23 @@ function NotesRightPanel({
         {panelMode === "edit" ? (
           <h2 className="font-serif text-lg">Edit note</h2>
         ) : (
-          <>
-            <h2 className="font-serif text-xl">{activeNote.title}</h2>
-            <p className="text-xs text-muted-foreground">Note preview</p>
-          </>
+          <div className="flex items-start justify-between gap-2">
+            <div>
+              <h2 className="font-serif text-xl">{activeNote.title}</h2>
+              <p className="text-xs text-muted-foreground">Note preview</p>
+            </div>
+            <div className="flex shrink-0 items-center gap-1">
+              <IconButton
+                aria-label="Expand preview"
+                title="Expand preview"
+                className="h-7 w-7"
+                onClick={() => setPreviewExpanded(true)}
+              >
+                <Maximize2 className="h-3.5 w-3.5" />
+              </IconButton>
+              <GhostButton onClick={onClose}>Close</GhostButton>
+            </div>
+          </div>
         )}
       </div>
 
@@ -356,9 +372,16 @@ function NotesRightPanel({
             <div className="notes-panel-preview-scroll">
               <NotesPreviewPanel note={activeNote} />
             </div>
-            <div className="notes-panel-preview-footer">
-              <GhostButton onClick={onClose}>Close</GhostButton>
-            </div>
+            <Dialog open={previewExpanded} onOpenChange={setPreviewExpanded}>
+              <DialogContent className="flex max-h-[90vh] w-[90vw] max-w-4xl flex-col gap-3 p-6">
+                <DialogHeader>
+                  <DialogTitle className="font-serif text-xl">{activeNote.title}</DialogTitle>
+                </DialogHeader>
+                <div className="min-h-0 flex-1 overflow-y-auto">
+                  <NotesPreviewPanel note={activeNote} />
+                </div>
+              </DialogContent>
+            </Dialog>
           </>
         )}
       </div>

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import type { Note } from "@/lib/types";
 import { INPUT_BASE_CLASS } from "@/components/common/FormClasses";
 import { BrassButton, Button, GhostButton } from "@/components/common/Button";
@@ -12,6 +12,7 @@ import { DetailsField } from "@/components/common/input/DetailsField";
 import { InputField } from "@/components/common/input/InputField";
 import { SuggestionsDropdown } from "@/components/common/dropdown/SuggestionsDropdown";
 import { toast } from "sonner";
+import { usePasteImages } from "@/hooks/usePasteImages";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/common/Dialog";
 
 type ImageSort = "newest" | "oldest" | "name-asc" | "name-desc";
@@ -61,42 +62,31 @@ export function NotesEditorPanel({
   const imageById = useMemo(() => new Map(images.map((img) => [img.id, img])), [images]);
   const tagsInput = isTagsFocused ? tagsInputDraft : draft.tags.join(", ");
 
-  useEffect(() => {
-    function onPaste(e: ClipboardEvent) {
-      const items = e.clipboardData?.items;
-      if (!items) return;
-
-      const images: File[] = [];
-      for (const item of items) {
-        if (!item.type.startsWith("image/")) continue;
-        const file = item.getAsFile();
-        if (file) images.push(file);
-      }
-
-      if (images.length === 0) return;
-
+  usePasteImages({
+    onImages: (files) => {
       void (async () => {
         try {
-          const created = await Promise.all(images.map((f) => addImage(f, f.name)));
+          const created = await Promise.all(files.map((f) => addImage(f, f.name)));
           const newIds = created.map((img) => img.id);
           setDraft((prev) => ({
             ...prev,
             imageIds: Array.from(new Set([...prev.imageIds, ...newIds])),
           }));
-          toast.success(images.length === 1 ? "Pasted image attached" : "Pasted images attached");
+          toast.success(files.length === 1 ? "Pasted image attached" : "Pasted images attached");
         } catch {
           toast.error("Could not attach pasted image");
         }
       })();
-    }
-
-    window.addEventListener("paste", onPaste);
-    return () => window.removeEventListener("paste", onPaste);
-  }, [addImage, setDraft]);
+    },
+  });
 
   return (
     <div className="note-editor-wrap">
-      <SuggestionsDropdown onSubmitShortcut={() => { void onSave(); }}>
+      <SuggestionsDropdown
+        onSubmitShortcut={() => {
+          void onSave();
+        }}
+      >
         <InputField
           label="Title"
           value={draft.title}

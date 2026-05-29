@@ -23,13 +23,13 @@
   .notes-right-panel-shell {
     @apply rounded-lg;
     max-height: calc(100dvh - 7rem);
-    overflow: hidden;
+    overflow-y: auto;
   }
 
   @media (min-width: 64rem) {
     .notes-right-panel-shell {
       height: calc(100dvh - 7rem);
-      overflow: hidden;
+      overflow-y: auto;
     }
   }
 
@@ -132,7 +132,7 @@
   }
 
   .notes-panel-preview-scroll {
-    @apply min-h-[18rem] flex-1 overflow-y-auto pr-1;
+    @apply min-h-[18rem] flex-1 pr-1;
   }
 
   .notes-panel-preview-footer {

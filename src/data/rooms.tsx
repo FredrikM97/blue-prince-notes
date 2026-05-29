@@ -10,10 +10,12 @@ export type RoomGroup =
   | "Green Rooms"
   | "Shops"
   | "Red Rooms"
-  | "Secret Rooms";
+  | "Secret Rooms"
+  | "Custom Rooms";
 
-// Backward-compatible alias used by older components.
-export type RoomCategory = RoomGroup;
+// Known built-in groups or any user-defined custom group string.
+// The `(string & {})` intersection preserves autocomplete for RoomGroup values.
+export type RoomCategory = RoomGroup | (string & {});
 
 export interface RoomDef {
   name: string;
@@ -37,6 +39,7 @@ export const ROOM_GROUPS: RoomGroup[] = [
   "Shops",
   "Red Rooms",
   "Secret Rooms",
+  "Custom Rooms",
 ];
 
 const DEFAULT_ROOMS: RoomDef[] = [
@@ -192,7 +195,7 @@ export function listCustomRooms(): RoomDef[] {
         category: room.category,
         custom: true,
       }))
-      .filter((room) => room.name.length > 0 && ROOM_GROUPS.includes(room.category));
+      .filter((room) => room.name.length > 0 && room.category.length > 0);
   } catch {
     return [];
   }
@@ -205,7 +208,7 @@ export function replaceCustomRooms(rooms: Array<{ name: string; category: RoomCa
       category: room.category,
       custom: true,
     }))
-    .filter((room) => room.name.length > 0 && ROOM_GROUPS.includes(room.category));
+    .filter((room) => room.name.length > 0 && room.category.length > 0);
 
   const byName = new Map<string, RoomDef>();
   for (const room of normalized) {
@@ -251,6 +254,17 @@ export function clearCustomRooms() {
   writeCustomRooms([]);
 }
 
+/** Returns all built-in groups followed by any user-created custom group names, sorted. */
+export function getAllRoomGroups(): string[] {
+  const customGroupSet = new Set<string>();
+  listCustomRooms().forEach((r) => {
+    if (!(ROOM_GROUPS as readonly string[]).includes(r.category)) {
+      customGroupSet.add(r.category);
+    }
+  });
+  return [...ROOM_GROUPS, ...[...customGroupSet].sort()];
+}
+
 export function getRoomCatalog() {
   if (cachedRoomCatalog) return cachedRoomCatalog;
 
@@ -258,14 +272,17 @@ export function getRoomCatalog() {
   return cachedRoomCatalog;
 }
 
-function groupRoomsByCategory(rooms: RoomDef[]) {
-  return ROOM_GROUPS.reduce(
-    (acc, group) => {
-      acc[group] = rooms.filter((room) => room.category === group);
-      return acc;
-    },
-    {} as Record<RoomCategory, RoomDef[]>,
-  );
+function groupRoomsByCategory(rooms: RoomDef[]): Record<string, RoomDef[]> {
+  // Include all built-in groups plus any custom group names found in the rooms list.
+  const allGroupSet = new Set<string>([
+    ...ROOM_GROUPS,
+    ...rooms.filter((r) => r.custom).map((r) => r.category),
+  ]);
+  const result: Record<string, RoomDef[]> = {};
+  allGroupSet.forEach((group) => {
+    result[group] = rooms.filter((r) => r.category === group);
+  });
+  return result;
 }
 
 export function getGroupedRoomCatalog() {
