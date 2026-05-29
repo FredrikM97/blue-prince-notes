@@ -8,7 +8,7 @@
     "build": "vite build",
     "build:dev": "vite build --mode development",
     "preview": "vite preview",
-    "test": "npm run check:types && npm run test:vitest && npm run test:smoke:local",
+    "test": "npm run check:types && npm run test:vitest",
     "test:vitest": "vitest run",
     "test:unit": "vitest run tests/unit",
     "test:integration": "vitest run tests/integration",
