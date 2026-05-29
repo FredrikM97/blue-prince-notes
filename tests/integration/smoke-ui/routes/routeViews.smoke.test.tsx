@@ -56,7 +56,7 @@ vi.mock("@/components/graph/GraphPage", () => ({
   GraphPage: () => <div data-testid="graph-page">graph</div>,
 }));
 
-import { NotFoundView, NotesIndexView, SectionView } from "@/router";
+import { NotFoundView, NotesIndexView, SectionView } from "@/routes/__root";
 
 describe("route views smoke snapshots", () => {
   beforeEach(() => {

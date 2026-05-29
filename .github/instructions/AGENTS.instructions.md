@@ -36,6 +36,19 @@ description: Describe when these instructions should be loaded by the agent base
 - Do not place `import` statements inside functions, conditionals, loops, or mid-file blocks.
 - Prefer static top-level imports over dynamic imports unless lazy-loading behavior is explicitly required.
 
+## Export Placement
+
+- Place all `export` statements at the bottom of the file, after all definitions.
+- Prefer named exports grouped at the end over scattered inline `export` keywords on declarations.
+- Exception: re-exports used solely for type-compatibility aliases (e.g. `export { rootRoute as Route }`) may appear at the very bottom clearly labeled.
+
+## Ternary Operators
+
+- Avoid ternary expressions where the branches are non-trivial or where an `if` statement or early return is clearer.
+- In JSX, prefer early returns or extracted helper components over deeply nested ternaries.
+- Short single-value ternaries for simple conditional class names or primitive values are acceptable when they fit on one readable line.
+- Never nest ternaries.
+
 ## Type Safety
 
 - Keep `noImplicitAny` behavior enforced and avoid introducing implicit `any` values.
@@ -52,6 +65,12 @@ description: Describe when these instructions should be loaded by the agent base
   - functionality: run automated tests relevant to touched features and at least one end-to-end user flow smoke check (manual or automated) covering create/edit/delete and navigation paths touched by the change.
   - performance: verify no new repeated long-task warnings, no `Maximum update depth exceeded`, and no unstable external-store snapshot loops before finalizing.
 - If full UI automation is not yet available for a touched workflow, explicitly report that gap and add/adjust the closest component-level or integration test in the same change.
+
+## Component Self-Containment
+
+- `useEffect` hooks and DOM event listeners (e.g. `document.addEventListener`) must live in the component that owns the interaction — not be delegated to a parent or sibling.
+- A component that manages a popup, tooltip, or overlay must own its open/close state and all related effects internally. Callers should receive no more than an optional callback prop.
+- Do not add `data-*` attributes to unrelated elements just to work around missing encapsulation; refactor the boundary instead.
 
 ## Theme Token Structure
 

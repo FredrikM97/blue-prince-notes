@@ -85,7 +85,6 @@ function ImagesInspectorPanel({
           <div className="images-right-header">
             <div className="min-w-0">
               <h2 className="images-detail-title truncate">{getImageLabel(img)}</h2>
-              <p className="text-xs text-muted-foreground">File: {img.name}</p>
             </div>
             <div className="images-nav-buttons">
               <Button variant="outline" size="icon" onClick={onPrev} aria-label="Previous image">

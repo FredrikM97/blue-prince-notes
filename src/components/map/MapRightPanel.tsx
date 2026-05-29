@@ -81,7 +81,6 @@ export function MapRightPanel({
               label="Cell details"
               showOptionalHint={false}
               rows={6}
-              showShortcutToggle={false}
               placeholder="Quick note about this cell - door direction, gem cost, danger..."
             />
           </SuggestionsDropdown>

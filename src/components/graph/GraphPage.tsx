@@ -10,7 +10,10 @@ import type { Note, Todo } from "@/lib/types";
 const GRAPH_VIEWBOX = "0 0 1000 680";
 const LAYOUT_CENTER_X = 500;
 const LAYOUT_CENTER_Y = 340;
-const LAYOUT_RADIUS = 250;
+const CLUSTER_ORBIT_RADIUS = 210; // distance from canvas center to each cluster center
+const CLUSTER_NODE_SCALE = 9;    // multiply by note count to get mini-cluster radius
+const CLUSTER_MIN_NODE_RADIUS = 35;
+const CLUSTER_MAX_NODE_RADIUS = 85;
 const NODE_RADIUS = 13;
 const EDGE_NODE_PADDING = 16;
 const MIN_ZOOM = 0.55;
@@ -33,14 +36,25 @@ interface GraphEdge {
   relations: string[];
 }
 
+interface GraphCluster {
+  room: string | null;
+  label: string | null;
+  cx: number;
+  cy: number;
+  r: number;
+}
+
 interface GraphModel {
   nodes: GraphNode[];
   edges: GraphEdge[];
+  clusters: GraphCluster[];
 }
 
 interface ReferenceSignals {
   tags: Set<string>;
   rooms: Set<string>;
+  /** Slugified note titles from ^ tokens — match against normalizeNoteSlug(note.title). */
+  noteRefs: Set<string>;
 }
 
 interface OwnerSignals {
@@ -48,13 +62,15 @@ interface OwnerSignals {
   room: string | null;
 }
 
-interface LineGeometry {
+/** An edge ready for SVG rendering — endpoints already resolved to cluster boundaries or note positions. */
+interface RenderedEdge {
+  key: string;
   x1: number;
   y1: number;
   x2: number;
   y2: number;
-  mx: number;
-  my: number;
+  weight: number;
+  relations: string[];
 }
 
 const TYPE_COLOR: Record<Note["type"], string> = {
@@ -89,8 +105,12 @@ export function GraphPage() {
   );
 
   const graphEntries = useMemo(() => toGraphEntries(notes, todos), [notes, todos]);
-  const { nodes, edges } = useMemo(() => buildGraph(graphEntries), [graphEntries]);
+  const { nodes, edges, clusters } = useMemo(() => buildGraph(graphEntries), [graphEntries]);
   const nodeById = useMemo(() => indexNodes(nodes), [nodes]);
+  const renderedEdges = useMemo(
+    () => buildRenderedEdges(edges, nodeById, clusters),
+    [edges, nodeById, clusters],
+  );
   const selectedNodeId = useMemo(
     () =>
       selectedNoteId && nodes.some((node) => node.id === selectedNoteId) ? selectedNoteId : null,
@@ -154,11 +174,18 @@ export function GraphPage() {
     event.preventDefault();
     const svg = event.currentTarget;
     const focus = toSvgPoint(event.clientX, event.clientY, svg);
-    const factor = event.deltaY > 0 ? 0.92 : 1.08;
+
+    // Pinch gesture (ctrlKey=true) fires many small-delta events; regular scroll fires fewer large ones.
+    // Normalise both to a comparable scale before applying the exponential factor.
+    const isPinch = event.ctrlKey;
+    const rawDelta = isPinch ? event.deltaY : (event.deltaMode === 0 ? event.deltaY / 120 : event.deltaY);
+    const sensitivity = isPinch ? 0.04 : 0.18;
+    const clamped = Math.max(-2, Math.min(2, rawDelta));
+    const factor = Math.exp(-clamped * sensitivity);
 
     setZoom((currentZoom) => {
       const nextZoom = Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, currentZoom * factor));
-      if (nextZoom === currentZoom) return currentZoom;
+      if (Math.abs(nextZoom - currentZoom) < 0.0005) return currentZoom;
 
       setPan((currentPan) => {
         const worldX = (focus.x - currentPan.x) / currentZoom;
@@ -209,21 +236,43 @@ export function GraphPage() {
             >
               <rect x="0" y="0" width="1000" height="680" fill="transparent" />
               <defs>
-                <marker
-                  id="graph-arrow"
-                  viewBox="0 0 10 10"
-                  refX="8"
-                  refY="5"
-                  markerWidth="6"
-                  markerHeight="6"
-                  orient="auto-start-reverse"
-                >
-                  <path d="M 0 0 L 10 5 L 0 10 z" fill="var(--color-foreground)" opacity="0.45" />
-                </marker>
+                {(
+                  [
+                    { id: "room", fill: "rgba(224, 150, 40, 0.85)" },
+                    { id: "tag",  fill: "rgba(70, 150, 210, 0.85)" },
+                    { id: "both", fill: "rgba(140, 100, 210, 0.85)" },
+                    { id: "note", fill: "rgba(50, 190, 100, 0.85)" },
+                  ] as const
+                ).map(({ id, fill }) => (
+                  <marker
+                    key={id}
+                    id={`graph-arrow-${id}`}
+                    viewBox="0 0 10 10"
+                    refX="8"
+                    refY="5"
+                    markerWidth="6"
+                    markerHeight="6"
+                    orient="auto-start-reverse"
+                  >
+                    <path d="M 0 0 L 10 5 L 0 10 z" fill={fill} />
+                  </marker>
+                ))}
               </defs>
 
               <g transform={`translate(${pan.x} ${pan.y}) scale(${zoom})`}>
-                {edges.map((edge) => renderEdge(edge, nodeById, zoom))}
+                {clusters.map((cluster) => renderCluster(cluster))}
+                {renderedEdges.map(({ key, x1, y1, x2, y2, weight, relations }) => {
+                  const { stroke, marker } = edgeAppearance(relations);
+                  return (
+                    <line
+                      key={key}
+                      x1={x1} y1={y1} x2={x2} y2={y2}
+                      stroke={stroke}
+                      strokeWidth={Math.min(1 + weight * 0.4, 2.5)}
+                      markerEnd={marker}
+                    />
+                  );
+                })}
 
                 {nodes.map((node) =>
                   renderNode(node, {
@@ -234,6 +283,20 @@ export function GraphPage() {
                 )}
               </g>
             </svg>
+            <div className="mt-2 flex flex-wrap items-center gap-4 text-[10px] text-muted-foreground">
+              <span className="font-medium uppercase tracking-wide">Links:</span>
+              {[
+                { color: "rgba(224,150,40,0.85)", label: "room" },
+                { color: "rgba(70,150,210,0.85)",  label: "tag" },
+                { color: "rgba(140,100,210,0.85)", label: "room + tag" },
+                { color: "rgba(50,190,100,0.85)",  label: "note" },
+              ].map(({ color, label }) => (
+                <span key={label} className="flex items-center gap-1.5 uppercase tracking-wide">
+                  <span style={{ background: color }} className="inline-block h-0.5 w-6 rounded-full" />
+                  {label}
+                </span>
+              ))}
+            </div>
           </div>
         )
       }
@@ -300,15 +363,13 @@ function renderNode(
 }
 
 function buildGraph(notes: Note[]): GraphModel {
-  if (notes.length === 0) return { nodes: [], edges: [] };
+  if (notes.length === 0) return { nodes: [], edges: [], clusters: [] };
 
   const refs = buildReferenceSignals(notes);
   const owners = buildOwnerSignals(notes);
+  const { nodes, clusters } = buildClusteredLayout(notes);
 
-  return {
-    nodes: buildNodes(notes),
-    edges: buildEdges(notes, refs, owners),
-  };
+  return { nodes, clusters, edges: buildEdges(notes, refs, owners) };
 }
 
 function toGraphEntries(notes: Note[], todos: Todo[]): Note[] {
@@ -330,17 +391,60 @@ function toGraphEntries(notes: Note[], todos: Todo[]): Note[] {
   return [...notes, ...todoEntries];
 }
 
-function buildNodes(notes: Note[]): GraphNode[] {
-  return notes.map((note, i) => {
-    const angle = (2 * Math.PI * i) / Math.max(notes.length, 1);
-    const wobble = (hashId(note.id) % 40) - 20;
-    return {
-      id: note.id,
-      note,
-      x: LAYOUT_CENTER_X + Math.cos(angle) * (LAYOUT_RADIUS + wobble),
-      y: LAYOUT_CENTER_Y + Math.sin(angle) * (LAYOUT_RADIUS + wobble),
-    };
+/** Groups notes by room and places them in mini-clusters spread around the canvas. */
+function buildClusteredLayout(notes: Note[]): { nodes: GraphNode[]; clusters: GraphCluster[] } {
+  const roomGroups = new Map<string | null, Note[]>();
+  for (const note of notes) {
+    const room = note.room?.trim() || null;
+    const group = roomGroups.get(room) ?? [];
+    group.push(note);
+    roomGroups.set(room, group);
+  }
+
+  // Named rooms first (largest first), ungrouped notes last
+  const sorted = [...roomGroups.entries()].sort(([aR, aG], [bR, bG]) => {
+    if (aR === null && bR !== null) return 1;
+    if (aR !== null && bR === null) return -1;
+    return bG.length - aG.length;
   });
+
+  const numClusters = sorted.length;
+  const nodes: GraphNode[] = [];
+  const clusters: GraphCluster[] = [];
+
+  sorted.forEach(([room, roomNotes], ci) => {
+    const angle = numClusters === 1 ? 0 : (2 * Math.PI * ci) / numClusters - Math.PI / 2;
+    const orbitR = numClusters === 1 ? 0 : CLUSTER_ORBIT_RADIUS;
+    const cx = LAYOUT_CENTER_X + Math.cos(angle) * orbitR;
+    const cy = LAYOUT_CENTER_Y + Math.sin(angle) * orbitR;
+
+    const n = roomNotes.length;
+    const miniR =
+      n === 1 ? 0 : Math.min(CLUSTER_MAX_NODE_RADIUS, Math.max(CLUSTER_MIN_NODE_RADIUS, n * CLUSTER_NODE_SCALE));
+
+    roomNotes.forEach((note, ni) => {
+      const noteAngle = n === 1 ? 0 : (2 * Math.PI * ni) / n - Math.PI / 2;
+      const wobble = (hashId(note.id) % 14) - 7;
+      nodes.push({
+        id: note.id,
+        note,
+        x: cx + Math.cos(noteAngle) * (miniR + wobble),
+        y: cy + Math.sin(noteAngle) * (miniR + wobble),
+      });
+    });
+
+    if (room !== null) {
+      clusters.push({
+        room,
+        label: room.replace(/[-_]+/g, " "),
+        cx,
+        cy,
+        r: Math.max(miniR + NODE_RADIUS + 14, NODE_RADIUS + 20),
+      });
+    }
+  });
+
+  return { nodes, clusters };
 }
 
 function buildReferenceSignals(notes: Note[]): Map<string, ReferenceSignals> {
@@ -371,6 +475,14 @@ function buildEdges(
 
   const idsByRoom = new Map<string, string[]>();
   const idsByTag = new Map<string, string[]>();
+  const idBySlug = new Map<string, string>(); // normalizeNoteSlug(title) → noteId
+  const slugById = new Map<string, string>(); // noteId → normalizeNoteSlug(title)
+
+  notes.forEach((note) => {
+    const slug = normalizeNoteSlug(note.title);
+    idBySlug.set(slug, note.id);
+    slugById.set(note.id, slug);
+  });
 
   owners.forEach((owner, ownerId) => {
     if (owner.room) {
@@ -392,6 +504,12 @@ function buildEdges(
 
     const candidateTargetIds = new Set<string>();
 
+    // Direct ^ note references
+    sourceRefs.noteRefs.forEach((slug) => {
+      const targetId = idBySlug.get(slug);
+      if (targetId && targetId !== source.id) candidateTargetIds.add(targetId);
+    });
+
     sourceRefs.rooms.forEach((room) => {
       const roomOwners = idsByRoom.get(room);
       if (!roomOwners) return;
@@ -410,7 +528,8 @@ function buildEdges(
       const targetOwner = owners.get(targetId);
       if (!targetOwner) return;
 
-      const edge = buildDirectedEdge(source.id, targetId, sourceRefs, targetOwner);
+      const targetSlug = slugById.get(targetId) ?? "";
+      const edge = buildDirectedEdge(source.id, targetId, targetSlug, sourceRefs, targetOwner);
       if (edge) edges.push(edge);
     });
   }
@@ -421,9 +540,15 @@ function buildEdges(
 function buildDirectedEdge(
   sourceId: string,
   targetId: string,
+  targetSlug: string,
   sourceRefs: ReferenceSignals,
   targetOwner: OwnerSignals,
 ): GraphEdge | null {
+  // Direct note reference takes priority over room/tag connections
+  if (sourceRefs.noteRefs.has(targetSlug)) {
+    return { from: sourceId, to: targetId, weight: 3, relations: ["note"] };
+  }
+
   let weight = 0;
   const relations: string[] = [];
 
@@ -445,16 +570,20 @@ function buildDirectedEdge(
 function extractReferences(note: Note): ReferenceSignals {
   const tags = new Set<string>();
   const rooms = new Set<string>();
+  const noteRefs = new Set<string>();
 
   const raw = `${note.title} ${note.body}`;
 
-  const hashMatches = raw.match(/#[\w-]+/g) ?? [];
+  const hashMatches = raw.match(/(?<!\w)#[\w-]+/g) ?? [];
   hashMatches.forEach((tok) => tags.add(normalizeTag(tok.slice(1))));
 
-  const roomMatches = raw.match(/@[\w-]+/g) ?? [];
+  const roomMatches = raw.match(/(?<!\w)@[\w-]+/g) ?? [];
   roomMatches.forEach((tok) => rooms.add(normalizeRoom(tok.slice(1))));
 
-  return { tags, rooms };
+  const noteRefMatches = raw.match(/(?<!\w)\^[\w-]+/g) ?? [];
+  noteRefMatches.forEach((tok) => noteRefs.add(tok.slice(1).toLowerCase()));
+
+  return { tags, rooms, noteRefs };
 }
 
 function indexNodes(nodes: GraphNode[]) {
@@ -465,31 +594,114 @@ function indexNodes(nodes: GraphNode[]) {
   return map;
 }
 
-function renderEdge(edge: GraphEdge, nodeById: Map<string, GraphNode>, zoom: number) {
-  const from = nodeById.get(edge.from);
-  const to = nodeById.get(edge.to);
-  if (!from || !to) return null;
+function edgeAppearance(relations: string[]): { stroke: string; marker: string } {
+  if (relations.includes("note")) return { stroke: "rgba(50,190,100,0.70)", marker: "url(#graph-arrow-note)" };
+  const hasRoom = relations.includes("room");
+  const hasTag = relations.includes("tag");
+  if (hasRoom && hasTag) return { stroke: "rgba(140,100,210,0.55)", marker: "url(#graph-arrow-both)" };
+  if (hasRoom) return { stroke: "rgba(224,150,40,0.60)", marker: "url(#graph-arrow-room)" };
+  return { stroke: "rgba(70,150,210,0.60)", marker: "url(#graph-arrow-tag)" };
+}
 
-  const line = edgeGeometry(from, to, EDGE_NODE_PADDING);
-  const labelScale = labelScaleForZoom(zoom);
+/**
+ * Converts note-level edges to renderable edges whose endpoints are anchored to cluster-circle
+ * boundaries for room/tag connections, and to note positions for direct ^ references.
+ * Room/tag edges are deduplicated to one arrow per unique cluster pair.
+ */
+function buildRenderedEdges(
+  edges: GraphEdge[],
+  nodeById: Map<string, GraphNode>,
+  clusters: GraphCluster[],
+): RenderedEdge[] {
+  const clusterByRoom = new Map<string, GraphCluster>();
+  for (const cluster of clusters) {
+    if (cluster.room) clusterByRoom.set(cluster.room, cluster);
+  }
 
+  const clusterByNoteId = new Map<string, GraphCluster>();
+  for (const [id, node] of nodeById) {
+    const room = node.note.room?.trim();
+    if (room) {
+      const cluster = clusterByRoom.get(room);
+      if (cluster) clusterByNoteId.set(id, cluster);
+    }
+  }
+
+  const collapsed = new Map<string, Omit<RenderedEdge, "key">>();
+
+  for (const edge of edges) {
+    const fromNode = nodeById.get(edge.from);
+    const toNode = nodeById.get(edge.to);
+    if (!fromNode || !toNode) continue;
+
+    // Direct note-ref (^) edges keep note-level endpoints; room/tag edges route via clusters.
+    const isDirectRef = edge.relations.includes("note");
+    const fromCluster = isDirectRef ? null : clusterByNoteId.get(edge.from);
+    const toCluster = isDirectRef ? null : clusterByNoteId.get(edge.to);
+
+    const fromKey = fromCluster ? `cluster:${fromCluster.room}` : edge.from;
+    const toKey = toCluster ? `cluster:${toCluster.room}` : edge.to;
+
+    if (fromKey === toKey) continue; // skip intra-cluster (same-room) edges
+
+    const fromX = fromCluster ? fromCluster.cx : fromNode.x;
+    const fromY = fromCluster ? fromCluster.cy : fromNode.y;
+    const toX = toCluster ? toCluster.cx : toNode.x;
+    const toY = toCluster ? toCluster.cy : toNode.y;
+
+    const dx = toX - fromX;
+    const dy = toY - fromY;
+    const dist = Math.hypot(dx, dy) || 1;
+
+    const fromPad = fromCluster ? fromCluster.r : EDGE_NODE_PADDING;
+    const toPad = toCluster ? toCluster.r : EDGE_NODE_PADDING;
+
+    const x1 = fromX + (dx / dist) * fromPad;
+    const y1 = fromY + (dy / dist) * fromPad;
+    const x2 = toX - (dx / dist) * toPad;
+    const y2 = toY - (dy / dist) * toPad;
+
+    const key = `${fromKey}→${toKey}`;
+    const existing = collapsed.get(key);
+    if (existing) {
+      collapsed.set(key, {
+        ...existing,
+        weight: Math.max(existing.weight, edge.weight),
+        relations: [...new Set([...existing.relations, ...edge.relations])],
+      });
+    } else {
+      collapsed.set(key, { x1, y1, x2, y2, weight: edge.weight, relations: edge.relations });
+    }
+  }
+
+  return [...collapsed.entries()].map(([key, data]) => ({ key, ...data }));
+}
+
+function renderCluster(cluster: GraphCluster) {
   return (
-    <g key={`${edge.from}-${edge.to}`}>
-      <line
-        x1={line.x1}
-        y1={line.y1}
-        x2={line.x2}
-        y2={line.y2}
+    <g key={`cluster-${cluster.room}`}>
+      <circle
+        cx={cluster.cx}
+        cy={cluster.cy}
+        r={cluster.r}
+        fill="var(--color-foreground)"
+        fillOpacity="0.03"
         stroke="var(--color-foreground)"
-        strokeOpacity="0.22"
-        strokeWidth={Math.min(1 + edge.weight * 0.4, 3)}
-        markerEnd="url(#graph-arrow)"
+        strokeOpacity="0.14"
+        strokeWidth="1"
+        strokeDasharray="5 3"
       />
-      <g transform={`translate(${line.mx} ${line.my - 4}) scale(${labelScale})`}>
-        <text fill="var(--color-foreground)" opacity="0.72" fontSize="9" textAnchor="middle">
-          {edge.relations.join("+")}
-        </text>
-      </g>
+      <text
+        x={cluster.cx}
+        y={cluster.cy + cluster.r + 13}
+        fill="var(--color-foreground)"
+        fillOpacity="0.45"
+        fontSize="10"
+        textAnchor="middle"
+        fontStyle="italic"
+      >
+        {cluster.label}
+      </text>
     </g>
   );
 }
@@ -499,32 +711,17 @@ function labelScaleForZoom(zoom: number) {
   return Math.max(MIN_LABEL_SCALE, Math.min(MAX_LABEL_SCALE, inverse));
 }
 
-function edgeGeometry(from: GraphNode, to: GraphNode, pad: number): LineGeometry {
-  const dx = to.x - from.x;
-  const dy = to.y - from.y;
-  const distance = Math.hypot(dx, dy) || 1;
-
-  const x1 = from.x + (dx / distance) * pad;
-  const y1 = from.y + (dy / distance) * pad;
-  const x2 = to.x - (dx / distance) * pad;
-  const y2 = to.y - (dy / distance) * pad;
-
-  return {
-    x1,
-    y1,
-    x2,
-    y2,
-    mx: (x1 + x2) / 2,
-    my: (y1 + y2) / 2,
-  };
-}
-
 function normalizeTag(value: string) {
   return value.trim().toLowerCase().replace(/[_-]+/g, " ").replace(/\s+/g, " ");
 }
 
 function normalizeRoom(value: string) {
   return value.trim().toLowerCase().replace(/[_-]+/g, " ").replace(/\s+/g, " ");
+}
+
+/** Converts a note title to a URL-safe slug used in ^ tokens (e.g. "The Parlor" → "the-parlor"). */
+function normalizeNoteSlug(title: string): string {
+  return title.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
 }
 
 function intersectCount(a: Set<string>, b: Set<string>) {

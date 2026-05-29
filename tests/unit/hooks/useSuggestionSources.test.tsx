@@ -19,10 +19,7 @@ vi.mock("@/data/rooms", () => ({
 }));
 
 import {
-  SuggestionSourcesContext,
-  useScopedSuggestionSources,
   useSuggestionSources,
-  useSuggestionSourcesContext,
 } from "@/hooks/useSuggestionSources";
 
 describe("useSuggestionSources", () => {
@@ -45,34 +42,5 @@ describe("useSuggestionSources", () => {
 
     expect(result.current.roomSuggestions).toEqual(["Attic", "Entrance Hall", "Library", "Parlor"]);
     expect(result.current.tagSuggestions).toEqual(["puzzle", "story", "todo-tag"]);
-  });
-
-  it("returns empty context fallback when provider missing", () => {
-    const { result } = renderHook(() => useSuggestionSourcesContext());
-    expect(result.current).toEqual({ roomSuggestions: [], tagSuggestions: [] });
-  });
-
-  it("uses provided context value when available", () => {
-    const wrapper = ({ children }: { children: React.ReactNode }) => (
-      <SuggestionSourcesContext.Provider value={{ roomSuggestions: ["A"], tagSuggestions: ["B"] }}>
-        {children}
-      </SuggestionSourcesContext.Provider>
-    );
-
-    const { result } = renderHook(() => useSuggestionSourcesContext(), { wrapper });
-    expect(result.current).toEqual({ roomSuggestions: ["A"], tagSuggestions: ["B"] });
-  });
-
-  it("builds scoped suggestions without catalog", () => {
-    const { result } = renderHook(() =>
-      useScopedSuggestionSources({
-        notes: [{ room: "Boiler", tags: ["tag-1"] } as never],
-        todos: [{ room: "Atrium", tags: ["tag-2"] } as never],
-        extraRooms: ["Cellar"],
-      }),
-    );
-
-    expect(result.current.roomSuggestions).toEqual(["Atrium", "Boiler", "Cellar"]);
-    expect(result.current.tagSuggestions).toEqual(["tag-1", "tag-2"]);
   });
 });

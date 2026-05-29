@@ -192,8 +192,8 @@ function NotesMetaFields({
 
       {mode === "note" && (
         <div>
-          <label className="capture-label">Date</label>
           <input
+            type="date"
             value={dateInput}
             onChange={(e) => setDateInput(e.target.value)}
             className={INPUT_BASE_CLASS}

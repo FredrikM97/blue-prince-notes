@@ -122,7 +122,18 @@ exports[`smoke panels > matches snapshot for graph details panel 1`] = `
         class="markdown-preview-surface prose prose-sm dark:prose-invert max-w-none text-sm leading-relaxed"
       >
         <p>
-          Check @Entrance-Hall and #keys
+          Check 
+          <code
+            class="text-amber-600 dark:text-amber-400 bg-transparent font-mono text-[0.83em] font-semibold"
+          >
+            @Entrance-Hall
+          </code>
+           and 
+          <code
+            class="text-blue-600 dark:text-blue-400 bg-transparent font-mono text-[0.83em] font-semibold"
+          >
+            #keys
+          </code>
         </p>
       </div>
       <div
@@ -189,7 +200,7 @@ exports[`smoke panels > matches snapshot for map shell and supports opening a ce
     <h1
       class="font-serif text-xl font-semibold"
     >
-      Mt. Holly Map
+      House Map
     </h1>
     <p
       class="mt-1 text-xs text-muted-foreground"

@@ -133,13 +133,13 @@ export function AppHeader() {
           )}
           <ThemeToggle />
           <div className="app-search-wrap">
-            <Search className="app-search-icon" />
+            {!searchInput && <Search className="app-search-icon" />}
             <input
               value={searchInput}
               onChange={(e) => setSearchInput(e.target.value)}
-              placeholder=""
+              placeholder="Search…"
               aria-label="Search notes"
-              className={`${INPUT_BASE_CLASS} app-search-input`}
+              className={`${INPUT_BASE_CLASS} h-8 w-44 transition-[padding] ${searchInput ? "pl-3" : "pl-8"}`}
             />
           </div>
           <Button

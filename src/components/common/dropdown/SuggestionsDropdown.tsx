@@ -21,7 +21,7 @@
  */
 
 import { useMemo, useRef, useState, type CSSProperties, type ReactNode } from "react";
-import { useSuggestionSourcesContext } from "@/hooks/useSuggestionSources";
+import { useSuggestionSources } from "@/hooks/useSuggestionSources";
 
 // ── Types ──────────────────────────────────────────────────────────────────────
 
@@ -66,48 +66,72 @@ export function getActiveToken(value: string, cursorPos: number): ActiveToken {
   return { token: value.slice(tokenStart, tokenEnd), start: tokenStart, end: tokenEnd };
 }
 
-/** Returns suggestion candidates for @room, #tag, !type, >date tokens. Empty array when no token matches. */
+// ── Per-token suggestion helpers ──────────────────────────────────────────────
+
+function suggestRooms(token: string, rooms: string[]): TokenSuggestion[] {
+  const q = token.startsWith("@")
+    ? normalizeTokenValue(token.slice(1))
+    : normalizeTokenValue(token.slice(5)); // "room:" prefix
+  const out: TokenSuggestion[] = [];
+  for (const room of rooms) {
+    if (!normalizeTokenValue(room).includes(q)) continue;
+    out.push({ value: `@${room.replace(/\s+/g, "-")}`, hint: "room" });
+    if (out.length >= 8) break;
+  }
+  return out;
+}
+
+function suggestTags(token: string, tags: string[]): TokenSuggestion[] {
+  const q = normalizeTokenValue(token.slice(1));
+  const out: TokenSuggestion[] = [];
+  for (const tag of tags) {
+    if (!normalizeTokenValue(tag).includes(q)) continue;
+    out.push({ value: `#${tag.replace(/\s+/g, "-")}`, hint: "tag" });
+    if (out.length >= 8) break;
+  }
+  return out;
+}
+
+function suggestNotes(token: string, noteTitles: string[]): TokenSuggestion[] {
+  const q = normalizeTokenValue(token.slice(1));
+  const out: TokenSuggestion[] = [];
+  for (const title of noteTitles) {
+    const slug = title.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
+    if (!slug.includes(q)) continue;
+    out.push({ value: `^${slug}`, hint: "note" });
+    if (out.length >= 8) break;
+  }
+  return out;
+}
+
+const TYPE_COMMANDS = ["!code", "!observation", "!theory", "!story", "!todo"] as const;
+
+function suggestTypes(token: string): TokenSuggestion[] {
+  const q = token.toLowerCase();
+  return TYPE_COMMANDS
+    .filter((cmd) => cmd.includes(q))
+    .map((cmd) => ({ value: cmd, hint: "type" }));
+}
+
+function suggestDate(): TokenSuggestion[] {
+  return [{ value: `>${new Date().toISOString().slice(0, 10)}`, hint: "date" }];
+}
+
+/** Returns suggestion candidates for @room, #tag, ^note, !type, >date tokens. Empty array when no token matches. */
 export function buildSuggestions(
   activeToken: { token: string },
   rooms: string[],
   tags: string[],
+  noteTitles: string[] = [],
 ): TokenSuggestion[] {
-  const token = activeToken.token;
+  const { token } = activeToken;
   if (!token) return [];
 
-  if (token.startsWith("@") || /^room:/i.test(token)) {
-    const q = token.startsWith("@")
-      ? normalizeTokenValue(token.slice(1))
-      : normalizeTokenValue(token.slice(5));
-    const out: TokenSuggestion[] = [];
-    for (const room of rooms) {
-      if (!normalizeTokenValue(room).includes(q)) continue;
-      out.push({ value: `@${room.replace(/\s+/g, "-")}`, hint: "room" });
-      if (out.length >= 8) break;
-    }
-    return out;
-  }
-
-  if (token.startsWith("#")) {
-    const q = normalizeTokenValue(token.slice(1));
-    const out: TokenSuggestion[] = [];
-    for (const tag of tags) {
-      if (!normalizeTokenValue(tag).includes(q)) continue;
-      out.push({ value: `#${tag.replace(/\s+/g, "-")}`, hint: "tag" });
-      if (out.length >= 8) break;
-    }
-    return out;
-  }
-
-  if (token.startsWith("!")) {
-    const typeCommands = ["!clue", "!code", "!observation", "!theory", "!story", "!todo"];
-    const q = token.toLowerCase();
-    return typeCommands.filter((cmd) => cmd.includes(q)).map((cmd) => ({ value: cmd, hint: "type" }));
-  }
-
-  if (token.startsWith(">")) {
-    return [{ value: `>${new Date().toISOString().slice(0, 10)}`, hint: "date" }];
-  }
+  if (token.startsWith("@") || /^room:/i.test(token)) return suggestRooms(token, rooms);
+  if (token.startsWith("#")) return suggestTags(token, tags);
+  if (token.startsWith("^")) return suggestNotes(token, noteTitles);
+  if (token.startsWith("!")) return suggestTypes(token);
+  if (token.startsWith(">")) return suggestDate();
 
   return [];
 }
@@ -226,6 +250,7 @@ function useSuggestionController({
   setCursorPos,
   roomSuggestions,
   tagSuggestions,
+  noteTitles,
   onCommitCursor,
 }: {
   value: string;
@@ -234,12 +259,13 @@ function useSuggestionController({
   setCursorPos: (pos: number) => void;
   roomSuggestions: string[];
   tagSuggestions: string[];
+  noteTitles: string[];
   onCommitCursor?: (cursor: number) => void;
 }) {
   const activeToken = useMemo(() => getActiveToken(value, cursorPos), [value, cursorPos]);
   const suggestions = useMemo(
-    () => buildSuggestions(activeToken, roomSuggestions, tagSuggestions),
-    [activeToken, roomSuggestions, tagSuggestions],
+    () => buildSuggestions(activeToken, roomSuggestions, tagSuggestions, noteTitles),
+    [activeToken, roomSuggestions, tagSuggestions, noteTitles],
   );
   const [activeIndex, setActiveIndex] = useState(0);
   const [dismissedForKey, setDismissedForKey] = useState<string | null>(null);
@@ -349,7 +375,7 @@ export function SuggestionsDropdown({
   /** Optional: called with keepOpen=true when Shift is held during Cmd/Ctrl+Enter. */
   onSubmitShortcut?: (keepOpen: boolean) => void;
 }) {
-  const sharedSuggestions = useSuggestionSourcesContext();
+  const sharedSuggestions = useSuggestionSources();
   const [localValue, setLocalValue] = useState("");
   const [cursorPos, setCursorPos] = useState(0);
   const inputElRef = useRef<HTMLInputElement | HTMLTextAreaElement | null>(null);
@@ -384,6 +410,7 @@ export function SuggestionsDropdown({
     setCursorPos,
     roomSuggestions: sharedSuggestions.roomSuggestions,
     tagSuggestions: sharedSuggestions.tagSuggestions,
+    noteTitles: sharedSuggestions.noteSuggestions,
     onCommitCursor: (nextCursor) => {
       requestAnimationFrame(() => {
         inputElRef.current?.focus();

@@ -4,7 +4,7 @@
  * Typing in the search box flattens results across all groups.
  */
 
-import { memo, useState } from "react";
+import { memo, useRef, useState } from "react";
 import { ChevronDown } from "lucide-react";
 import { Button } from "@/components/common/Button";
 import {
@@ -30,6 +30,7 @@ function RoomDropdownComponent({
   clearLabel?: string;
 }) {
   const [query, setQuery] = useState("");
+  const searchRef = useRef<HTMLInputElement>(null);
   const groupedRooms = getGroupedRoomCatalog();
   const roomCategoryByName = new Map<string, RoomCategory>();
   ROOM_GROUPS.forEach((group) => {
@@ -60,6 +61,7 @@ function RoomDropdownComponent({
       modal={false}
       onOpenChange={(nextOpen) => {
         if (!nextOpen) setQuery("");
+        if (nextOpen) requestAnimationFrame(() => searchRef.current?.focus());
       }}
     >
       <DropdownMenuTrigger asChild>
@@ -78,6 +80,7 @@ function RoomDropdownComponent({
       <DropdownMenuContent align="start" className="w-[var(--radix-dropdown-menu-trigger-width)]">
         <div className="px-1 pb-1">
           <input
+            ref={searchRef}
             value={query}
             onChange={(event) => setQuery(event.target.value)}
             onKeyDown={(event) => event.stopPropagation()}

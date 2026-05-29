@@ -1,12 +1,13 @@
 import { useRef, useState, type RefObject } from "react";
-import ReactMarkdown from "react-markdown";
-import remarkGfm from "remark-gfm";
 import { Bold, Italic, Table, List, ListOrdered, Eye, EyeOff, WandSparkles } from "lucide-react";
 import { TEXTAREA_BASE_CLASS } from "@/components/common/FormClasses";
 import { IconButton } from "@/components/common/Button";
+import { MarkdownPreview } from "@/components/common/markdown/MarkdownPreview";
+import { MarkdownShortcutHelp } from "@/components/common/markdown/MarkdownShortcutHelp";
 import {
   findTableBlockAtCursor,
   formatTableMarkdown,
+  formatAllMarkdownTables,
 } from "@/components/common/markdown/MarkdownTables";
 
 // ── toolbar actions ───────────────────────────────────────────────
@@ -192,24 +193,20 @@ export function MarkdownEditor({
   onBlur,
   onCursorChange,
   onTextKeyDown,
-  onFormatTables,
   placeholder,
   rows = 6,
   className,
   textareaRef,
-  extraTools,
 }: {
   value: string;
   onChange: (v: string) => void;
   onBlur?: () => void;
   onCursorChange?: (cursor: number) => void;
   onTextKeyDown?: (event: React.KeyboardEvent<HTMLTextAreaElement>) => boolean | void;
-  onFormatTables?: () => void;
   placeholder?: string;
   rows?: number;
   className?: string;
   textareaRef?: RefObject<HTMLTextAreaElement | null>;
-  extraTools?: React.ReactNode;
 }) {
   const [preview, setPreview] = useState(false);
   const localRef = useRef<HTMLTextAreaElement>(null);
@@ -233,22 +230,22 @@ export function MarkdownEditor({
             {action.icon}
           </IconButton>
         ))}
-        {onFormatTables && (
-          <>
-            <div className="mx-1 h-4 w-px bg-border" />
-            <IconButton
-              aria-label="Format tables"
-              title="Format tables"
-              className="h-7 w-7"
-              onClick={onFormatTables}
-            >
-              <WandSparkles className="h-3.5 w-3.5" />
-            </IconButton>
-          </>
-        )}
         <div className="mx-1 h-4 w-px bg-border" />
-        {extraTools}
-        {extraTools && <div className="mx-1 h-4 w-px bg-border" />}
+        <IconButton
+          aria-label="Format tables"
+          title="Format tables"
+          className="h-7 w-7"
+          onClick={() => {
+            if (!ref.current) return;
+            const formatted = tryFormatTableInEditor(ref.current, onChange);
+            if (!formatted) onChange(formatAllMarkdownTables(value));
+          }}
+        >
+          <WandSparkles className="h-3.5 w-3.5" />
+        </IconButton>
+        <div className="mx-1 h-4 w-px bg-border" />
+        <MarkdownShortcutHelp />
+        <div className="mx-1 h-4 w-px bg-border" />
         <IconButton
           aria-label={preview ? "Hide preview" : "Show preview"}
           title={preview ? "Hide preview" : "Show preview"}
@@ -260,12 +257,8 @@ export function MarkdownEditor({
       </div>
 
       {preview ? (
-        <div className="markdown-preview-surface prose prose-sm dark:prose-invert min-h-[6rem] max-w-none rounded-b-md border border-input bg-background p-3 text-sm leading-relaxed">
-          {value.trim() ? (
-            <ReactMarkdown remarkPlugins={[remarkGfm]}>{value}</ReactMarkdown>
-          ) : (
-            <p className="text-muted-foreground">Nothing to preview yet.</p>
-          )}
+        <div className="min-h-[6rem] rounded-b-md border border-input bg-background p-3">
+          <MarkdownPreview>{value}</MarkdownPreview>
         </div>
       ) : (
         <textarea
@@ -299,9 +292,8 @@ export function MarkdownEditor({
             if ((e.metaKey || e.ctrlKey) && e.shiftKey && e.key.toLowerCase() === "f") {
               if (!ref.current) return;
               const didFormat = tryFormatTableInEditor(ref.current, onChange);
-              if (didFormat) {
-                e.preventDefault();
-              }
+              if (!didFormat) onChange(formatAllMarkdownTables(value));
+              e.preventDefault();
             }
           }}
           placeholder={placeholder}

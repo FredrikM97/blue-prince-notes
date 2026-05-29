@@ -1,6 +1,6 @@
 import { QueryClient } from "@tanstack/react-query";
 import { render } from "@testing-library/react";
-import { RootLayoutView } from "@/router";
+import { RootLayoutView } from "@/routes/__root";
 
 /**
  * Creates a QueryClient configured for deterministic tests.
