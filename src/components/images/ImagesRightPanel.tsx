@@ -3,7 +3,7 @@ import { ChevronLeft, ChevronRight, Expand, Trash2 } from "lucide-react";
 import { Button, GhostButton } from "@/components/common/Button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/common/Dialog";
 import { INPUT_BASE_CLASS } from "@/components/common/FormClasses";
-import { MarkdownPreview } from "@/components/common/markdown/MarkdownPreview";
+import { PagedNotesList } from "@/components/common/PagedNotesList";
 import { StoredImageView } from "@/components/StoredImageView";
 import type { Note, StoredImage } from "@/lib/types";
 
@@ -77,19 +77,6 @@ function ImagesInspectorPanel({
 }) {
   const [labelInput, setLabelInput] = useState(getImageLabel(img));
   const [savingLabel, setSavingLabel] = useState(false);
-  const [noteIndex, setNoteIndex] = useState(0);
-
-  const activeRelatedNote =
-    relatedNotes.length > 0
-      ? relatedNotes[
-          ((noteIndex % relatedNotes.length) + relatedNotes.length) % relatedNotes.length
-        ]
-      : null;
-
-  function cycleRelatedNote(offset: number) {
-    if (relatedNotes.length <= 1) return;
-    setNoteIndex((prev) => (prev + offset + relatedNotes.length) % relatedNotes.length);
-  }
 
   return (
     <>
@@ -145,48 +132,11 @@ function ImagesInspectorPanel({
             </div>
           </div>
 
-          <div className="flex items-center justify-between gap-2">
-            <h3 className="images-linked-notes-title">Details from notes</h3>
-            {relatedNotes.length > 1 && (
-              <div className="flex items-center gap-1">
-                <Button
-                  variant="outline"
-                  size="icon"
-                  className="h-7 w-7"
-                  onClick={() => cycleRelatedNote(-1)}
-                  aria-label="Previous related note"
-                >
-                  <ChevronLeft className="h-3.5 w-3.5" />
-                </Button>
-                <span className="text-xs text-muted-foreground">
-                  {noteIndex + 1} / {relatedNotes.length}
-                </span>
-                <Button
-                  variant="outline"
-                  size="icon"
-                  className="h-7 w-7"
-                  onClick={() => cycleRelatedNote(1)}
-                  aria-label="Next related note"
-                >
-                  <ChevronRight className="h-3.5 w-3.5" />
-                </Button>
-              </div>
-            )}
-          </div>
-          <div className="images-linked-notes-list">
-            {activeRelatedNote ? (
-              <div key={activeRelatedNote.id} className="images-linked-note-item">
-                <p className="images-linked-note-name">{activeRelatedNote.title}</p>
-                {activeRelatedNote.body.trim() ? (
-                  <MarkdownPreview>{activeRelatedNote.body}</MarkdownPreview>
-                ) : (
-                  <p className="images-size-info">No details on this note yet.</p>
-                )}
-              </div>
-            ) : (
-              <p className="images-size-info">No notes currently reference this image.</p>
-            )}
-          </div>
+          <PagedNotesList
+            notes={relatedNotes}
+            title="Details from notes"
+            emptyLabel="No notes currently reference this image."
+          />
 
           <div className="images-detail-actions">
             <Button variant="outline" size="sm" onClick={() => setPreviewOpen(true)}>

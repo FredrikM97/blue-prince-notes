@@ -1,6 +1,6 @@
 import { BrassButton, Button, GhostButton, IconButton } from "@/components/common/Button";
 import { useNavigate } from "@tanstack/react-router";
-import { Chip } from "@/components/common/Chip";
+import { PagedNotesList } from "@/components/common/PagedNotesList";
 import { RoomDropdown } from "@/components/common/dropdown/RoomDropdown";
 import { DetailsField } from "@/components/common/input/DetailsField";
 import { SuggestionsDropdown } from "@/components/common/dropdown/SuggestionsDropdown";
@@ -135,35 +135,15 @@ export function MapRightPanel({
           </GhostButton>
         </div>
 
-        {activeNotes.length > 0 && <MapRoomNotes notes={activeNotes} />}
+        {activeNotes.length > 0 && (
+          <PagedNotesList
+            key={`${row}-${col}`}
+            notes={activeNotes}
+            title="Notes in this room"
+          />
+        )}
         {activeTodos.length > 0 && <MapRoomTodos todos={activeTodos} />}
       </div>
-    </div>
-  );
-}
-
-function MapRoomNotes({ notes }: { notes: Note[] }) {
-  return (
-    <div>
-      <div className="map-list-title">Notes in this room</div>
-      <ul className="map-note-list">
-        {notes.map((note) => (
-          <li key={note.id} className="map-note-item">
-            <div className="map-note-item-title">{note.title}</div>
-            <div className="map-note-chip-row">
-              <Chip className="map-note-chip">{note.type}</Chip>
-              {note.imageIds.length > 0 && (
-                <Chip className="map-note-chip">📎 {note.imageIds.length}</Chip>
-              )}
-              {note.tags.map((tag) => (
-                <Chip key={tag} className="map-note-chip">
-                  #{tag}
-                </Chip>
-              ))}
-            </div>
-          </li>
-        ))}
-      </ul>
     </div>
   );
 }
