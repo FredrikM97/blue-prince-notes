@@ -7,7 +7,11 @@ import { ImagesLeftPanel } from "@/components/images/ImagesLeftPanel";
 import { ImagesRightPanel } from "@/components/images/ImagesRightPanel";
 import type { Note, StoredImage } from "@/lib/types";
 import { toast } from "sonner";
-import { loadSteamImportState, refreshSteamFolderImages } from "@/data/steamImport";
+import {
+  isSteamImportSupported,
+  loadSteamImportStatus,
+  pickAndImportSteamFiles,
+} from "@/data/steamImport";
 
 function getImageLabel(img: StoredImage): string {
   return img.caption?.trim() || img.name;
@@ -23,22 +27,19 @@ export function ImagesPage() {
   const deferredSearch = useDeferredValue(search);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [previewOpen, setPreviewOpen] = useState(false);
-  const [steamImportActive, setSteamImportActive] = useState(false);
+  const steamImportActive = isSteamImportSupported();
   const [steamLastRefreshAt, setSteamLastRefreshAt] = useState<number | null>(null);
   const [refreshBusy, setRefreshBusy] = useState(false);
 
   useEffect(() => {
-    void (async () => {
-      const state = await loadSteamImportState();
-      setSteamImportActive(state.enabled && Boolean(state.folderName));
-      setSteamLastRefreshAt(state.lastRefreshAt);
-    })();
+    void loadSteamImportStatus().then((s) => setSteamLastRefreshAt(s.lastRefreshAt));
   }, []);
 
   async function handleRefreshSteamImages() {
     setRefreshBusy(true);
     try {
-      const result = await refreshSteamFolderImages(addImage);
+      const result = await pickAndImportSteamFiles(addImage);
+      if (result === null) return; // user cancelled
       setSteamLastRefreshAt(Date.now());
       if (result.imported > 0) {
         toast.success(`Imported ${result.imported} screenshot${result.imported === 1 ? "" : "s"}`);
@@ -46,7 +47,7 @@ export function ImagesPage() {
         toast.success("No new Steam screenshots found");
       }
     } catch {
-      toast.error("Could not refresh Steam screenshots");
+      toast.error("Could not import Steam screenshots");
     } finally {
       setRefreshBusy(false);
     }

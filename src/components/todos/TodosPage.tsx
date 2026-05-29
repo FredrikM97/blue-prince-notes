@@ -4,6 +4,7 @@ import { groupTodosByStatus } from "@/components/todos/Constants";
 import { PageLayout } from "@/components/common/PageLayout";
 import { TodoLeftPanel } from "./TodoLeftPanel";
 import { TodoMiddlePanel } from "./TodoMiddlePanel";
+import { TodoPreviewDialog } from "./TodoPreviewDialog";
 
 export function TodosPage() {
   const todos = useStore((s) => s.todos);
@@ -12,6 +13,7 @@ export function TodosPage() {
   const remove = useStore((s) => s.removeTodo);
   const save = useStore((s) => s.saveTodo);
   const [scopeFilter, setScopeFilter] = useState<string | null>(null);
+  const [previewTodoId, setPreviewTodoId] = useState<string | null>(null);
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
@@ -32,33 +34,46 @@ export function TodosPage() {
   const showRunCard =
     thisRunOpen.length > 0 && scopeFilter !== "cross-run" && scopeFilter !== "someday";
 
+  const previewTodo = previewTodoId ? (todos.find((t) => t.id === previewTodoId) ?? null) : null;
+
   return (
-    <PageLayout
-      leftSidebar={
-        <TodoLeftPanel
-          total={filtered.length}
-          openCount={openCount}
-          progressCount={progressCount}
-          doneCount={doneCount}
-          scopeFilter={scopeFilter}
-          setScopeFilter={setScopeFilter}
-          showRunCard={showRunCard}
-          thisRunOpen={thisRunOpen}
-          onToggleDone={(id) => toggle(id, "done")}
-        />
-      }
-      middle={
-        <TodoMiddlePanel
-          grouped={grouped}
-          onToggle={(id, next) => toggle(id, next)}
-          onDelete={(id) => {
-            if (confirm("Delete this todo?")) remove(id);
-          }}
-          onEdit={save}
-        />
-      }
-    >
-      {/* middle content is provided via the `middle` prop */}
-    </PageLayout>
+    <>
+      <PageLayout
+        leftSidebar={
+          <TodoLeftPanel
+            total={filtered.length}
+            openCount={openCount}
+            progressCount={progressCount}
+            doneCount={doneCount}
+            scopeFilter={scopeFilter}
+            setScopeFilter={setScopeFilter}
+            showRunCard={showRunCard}
+            thisRunOpen={thisRunOpen}
+            onToggleDone={(id) => toggle(id, "done")}
+          />
+        }
+        middle={
+          <TodoMiddlePanel
+            grouped={grouped}
+            onToggle={(id, next) => toggle(id, next)}
+            onDelete={(id) => {
+              if (confirm("Delete this todo?")) remove(id);
+            }}
+            onEdit={save}
+            onOpenPreview={(todo) => setPreviewTodoId(todo.id)}
+          />
+        }
+      >
+        {/* middle content is provided via the `middle` prop */}
+      </PageLayout>
+
+      <TodoPreviewDialog
+        todo={previewTodo}
+        open={!!previewTodo}
+        onOpenChange={(open) => {
+          if (!open) setPreviewTodoId(null);
+        }}
+      />
+    </>
   );
 }

@@ -10,13 +10,16 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/common/Dialog";
-import { Maximize2 } from "lucide-react";
+import { Maximize2, X } from "lucide-react";
 import { NotesCreatePanel } from "./NotesCreatePanel";
 import { NotesEditorPanel } from "./NotesEditorPanel";
 import { NotesFilterPanel } from "./NotesFilterPanel";
-import { NotesPreviewPanel } from "./NotesPreviewPanel";
 import { NotesView } from "./NotesView";
 import { useNotesPageState } from "@/hooks/useNotesPageState";
+import { TodoRightPanel } from "@/components/todos/TodoRightPanel";
+import { RightPreviewPanel } from "@/components/common/RightPreviewPanel";
+import { NotePreviewDialog } from "./NotePreviewDialog";
+import { NotesPreviewPanel } from "./NotesPreviewPanel";
 
 export function NotesPage({
   filterType,
@@ -38,6 +41,7 @@ export function NotesPage({
   const removeTodo = useStore((s) => s.removeTodo);
   const deferredSearch = useDeferredValue(search);
   const { state: uiState, actions: uiActions } = useNotesPageState();
+  const [previewTodo, setPreviewTodo] = useState<Todo | null>(null);
 
   const effectiveType = filterType ?? uiState.typeFilter;
   const roomFilter = uiState.roomFilter;
@@ -117,6 +121,7 @@ export function NotesPage({
 
   const openCaptureForNotes = useCallback(() => {
     uiActions.clearSelection();
+    setPreviewTodo(null);
     openCapture({ kind: "note", noteType: filterType });
   }, [openCapture, filterType, uiActions]);
 
@@ -125,9 +130,11 @@ export function NotesPage({
       const todo = todoByVirtualId.get(note.id);
       if (todo) {
         uiActions.clearSelection();
+        setPreviewTodo(null);
         openCapture({ todo });
         return;
       }
+      setPreviewTodo(null);
       closeCapture();
       uiActions.openEdit(note);
     },
@@ -139,13 +146,15 @@ export function NotesPage({
       const todo = todoByVirtualId.get(note.id);
       if (todo) {
         uiActions.clearSelection();
-        openCapture({ todo });
+        closeCapture();
+        setPreviewTodo(todo);
         return;
       }
+      setPreviewTodo(null);
       closeCapture();
       uiActions.openPreview(note);
     },
-    [todoByVirtualId, openCapture, closeCapture, uiActions],
+    [todoByVirtualId, closeCapture, uiActions],
   );
 
   const deleteFromList = useCallback(
@@ -186,6 +195,8 @@ export function NotesPage({
           <div className="notes-right-panel-shell">
             {captureOpen ? (
               <NotesCreatePanel defaultNoteType={filterType} />
+            ) : previewTodo ? (
+              <TodoRightPanel todo={previewTodo} onClose={() => setPreviewTodo(null)} />
             ) : (
               <NotesRightPanel
                 activeNote={activeNote}
@@ -333,58 +344,48 @@ function NotesRightPanel({
     );
   }
 
-  return (
-    <div className="notes-view-panel rounded-lg border border-border bg-card p-4">
-      <div className="shrink-0 space-y-0">
-        {panelMode === "edit" ? (
+  if (panelMode === "edit") {
+    return (
+      <div className="page-layout-panel flex flex-col gap-3">
+        <div className="flex items-start justify-between gap-2 border-b border-border pb-3">
           <h2 className="font-serif text-lg">Edit note</h2>
-        ) : (
-          <div className="flex items-start justify-between gap-2">
-            <div>
-              <h2 className="font-serif text-xl">{activeNote.title}</h2>
-              <p className="text-xs text-muted-foreground">Note preview</p>
-            </div>
-            <div className="flex shrink-0 items-center gap-1">
-              <IconButton
-                aria-label="Expand preview"
-                title="Expand preview"
-                className="h-7 w-7"
-                onClick={() => setPreviewExpanded(true)}
-              >
-                <Maximize2 className="h-3.5 w-3.5" />
-              </IconButton>
-              <GhostButton onClick={onClose}>Close</GhostButton>
-            </div>
-          </div>
-        )}
+          <IconButton onClick={onClose} title="Close">
+            <X className="h-4 w-4" />
+          </IconButton>
+        </div>
+        <NotesEditorPanel
+          draft={draft ?? activeNote}
+          setDraft={setDraft}
+          onSave={onSave}
+          onCancel={onClose}
+        />
       </div>
+    );
+  }
 
-      <div className="min-h-0">
-        {panelMode === "edit" ? (
-          <NotesEditorPanel
-            draft={draft ?? activeNote}
-            setDraft={setDraft}
-            onSave={onSave}
-            onCancel={onClose}
-          />
-        ) : (
-          <>
-            <div className="notes-panel-preview-scroll">
-              <NotesPreviewPanel note={activeNote} />
-            </div>
-            <Dialog open={previewExpanded} onOpenChange={setPreviewExpanded}>
-              <DialogContent className="flex max-h-[90vh] w-[90vw] max-w-4xl flex-col gap-3 p-6">
-                <DialogHeader>
-                  <DialogTitle className="font-serif text-xl">{activeNote.title}</DialogTitle>
-                </DialogHeader>
-                <div className="min-h-0 flex-1 overflow-y-auto">
-                  <NotesPreviewPanel note={activeNote} />
-                </div>
-              </DialogContent>
-            </Dialog>
-          </>
-        )}
-      </div>
-    </div>
+  const subtitle = [
+    activeNote.type,
+    activeNote.date,
+    `Created ${new Date(activeNote.createdAt).toLocaleDateString()}`,
+  ]
+    .filter(Boolean)
+    .join(" · ");
+
+  return (
+    <RightPreviewPanel
+      title={activeNote.title}
+      subtitle={subtitle}
+      onExpand={() => setPreviewExpanded(true)}
+      onClose={onClose}
+      expandDialog={
+        <NotePreviewDialog
+          note={activeNote}
+          open={previewExpanded}
+          onOpenChange={setPreviewExpanded}
+        />
+      }
+    >
+      <NotesPreviewPanel note={activeNote} />
+    </RightPreviewPanel>
   );
 }

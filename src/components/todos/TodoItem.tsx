@@ -2,7 +2,7 @@ import { useState } from "react";
 import type { Todo, TodoStatus } from "@/lib/types";
 import { Chip } from "@/components/common/Chip";
 import { INPUT_BASE_CLASS } from "@/components/common/FormClasses";
-import { Trash2 } from "lucide-react";
+import { Maximize2, Trash2 } from "lucide-react";
 import { DropdownSelect } from "@/components/common/dropdown/DropdownSelect";
 import { todoPriorityClass } from "./Constants";
 
@@ -17,17 +17,19 @@ export function TodoItem({
   onToggle,
   onDelete,
   onEdit,
+  onOpenPreview,
 }: {
   todo: Todo;
   onToggle: (s: TodoStatus) => void;
   onDelete: () => void;
   onEdit: (t: Todo) => void;
+  onOpenPreview: () => void;
 }) {
   const [editing, setEditing] = useState(false);
   const [title, setTitle] = useState(todo.title);
 
   return (
-    <li className="group flex items-start gap-2 px-3 py-2">
+    <li className="group flex items-start gap-2 px-3 py-2 hover:bg-muted/30">
       <input
         type="checkbox"
         className="mt-1"
@@ -74,22 +76,31 @@ export function TodoItem({
               #{tag}
             </Chip>
           ))}
-          <DropdownSelect
-            value={todo.status}
-            onValueChange={(value) => onToggle(value as TodoStatus)}
-            options={TODO_STATUS_OPTIONS}
-            className="ml-auto h-6 w-auto rounded border border-input bg-background px-1 text-[11px] opacity-0 group-hover:opacity-100"
-            contentClassName="min-w-32"
-          />
         </div>
       </div>
-      <button
-        onClick={onDelete}
-        className="rounded p-1 text-muted-foreground opacity-0 hover:bg-destructive/20 hover:text-destructive group-hover:opacity-100"
-        aria-label="Delete"
-      >
-        <Trash2 className="h-3.5 w-3.5" />
-      </button>
+      <div className="flex shrink-0 items-center gap-0.5 opacity-0 group-hover:opacity-100">
+        <DropdownSelect
+          value={todo.status}
+          onValueChange={(value) => onToggle(value as TodoStatus)}
+          options={TODO_STATUS_OPTIONS}
+          className="h-6 w-auto rounded border border-input bg-background px-1 text-[11px]"
+          contentClassName="min-w-32"
+        />
+        <button
+          onClick={onOpenPreview}
+          className="rounded p-1 text-muted-foreground hover:bg-accent hover:text-foreground"
+          aria-label="Preview todo"
+        >
+          <Maximize2 className="h-3.5 w-3.5" />
+        </button>
+        <button
+          onClick={onDelete}
+          className="rounded p-1 text-muted-foreground hover:bg-destructive/20 hover:text-destructive"
+          aria-label="Delete"
+        >
+          <Trash2 className="h-3.5 w-3.5" />
+        </button>
+      </div>
     </li>
   );
 }

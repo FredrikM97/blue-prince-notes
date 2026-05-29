@@ -31,11 +31,9 @@ import {
   openSyncFolderInPicker,
 } from "@/data/sync";
 import {
-  disconnectSteamImportFolder,
-  loadSteamImportState,
-  pickSteamImportFolder,
-  refreshSteamFolderImages,
-  setSteamImportEnabled,
+  isSteamImportSupported,
+  loadSteamImportStatus,
+  pickAndImportSteamFiles,
 } from "@/data/steamImport";
 import { toast } from "sonner";
 
@@ -240,89 +238,36 @@ export function SettingsPage() {
 
 function SteamImportSection() {
   const addImage = useStore((s) => s.addImage);
-  const [enabled, setEnabled] = useState(false);
-  const [folderName, setFolderName] = useState<string | null>(null);
   const [lastRefreshAt, setLastRefreshAt] = useState<number | null>(null);
   const [lastImported, setLastImported] = useState(0);
   const [lastSkipped, setLastSkipped] = useState(0);
   const [busy, setBusy] = useState(false);
-  const isSupported = typeof window !== "undefined" && "showDirectoryPicker" in window;
+  const isSupported = isSteamImportSupported();
 
   useEffect(() => {
     if (!isSupported) return;
-    void (async () => {
-      const state = await loadSteamImportState();
-      setEnabled(state.enabled);
-      setFolderName(state.folderName);
-      setLastRefreshAt(state.lastRefreshAt);
-      setLastImported(state.lastImported);
-      setLastSkipped(state.lastSkipped);
-    })();
+    void loadSteamImportStatus().then((s) => {
+      setLastRefreshAt(s.lastRefreshAt);
+      setLastImported(s.lastImported);
+      setLastSkipped(s.lastSkipped);
+    });
   }, [isSupported]);
 
-  async function handleToggle(next: boolean) {
+  async function handlePickFiles() {
     setBusy(true);
     try {
-      await setSteamImportEnabled(next);
-      setEnabled(next);
-      toast.success(next ? "Steam import enabled" : "Steam import disabled");
-    } catch {
-      toast.error("Could not update Steam import setting");
-    } finally {
-      setBusy(false);
-    }
-  }
-
-  async function handlePickFolder() {
-    setBusy(true);
-    try {
-      const nextName = await pickSteamImportFolder();
-      if (!nextName) return;
-      setFolderName(nextName);
-      toast.success(`Steam screenshots folder connected: ${nextName}`);
-    } catch {
-      toast.error("Could not connect Steam screenshots folder");
-    } finally {
-      setBusy(false);
-    }
-  }
-
-  async function handleDisconnect() {
-    setBusy(true);
-    try {
-      await disconnectSteamImportFolder();
-      setFolderName(null);
-      toast.success("Steam screenshots folder disconnected");
-    } catch {
-      toast.error("Could not disconnect Steam screenshots folder");
-    } finally {
-      setBusy(false);
-    }
-  }
-
-  async function handleRefresh() {
-    if (!enabled) {
-      toast.error("Enable Steam import first");
-      return;
-    }
-    if (!folderName) {
-      toast.error("Connect a Steam screenshots folder first");
-      return;
-    }
-
-    setBusy(true);
-    try {
-      const result = await refreshSteamFolderImages(addImage);
+      const result = await pickAndImportSteamFiles(addImage);
+      if (result === null) return; // user cancelled
       setLastRefreshAt(Date.now());
       setLastImported(result.imported);
       setLastSkipped(result.skipped);
       if (result.imported > 0) {
         toast.success(`Imported ${result.imported} screenshot${result.imported === 1 ? "" : "s"}`);
       } else {
-        toast.success("No new screenshots found");
+        toast.success("No new screenshots — all already imported");
       }
     } catch {
-      toast.error("Could not refresh Steam screenshots");
+      toast.error("Could not import Steam screenshots");
     } finally {
       setBusy(false);
     }
@@ -331,61 +276,26 @@ function SteamImportSection() {
   if (!isSupported) {
     return (
       <p className="text-sm text-muted-foreground">
-        Your browser does not support folder access. Steam import requires Chrome or Edge.
+        Your browser does not support file access. Steam import requires Chrome or Edge.
       </p>
     );
   }
 
   return (
     <div className="space-y-3">
-      <label className="flex items-center gap-2 text-sm">
-        <input
-          type="checkbox"
-          checked={enabled}
-          onChange={(e) => void handleToggle(e.target.checked)}
-          disabled={busy}
-        />
-        Enable Steam screenshots import
-      </label>
-
-      {folderName ? (
-        <p className="text-xs text-muted-foreground">
-          Connected folder: <strong>{folderName}</strong>
-        </p>
-      ) : (
-        <p className="text-xs text-muted-foreground">No Steam screenshots folder connected yet.</p>
-      )}
-
-      <div className="flex flex-wrap gap-2">
-        <Button variant="outline" size="sm" onClick={handlePickFolder} disabled={busy}>
-          {folderName ? "Change folder" : "Connect folder"}
-        </Button>
-        <Button variant="outline" size="sm" onClick={handleRefresh} disabled={busy || !enabled}>
-          Refresh now
-        </Button>
-        {folderName ? (
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handleDisconnect}
-            disabled={busy}
-            className="text-destructive hover:text-destructive"
-          >
-            <Unlink className="mr-1.5 h-3.5 w-3.5" />
-            Disconnect
-          </Button>
-        ) : null}
-      </div>
-
       <p className="text-xs text-muted-foreground">
-        Manual only: no periodic scanning. Press <code>Refresh now</code> when you want to import
-        new screenshots.
+        Pick screenshot files directly — works with any folder including Steam&apos;s installation
+        directory. Already-imported files are skipped automatically.
       </p>
 
+      <Button variant="outline" size="sm" onClick={handlePickFiles} disabled={busy}>
+        Pick screenshots…
+      </Button>
+
       <p className="text-xs text-muted-foreground">
-        Last refresh:{" "}
+        Last import:{" "}
         {lastRefreshAt
-          ? `${new Date(lastRefreshAt).toLocaleString()} • imported ${lastImported}, skipped ${lastSkipped}`
+          ? `${new Date(lastRefreshAt).toLocaleString()} · imported ${lastImported}, skipped ${lastSkipped}`
           : "Never"}
       </p>
     </div>

@@ -6,7 +6,7 @@ exports[`smoke panels > matches snapshot for graph details panel 1`] = `
     class="page-layout-panel space-y-4"
   >
     <div
-      class="space-y-3 rounded-md border border-border/70 bg-card/50 p-3"
+      class="space-y-3"
     >
       <div>
         <h2
@@ -198,7 +198,7 @@ exports[`smoke panels > matches snapshot for map shell and supports opening a ce
     class="page-layout-panel"
   >
     <h1
-      class="font-serif text-xl font-semibold"
+      class="font-serif text-2xl"
     >
       House Map
     </h1>

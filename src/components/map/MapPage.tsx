@@ -82,7 +82,6 @@ export function MapPage() {
 
   return (
     <PageLayout
-      className="max-w-6xl"
       leftSidebar={<MapLeftPanel />}
       rightSidebar={rightSidebar}
       middle={

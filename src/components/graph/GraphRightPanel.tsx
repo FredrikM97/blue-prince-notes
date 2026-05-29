@@ -20,7 +20,7 @@ export function GraphRightPanel({
   outgoingCount: number;
 }) {
   const summary = (
-    <div className="space-y-3 rounded-md border border-border/70 bg-card/50 p-3">
+    <div className="space-y-3">
       <div>
         <h2 className="font-serif text-lg">Connections</h2>
         <p className="mt-1 text-sm text-muted-foreground">

@@ -11,9 +11,7 @@ import {
   DropdownMenuSubTrigger,
 } from "@/components/common/dropdown/DropdownMenu";
 
-const sonnerSpy = vi.fn<(props: unknown) => ReactElement>((_props) => (
-  <div data-testid="sonner" />
-));
+const sonnerSpy = vi.fn<(props: unknown) => ReactElement>((_props) => <div data-testid="sonner" />);
 
 vi.mock("sonner", () => ({
   Toaster: (props: unknown) => {

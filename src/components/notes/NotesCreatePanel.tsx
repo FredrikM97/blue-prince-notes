@@ -32,6 +32,15 @@ function useNotesStoreSlice() {
   const prefill = useStore((s) => s.capturePrefill);
   const prefillRoom = useStore((s) => s.capturePrefillRoom);
   const prefillType = useStore((s) => s.capturePrefillType);
+  const prefillTags = useStore((s) => s.capturePrefillTags);
+  const prefillBody = useStore((s) => s.capturePrefillBody);
+  const prefillPriority = useStore((s) => s.capturePrefillPriority);
+  const editNoteId = useStore((s) => s.captureEditNoteId);
+  const editTodoId = useStore((s) => s.captureEditTodoId);
+  const saveNote = useStore((s) => s.saveNote);
+  const saveTodo = useStore((s) => s.saveTodo);
+  const notes = useStore((s) => s.notes);
+  const todos = useStore((s) => s.todos);
   const returnTo = useStore((s) => s.captureReturnTo);
   const create = useStore((s) => s.createFromCapture);
 
@@ -42,6 +51,15 @@ function useNotesStoreSlice() {
     prefill,
     prefillRoom,
     prefillType,
+    prefillTags,
+    prefillBody,
+    prefillPriority,
+    editNoteId,
+    editTodoId,
+    saveNote,
+    saveTodo,
+    notes,
+    todos,
     returnTo,
     create,
   };
@@ -52,12 +70,18 @@ function useNotesFormState({
   prefill,
   prefillRoom,
   prefillType,
+  prefillTags,
+  prefillBody,
+  prefillPriority,
   defaultNoteType,
 }: {
   kind: "note" | "todo";
   prefill: string;
   prefillRoom?: string;
   prefillType?: NoteType;
+  prefillTags?: string;
+  prefillBody?: string;
+  prefillPriority?: Priority;
   defaultNoteType?: NoteType;
 }) {
   const [mode, setMode] = useState<"note" | "todo">(kind);
@@ -65,9 +89,9 @@ function useNotesFormState({
   const [type, setType] = useState<NoteType>(prefillType ?? defaultNoteType ?? "observation");
   const [room, setRoom] = useState<string>(prefillRoom ?? "");
   const [dateInput, setDateInput] = useState("");
-  const [tagsInput, setTagsInput] = useState("");
-  const [priority, setPriority] = useState<Priority>("med");
-  const [body, setBody] = useState("");
+  const [tagsInput, setTagsInput] = useState(prefillTags ?? "");
+  const [priority, setPriority] = useState<Priority>(prefillPriority ?? "med");
+  const [body, setBody] = useState(prefillBody ?? "");
   const [pendingImages, setPendingImages] = useState<Blob[]>([]);
 
   function resetAfterSubmit() {
@@ -115,10 +139,12 @@ function NotesRoomField({
   );
 }
 
-function NotesCreateHeader({ mode }: { mode: "note" | "todo" }) {
+function NotesCreateHeader({ mode, isEditing }: { mode: "note" | "todo"; isEditing: boolean }) {
   return (
     <div className="capture-header">
-      <h2 className="font-serif text-lg">New {mode === "todo" ? "todo" : "note"}</h2>
+      <h2 className="font-serif text-lg">
+        {isEditing ? "Edit" : "New"} {mode === "todo" ? "todo" : "note"}
+      </h2>
     </div>
   );
 }
@@ -287,10 +313,79 @@ function parseTags(tagsInput: string) {
     .filter(Boolean);
 }
 
-function useNotesSubmit({
+// ── Todo submit ────────────────────────────────────────────────────────────
+function useTodoSubmit({
+  saveTodo,
   create,
+  editTodoId,
+  existingTodos,
   closeWithReturn,
-  mode,
+  title,
+  body,
+  room,
+  tagsInput,
+  priority,
+  resetAfterSubmit,
+}: {
+  saveTodo: NotesStoreSlice["saveTodo"];
+  create: NotesStoreSlice["create"];
+  editTodoId: NotesStoreSlice["editTodoId"];
+  existingTodos: NotesStoreSlice["todos"];
+  closeWithReturn: () => Promise<void>;
+  title: NotesFormState["title"];
+  body: NotesFormState["body"];
+  room: NotesFormState["room"];
+  tagsInput: NotesFormState["tagsInput"];
+  priority: NotesFormState["priority"];
+  resetAfterSubmit: NotesFormState["resetAfterSubmit"];
+}) {
+  return async function submit(keepOpen: boolean) {
+    if (!title.trim()) {
+      toast.error("Add a title before saving.");
+      return;
+    }
+    const tags = parseTags(tagsInput);
+
+    if (editTodoId) {
+      const existing = existingTodos.find((t) => t.id === editTodoId);
+      if (existing) {
+        await saveTodo({
+          ...existing,
+          title: title.trim() || "Untitled",
+          room: room || undefined,
+          tags,
+          priority,
+          notes: body.trim() || undefined,
+        });
+        toast.success("Todo updated");
+        await closeWithReturn();
+        return;
+      }
+    }
+
+    await create(title || "Untitled", {
+      kind: "todo",
+      body,
+      room: room || undefined,
+      tags,
+      priority,
+    });
+    toast.success("Todo added");
+    if (keepOpen) {
+      resetAfterSubmit();
+    } else {
+      await closeWithReturn();
+    }
+  };
+}
+
+// ── Note submit ────────────────────────────────────────────────────────────
+function useNoteSubmit({
+  saveNote,
+  create,
+  editNoteId,
+  existingNotes,
+  closeWithReturn,
   title,
   pendingImages,
   body,
@@ -298,12 +393,13 @@ function useNotesSubmit({
   room,
   dateInput,
   tagsInput,
-  priority,
   resetAfterSubmit,
 }: {
+  saveNote: NotesStoreSlice["saveNote"];
   create: NotesStoreSlice["create"];
+  editNoteId: NotesStoreSlice["editNoteId"];
+  existingNotes: NotesStoreSlice["notes"];
   closeWithReturn: () => Promise<void>;
-  mode: NotesFormState["mode"];
   title: NotesFormState["title"];
   pendingImages: NotesFormState["pendingImages"];
   body: NotesFormState["body"];
@@ -311,7 +407,6 @@ function useNotesSubmit({
   room: NotesFormState["room"];
   dateInput: NotesFormState["dateInput"];
   tagsInput: NotesFormState["tagsInput"];
-  priority: NotesFormState["priority"];
   resetAfterSubmit: NotesFormState["resetAfterSubmit"];
 }) {
   return async function submit(keepOpen: boolean) {
@@ -320,19 +415,37 @@ function useNotesSubmit({
       return;
     }
     const tags = parseTags(tagsInput);
+
+    if (editNoteId) {
+      const existing = existingNotes.find((n) => n.id === editNoteId);
+      if (existing) {
+        await saveNote({
+          ...existing,
+          title: title.trim() || "Untitled",
+          body: body.trim(),
+          type,
+          room: room || undefined,
+          tags,
+          date: dateInput || existing.date,
+        });
+        toast.success("Note updated");
+        await closeWithReturn();
+        return;
+      }
+    }
+
     // Pass title raw so #tag @room shortcuts inside still parse,
     // but explicit fields override.
     await create(title || "Untitled", {
-      kind: mode,
+      kind: "note",
       imageBlobs: pendingImages,
       body,
-      type: mode === "note" ? type : undefined,
-      date: mode === "note" ? dateInput || undefined : undefined,
+      type,
+      date: dateInput || undefined,
       room: room || undefined,
       tags,
-      priority: mode === "todo" ? priority : undefined,
     });
-    toast.success(mode === "todo" ? "Todo added" : "Note added");
+    toast.success("Note added");
     if (keepOpen) {
       resetAfterSubmit();
     } else {
@@ -349,6 +462,9 @@ export function NotesCreatePanel({ defaultNoteType }: { defaultNoteType?: NoteTy
     prefill: store.prefill,
     prefillRoom: store.prefillRoom,
     prefillType: store.prefillType,
+    prefillTags: store.prefillTags,
+    prefillBody: store.prefillBody,
+    prefillPriority: store.prefillPriority,
     defaultNoteType,
   });
 
@@ -365,10 +481,26 @@ export function NotesCreatePanel({ defaultNoteType }: { defaultNoteType?: NoteTy
     }
   };
 
-  const submit = useNotesSubmit({
+  const submitTodo = useTodoSubmit({
+    saveTodo: store.saveTodo,
     create: store.create,
+    editTodoId: store.editTodoId,
+    existingTodos: store.todos,
     closeWithReturn,
-    mode: form.mode,
+    title: form.title,
+    body: form.body,
+    room: form.room,
+    tagsInput: form.tagsInput,
+    priority: form.priority,
+    resetAfterSubmit: form.resetAfterSubmit,
+  });
+
+  const submitNote = useNoteSubmit({
+    saveNote: store.saveNote,
+    create: store.create,
+    editNoteId: store.editNoteId,
+    existingNotes: store.notes,
+    closeWithReturn,
     title: form.title,
     pendingImages: form.pendingImages,
     body: form.body,
@@ -376,14 +508,17 @@ export function NotesCreatePanel({ defaultNoteType }: { defaultNoteType?: NoteTy
     room: form.room,
     dateInput: form.dateInput,
     tagsInput: form.tagsInput,
-    priority: form.priority,
     resetAfterSubmit: form.resetAfterSubmit,
   });
 
+  const submit = form.mode === "todo" ? submitTodo : submitNote;
+
+  const isEditing = Boolean(store.editNoteId ?? store.editTodoId);
+
   const content = (
     <>
-      <NotesCreateHeader mode={form.mode} />
-      <NotesModeTabs mode={form.mode} setMode={form.setMode} />
+      <NotesCreateHeader mode={form.mode} isEditing={isEditing} />
+      {!isEditing && <NotesModeTabs mode={form.mode} setMode={form.setMode} />}
 
       <div className="capture-form-stack">
         <SuggestionsDropdown onSubmitShortcut={submit}>

@@ -1,3 +1,5 @@
+import { useState } from "react";
+import { ChevronDown, ChevronRight } from "lucide-react";
 import type { NoteType } from "@/lib/types";
 import { SelectButton } from "@/components/common/Button";
 
@@ -66,10 +68,17 @@ export function NotesFilterPanel({
           options={roomOptions}
           value={roomFilter}
           onChange={setRoomFilter}
+          defaultCollapsed={rooms.length > 4}
         />
       )}
       {tags.length > 0 && (
-        <FilterGroup label="Tag" options={tagOptions} value={tagFilter} onChange={setTagFilter} />
+        <FilterGroup
+          label="Tag"
+          options={tagOptions}
+          value={tagFilter}
+          onChange={setTagFilter}
+          defaultCollapsed={tags.length > 4}
+        />
       )}
     </div>
   );
@@ -80,29 +89,42 @@ function FilterGroup({
   options,
   value,
   onChange,
+  defaultCollapsed = false,
 }: {
   label: string;
   options: { value: string; label: string }[];
   value: string | null;
   onChange: (v: string | null) => void;
+  defaultCollapsed?: boolean;
 }) {
+  const [collapsed, setCollapsed] = useState(defaultCollapsed);
+  const Chevron = collapsed ? ChevronRight : ChevronDown;
   return (
     <div>
-      <div className="notes-filter-label">{label}</div>
-      <div className="notes-filter-wrap">
-        <SelectButton active={value === null} onClick={() => onChange(null)}>
-          All
-        </SelectButton>
-        {options.map((o) => (
-          <SelectButton
-            key={o.value}
-            active={value === o.value}
-            onClick={() => onChange(value === o.value ? null : o.value)}
-          >
-            {o.label}
+      <button
+        type="button"
+        className="notes-filter-label w-full"
+        onClick={() => setCollapsed((c) => !c)}
+      >
+        <Chevron className="h-3 w-3 shrink-0" />
+        {label}
+      </button>
+      {!collapsed && (
+        <div className="notes-filter-wrap">
+          <SelectButton active={value === null} onClick={() => onChange(null)}>
+            All
           </SelectButton>
-        ))}
-      </div>
+          {options.map((o) => (
+            <SelectButton
+              key={o.value}
+              active={value === o.value}
+              onClick={() => onChange(value === o.value ? null : o.value)}
+            >
+              {o.label}
+            </SelectButton>
+          ))}
+        </div>
+      )}
     </div>
   );
 }

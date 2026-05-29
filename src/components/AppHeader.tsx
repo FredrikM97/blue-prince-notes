@@ -166,7 +166,7 @@ export function AppHeader() {
                   searchInputRef.current?.blur();
                 }
               }}
-              placeholder="Search… (/)"
+              placeholder="Search…"
               aria-label="Search notes"
               className={`${INPUT_BASE_CLASS} h-8 w-44 transition-[padding] ${searchInput ? "pl-3" : "pl-8"}`}
             />

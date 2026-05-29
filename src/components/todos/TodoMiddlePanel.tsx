@@ -9,6 +9,7 @@ function TodoColumn({
   onToggle,
   onDelete,
   onEdit,
+  onOpenPreview,
 }: {
   label: string;
   value: string;
@@ -16,6 +17,7 @@ function TodoColumn({
   onToggle: (id: string, next: TodoStatus) => void;
   onDelete: (id: string) => void;
   onEdit: (t: Todo) => void;
+  onOpenPreview: (t: Todo) => void;
 }) {
   return (
     <div className="todos-column">
@@ -36,6 +38,7 @@ function TodoColumn({
             onToggle={(next) => onToggle(t.id, next)}
             onDelete={() => onDelete(t.id)}
             onEdit={onEdit}
+            onOpenPreview={() => onOpenPreview(t)}
           />
         ))}
       </ul>
@@ -48,11 +51,13 @@ export function TodoMiddlePanel({
   onToggle,
   onDelete,
   onEdit,
+  onOpenPreview,
 }: {
   grouped: Record<TodoStatus, Todo[]>;
   onToggle: (id: string, next: TodoStatus) => void;
   onDelete: (id: string) => void;
   onEdit: (todo: Todo) => void;
+  onOpenPreview: (todo: Todo) => void;
 }) {
   return (
     <>
@@ -66,6 +71,7 @@ export function TodoMiddlePanel({
             onToggle={onToggle}
             onDelete={onDelete}
             onEdit={onEdit}
+            onOpenPreview={onOpenPreview}
           />
         ))}
       </div>
