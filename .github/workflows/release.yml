@@ -92,17 +92,37 @@ jobs:
         if: inputs.dry_run == true
         shell: bash
         run: |
+          PREV="${{ steps.version.outputs.prev_tag || '(none — first release)' }}"
+          NEXT="${{ steps.version.outputs.next_tag }}"
+          BUMP="${{ inputs.bump }}"
+
           echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
           echo "  DRY RUN — no tag or release will be created"
           echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
           echo ""
-          echo "  Previous tag : ${{ steps.version.outputs.prev_tag || '(none — first release)' }}"
-          echo "  Next tag     : ${{ steps.version.outputs.next_tag }}"
-          echo "  Bump type    : ${{ inputs.bump }}"
+          echo "  Previous tag : $PREV"
+          echo "  Next tag     : $NEXT"
+          echo "  Bump type    : $BUMP"
           echo ""
           echo "━━━━━━ Release notes preview ━━━━━━━━━━━━━━━━━━━"
           cat /tmp/release_notes.md
           echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+
+          # Write to GitHub Actions job summary
+          {
+            echo "## 🔍 Dry Run — Release Preview"
+            echo ""
+            echo "| | |"
+            echo "|---|---|"
+            echo "| **Previous tag** | \`${PREV}\` |"
+            echo "| **Next tag** | \`${NEXT}\` |"
+            echo "| **Bump type** | \`${BUMP}\` |"
+            echo ""
+            echo "> [!NOTE]"
+            echo "> No tag or release was created. Re-run without dry run to publish."
+            echo ""
+            cat /tmp/release_notes.md
+          } >> "$GITHUB_STEP_SUMMARY"
 
       # ── Real release: tag → GitHub Release (triggers pages deploy) ────────
       - name: Create tag and GitHub release
