@@ -1,13 +1,23 @@
+/**
+ * DetailsField — labeled multiline markdown editor.
+ *
+ * No suggestion state. For token suggestions wrap it:
+ *   <SuggestionsDropdown value={v} onChange={set} ariaLabel="...">
+ *     <DetailsField value={v} onChange={set} placeholder="..." />
+ *   </SuggestionsDropdown>
+ *
+ * Props:
+ *   showOptionalHint     — appends " (optional)" to the label
+ *   showShortcutToggle   — shows a ? button that toggles a markdown shortcut reference
+ *   rows                 — initial textarea height
+ */
+
 import { memo, useState } from "react";
 import { HelpCircle } from "lucide-react";
 import { IconButton } from "@/components/common/Button";
 import { MarkdownEditor } from "@/components/common/markdown/MarkdownEditor";
 import { formatAllMarkdownTables } from "@/components/common/markdown/MarkdownTables";
 import { MarkdownShortcutHelp } from "@/components/common/markdown/MarkdownShortcutHelp";
-
-/**
- * Plain multiline markdown field. Wrap with SuggestionsDropdown for token suggestion support.
- */
 function DetailsFieldComponent({
   value,
   onChange,

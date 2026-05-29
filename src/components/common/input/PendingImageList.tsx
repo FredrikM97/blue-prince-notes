@@ -1,3 +1,8 @@
+/**
+ * PendingImageList — row of thumbnail previews for images selected but not yet saved.
+ * Each thumbnail shows a remove button. Object URLs are revoked on unmount.
+ */
+
 import { memo, useEffect, useMemo } from "react";
 import { X } from "lucide-react";
 

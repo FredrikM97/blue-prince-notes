@@ -21,7 +21,7 @@ import {
   DropdownMenuItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "@/components/common/dropdowns/DropdownMenu";
+} from "@/components/common/dropdown/DropdownMenu";
 
 export function AppHeader() {
   const buyMeACoffeeUrl = "https://buymeacoffee.com/fredrikm97";

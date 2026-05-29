@@ -3,7 +3,7 @@ import type { Todo, TodoStatus } from "@/lib/types";
 import { Chip } from "@/components/common/Chip";
 import { INPUT_BASE_CLASS } from "@/components/common/FormClasses";
 import { Trash2 } from "lucide-react";
-import { DropdownSelect } from "@/components/common/dropdowns/DropdownSelect";
+import { DropdownSelect } from "@/components/common/dropdown/DropdownSelect";
 import { todoPriorityClass } from "./Constants";
 
 const TODO_STATUS_OPTIONS = [

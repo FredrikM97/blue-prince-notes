@@ -1,9 +1,16 @@
+/**
+ * InputField — plain labeled single-line input.
+ *
+ * No state, no logic. For token suggestions wrap it:
+ *   <SuggestionsDropdown value={v} onChange={set} ariaLabel="...">
+ *     <InputField label="Title" value={v} onChange={set} />
+ *   </SuggestionsDropdown>
+ */
+
 import { useId } from "react";
 import { INPUT_BASE_CLASS } from "@/components/common/FormClasses";
 
-/**
- * Plain single-line input field. Wrap with SuggestionsDropdown for token suggestion support.
- */
+/** Plain labeled text input. Zero suggestion or key-handling logic. */
 export function InputField({
   label,
   value,

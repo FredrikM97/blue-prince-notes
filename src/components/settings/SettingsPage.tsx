@@ -12,7 +12,7 @@ import {
   ROOM_GROUPS,
   type RoomCategory,
 } from "@/data/rooms";
-import { DropdownSelect } from "@/components/common/dropdowns/DropdownSelect";
+import { DropdownSelect } from "@/components/common/dropdown/DropdownSelect";
 import { exportAll, importAll } from "@/data/io";
 import {
   pickSyncFolder,

@@ -60,7 +60,7 @@ vi.mock("@/components/common/ThemeToggle", () => ({
   ThemeToggle: () => <button type="button">theme-toggle</button>,
 }));
 
-vi.mock("@/components/common/dropdowns/DropdownMenu", () => ({
+vi.mock("@/components/common/dropdown/DropdownMenu", () => ({
   DropdownMenu: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
   DropdownMenuTrigger: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
   DropdownMenuContent: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,

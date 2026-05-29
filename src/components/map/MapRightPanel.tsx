@@ -1,9 +1,9 @@
 import { BrassButton, Button, GhostButton, IconButton } from "@/components/common/Button";
 import { useNavigate } from "@tanstack/react-router";
 import { Chip } from "@/components/common/Chip";
-import { RoomDropdown } from "@/components/common/dropdowns/RoomDropdown";
-import { DetailsField } from "@/components/common/inputs/DetailsField";
-import { SuggestionsDropdown } from "@/components/common/dropdowns/SuggestionsDropdown";
+import { RoomDropdown } from "@/components/common/dropdown/RoomDropdown";
+import { DetailsField } from "@/components/common/input/DetailsField";
+import { SuggestionsDropdown } from "@/components/common/dropdown/SuggestionsDropdown";
 import { Eraser, Trash2, X } from "lucide-react";
 import type { GridCell, Note, Todo } from "@/lib/types";
 
@@ -73,7 +73,7 @@ export function MapRightPanel({
         </div>
 
         <div>
-          <SuggestionsDropdown value={commentDraft} onChange={setCommentDraft} ariaLabel="Cell details suggestions">
+          <SuggestionsDropdown>
             <DetailsField
               value={commentDraft}
               onChange={setCommentDraft}

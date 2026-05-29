@@ -2,15 +2,15 @@ import { useEffect, useMemo, useState } from "react";
 import type { Note } from "@/lib/types";
 import { INPUT_BASE_CLASS } from "@/components/common/FormClasses";
 import { BrassButton, Button, GhostButton } from "@/components/common/Button";
-import { RoomDropdown } from "@/components/common/dropdowns/RoomDropdown";
-import { DropdownSelect } from "@/components/common/dropdowns/DropdownSelect";
+import { RoomDropdown } from "@/components/common/dropdown/RoomDropdown";
+import { DropdownSelect } from "@/components/common/dropdown/DropdownSelect";
 import { StoredImageView } from "@/components/StoredImageView";
 import { useStore } from "@/data/store";
 import { ImagePlus, X } from "lucide-react";
 import { TYPE_LABEL } from "@/lib/noteMetadata";
-import { DetailsField } from "@/components/common/inputs/DetailsField";
-import { InputField } from "@/components/common/inputs/InputField";
-import { SuggestionsDropdown } from "@/components/common/dropdowns/SuggestionsDropdown";
+import { DetailsField } from "@/components/common/input/DetailsField";
+import { InputField } from "@/components/common/input/InputField";
+import { SuggestionsDropdown } from "@/components/common/dropdown/SuggestionsDropdown";
 import { toast } from "sonner";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/common/Dialog";
 
@@ -96,12 +96,7 @@ export function NotesEditorPanel({
 
   return (
     <div className="note-editor-wrap">
-      <SuggestionsDropdown
-        value={draft.title}
-        onChange={(nextTitle) => setDraft({ ...draft, title: nextTitle })}
-        onSubmitShortcut={() => { void onSave(); }}
-        ariaLabel="Edit title suggestions"
-      >
+      <SuggestionsDropdown onSubmitShortcut={() => { void onSave(); }}>
         <InputField
           label="Title"
           value={draft.title}
@@ -110,11 +105,7 @@ export function NotesEditorPanel({
         />
       </SuggestionsDropdown>
 
-      <SuggestionsDropdown
-        value={draft.body}
-        onChange={(value) => setDraft({ ...draft, body: value })}
-        ariaLabel="Details suggestions"
-      >
+      <SuggestionsDropdown>
         <DetailsField
           value={draft.body}
           onChange={(value) => setDraft({ ...draft, body: value })}

@@ -9,7 +9,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuSubContent,
   DropdownMenuSubTrigger,
-} from "@/components/common/dropdowns/DropdownMenu";
+} from "@/components/common/dropdown/DropdownMenu";
 
 const sonnerSpy = vi.fn<(props: unknown) => ReactElement>((_props) => (
   <div data-testid="sonner" />

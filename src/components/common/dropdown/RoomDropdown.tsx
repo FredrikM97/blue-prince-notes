@@ -1,3 +1,9 @@
+/**
+ * RoomDropdown — room picker with live search and grouped sub-menus by category.
+ * Rooms are grouped under sub-menus (e.g. Ground Floor, Upper Floor) when not filtering.
+ * Typing in the search box flattens results across all groups.
+ */
+
 import { memo, useState } from "react";
 import { ChevronDown } from "lucide-react";
 import { Button } from "@/components/common/Button";
@@ -9,7 +15,7 @@ import {
   DropdownMenuSubContent,
   DropdownMenuSubTrigger,
   DropdownMenuTrigger,
-} from "@/components/common/dropdowns/DropdownMenu";
+} from "@/components/common/dropdown/DropdownMenu";
 import { getGroupedRoomCatalog, ROOM_GROUPS, type RoomCategory } from "@/data/rooms";
 
 function RoomDropdownComponent({

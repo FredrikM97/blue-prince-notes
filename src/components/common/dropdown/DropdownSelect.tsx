@@ -1,3 +1,8 @@
+/**
+ * DropdownSelect — a styled select-style button backed by a DropdownMenu.
+ * Use when you need a compact single-value picker without a native <select>.
+ */
+
 import { memo } from "react";
 import { ChevronDown } from "lucide-react";
 import { Button } from "@/components/common/Button";
@@ -6,7 +11,7 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from "@/components/common/dropdowns/DropdownMenu";
+} from "@/components/common/dropdown/DropdownMenu";
 import { cn } from "@/lib/utils";
 
 export interface DropdownSelectOption {

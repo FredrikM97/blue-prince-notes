@@ -3,17 +3,17 @@ import { useNavigate } from "@tanstack/react-router";
 import { useStore } from "@/data/store";
 import { INPUT_BASE_CLASS } from "@/components/common/FormClasses";
 import { GhostButton, BrassButton, IconButton } from "@/components/common/Button";
-import { RoomDropdown } from "@/components/common/dropdowns/RoomDropdown";
+import { RoomDropdown } from "@/components/common/dropdown/RoomDropdown";
 import { Tabs, TabsList, TabsTrigger } from "@/components/common/Tabs";
-import { DropdownSelect } from "@/components/common/dropdowns/DropdownSelect";
+import { DropdownSelect } from "@/components/common/dropdown/DropdownSelect";
 import { toast } from "sonner";
 import { ImagePlus } from "lucide-react";
 import type { NoteType, Priority } from "@/lib/types";
 import { NOTE_TYPES } from "@/lib/noteMetadata";
-import { PendingImageList } from "@/components/common/inputs/PendingImageList";
-import { DetailsField } from "@/components/common/inputs/DetailsField";
-import { InputField } from "@/components/common/inputs/InputField";
-import { SuggestionsDropdown } from "@/components/common/dropdowns/SuggestionsDropdown";
+import { PendingImageList } from "@/components/common/input/PendingImageList";
+import { DetailsField } from "@/components/common/input/DetailsField";
+import { InputField } from "@/components/common/input/InputField";
+import { SuggestionsDropdown } from "@/components/common/dropdown/SuggestionsDropdown";
 
 const NOTE_PRIORITY_OPTIONS = [
   { value: "high", label: "High" },
@@ -396,7 +396,7 @@ export function NotesCreatePanel({ defaultNoteType }: { defaultNoteType?: NoteTy
       <NotesModeTabs mode={form.mode} setMode={form.setMode} />
 
       <div className="capture-form-stack">
-        <SuggestionsDropdown value={form.title} onChange={form.setTitle} onSubmitShortcut={submit} ariaLabel="Title suggestions">
+        <SuggestionsDropdown onSubmitShortcut={submit}>
           <InputField
             label="Title"
             value={form.title}
@@ -407,7 +407,7 @@ export function NotesCreatePanel({ defaultNoteType }: { defaultNoteType?: NoteTy
           />
         </SuggestionsDropdown>
 
-        <SuggestionsDropdown value={form.body} onChange={form.setBody} ariaLabel="Details suggestions">
+        <SuggestionsDropdown>
           <DetailsField
             value={form.body}
             onChange={form.setBody}
