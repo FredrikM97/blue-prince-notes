@@ -54,12 +54,13 @@ export function useTokenSuggestionController<T extends HTMLInputElement | HTMLTe
   }
 
   const tokenAnchor = useMemo(() => {
-    const before = value.slice(0, cursorPos);
+    const anchorPos = Math.max(0, Math.min(activeToken.start, value.length));
+    const before = value.slice(0, anchorPos);
     const lines = before.split("\n");
     const line = Math.max(0, lines.length - 1);
     const col = lines[line]?.length ?? 0;
     return { line, col };
-  }, [cursorPos, value]);
+  }, [activeToken.start, value]);
 
   function onKeyDown(event: SuggestionKeydownEvent) {
     if (!isOpen) return false;
