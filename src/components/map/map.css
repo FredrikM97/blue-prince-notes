@@ -83,7 +83,7 @@
   }
 
   .map-note-item {
-    @apply rounded border border-border bg-card p-2 text-sm;
+    @apply rounded bg-card/60 p-2 text-sm;
   }
 
   .map-note-item-title {

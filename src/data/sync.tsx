@@ -75,6 +75,7 @@ export interface SyncManifest {
 }
 
 const SYNC_DIR_HANDLE_META_KEY = "sync-dir-handle";
+const SYNC_MODE_META_KEY = "sync-mode";
 const SYNC_MANIFEST_FILE_NAME = "manifest.json";
 const SYNC_IMAGES_DIR_NAME = "images";
 
@@ -83,11 +84,47 @@ export interface SyncFolderPayload {
   images: StoredImage[];
 }
 
+export type SyncMode = "auto" | "manual";
+
+export interface SyncStatus {
+  mode: SyncMode;
+  dirty: boolean;
+  lastDirtyAt: number | null;
+  lastSyncedAt: number | null;
+}
+
 // ---------------------------------------------------------------------------
 // In-memory active handle (re-hydrated from IndexedDB on app start)
 // ---------------------------------------------------------------------------
 
 let _handle: DirHandle | null = null;
+let _mode: SyncMode = "auto";
+let _dirty = false;
+let _lastDirtyAt: number | null = null;
+let _lastSyncedAt: number | null = null;
+const _statusListeners = new Set<(status: SyncStatus) => void>();
+
+function getSyncSnapshot(): SyncStatus {
+  return {
+    mode: _mode,
+    dirty: _dirty,
+    lastDirtyAt: _lastDirtyAt,
+    lastSyncedAt: _lastSyncedAt,
+  };
+}
+
+function emitSyncStatus() {
+  const snapshot = getSyncSnapshot();
+  _statusListeners.forEach((listener) => listener(snapshot));
+}
+
+function markDirty() {
+  if (!_dirty) {
+    _dirty = true;
+    _lastDirtyAt = Date.now();
+  }
+  emitSyncStatus();
+}
 
 export function getActiveSyncHandle(): DirHandle | null {
   return _handle;
@@ -95,6 +132,35 @@ export function getActiveSyncHandle(): DirHandle | null {
 
 export function getActiveSyncFolderName(): string | null {
   return _handle?.name ?? null;
+}
+
+export function getSyncStatus(): SyncStatus {
+  return getSyncSnapshot();
+}
+
+export function subscribeSyncStatus(listener: (status: SyncStatus) => void) {
+  _statusListeners.add(listener);
+  listener(getSyncSnapshot());
+  return () => {
+    _statusListeners.delete(listener);
+  };
+}
+
+export async function loadSyncMode(): Promise<SyncMode> {
+  try {
+    const stored = await getMeta<SyncMode>(SYNC_MODE_META_KEY);
+    _mode = stored === "manual" ? "manual" : "auto";
+  } catch {
+    _mode = "auto";
+  }
+  emitSyncStatus();
+  return _mode;
+}
+
+export async function setSyncMode(mode: SyncMode): Promise<void> {
+  _mode = mode;
+  await setMeta(SYNC_MODE_META_KEY, mode);
+  emitSyncStatus();
 }
 
 export async function openSyncFolderInPicker(): Promise<boolean> {
@@ -152,6 +218,9 @@ export async function pickSyncFolder(): Promise<DirHandle | null> {
 export async function disconnectSyncFolder(): Promise<void> {
   await deleteMeta(SYNC_DIR_HANDLE_META_KEY);
   _handle = null;
+  _dirty = false;
+  _lastDirtyAt = null;
+  emitSyncStatus();
 }
 
 // ---------------------------------------------------------------------------
@@ -269,17 +338,66 @@ export async function importSyncManifest(payload: SyncFolderPayload): Promise<vo
 // ---------------------------------------------------------------------------
 
 let _syncTimer: ReturnType<typeof setTimeout> | null = null;
+let _syncIdleHandle: number | null = null;
 
-/** Schedule a sync write 800 ms after the last call. No-op when no folder is
+function clearPendingSyncCallbacks() {
+  if (_syncTimer) {
+    clearTimeout(_syncTimer);
+    _syncTimer = null;
+  }
+
+  if (_syncIdleHandle !== null && typeof window !== "undefined" && "cancelIdleCallback" in window) {
+    window.cancelIdleCallback(_syncIdleHandle);
+    _syncIdleHandle = null;
+  }
+}
+
+async function flushSyncWrite(handle: DirHandle) {
+  try {
+    await writeToSyncFolder(handle);
+    _dirty = false;
+    _lastDirtyAt = null;
+    _lastSyncedAt = Date.now();
+    emitSyncStatus();
+  } catch {
+    // Permission may have been revoked — fail silently.
+  }
+}
+
+export async function saveSyncNow(): Promise<boolean> {
+  if (!_handle) return false;
+  clearPendingSyncCallbacks();
+  await flushSyncWrite(_handle);
+  return true;
+}
+
+/** Schedule a sync write after the last mutation burst. No-op when no folder is
  *  connected. */
 export function scheduleSyncWrite(): void {
   if (!_handle) return;
-  if (_syncTimer) clearTimeout(_syncTimer);
+  markDirty();
+
+  if (_mode === "manual") {
+    return;
+  }
+
+  clearPendingSyncCallbacks();
   const handle = _handle;
+
   _syncTimer = setTimeout(() => {
     _syncTimer = null;
-    writeToSyncFolder(handle).catch(() => {
-      // Permission may have been revoked — fail silently.
-    });
-  }, 800);
+
+    if (typeof window !== "undefined" && "requestIdleCallback" in window) {
+      _syncIdleHandle = window.requestIdleCallback(
+        () => {
+          _syncIdleHandle = null;
+          void flushSyncWrite(handle);
+        },
+        { timeout: 2000 },
+      );
+      return;
+    }
+
+    void flushSyncWrite(handle);
+  }, 1400);
 }

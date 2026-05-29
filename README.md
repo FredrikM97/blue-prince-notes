@@ -22,3 +22,11 @@ A client-first notes and todo tracker for Blue Prince. This project is run on [g
 
 ## Easier tracking of todo list and what is finished and what to begin with!
 <img width="1259" height="341" alt="image" src="https://github.com/user-attachments/assets/7d854301-1963-446d-a3de-3dea1822b060" />
+
+# Routing Architecture (TanStack Start)
+* `src/start.tsx`: framework runtime entrypoint and server middleware setup.
+* `src/router.tsx`: root shell/layout, route components, and router creation in one place.
+* `src/routes/__root.tsx`: minimal file-route root anchor used by TanStack route generation.
+* `src/routeTree.gen.ts`: auto-generated route/type registry; do not edit manually.
+* `src/routeTree.gen.ts` should be the only generated route tree file checked in.
+* If route files are added/renamed, regenerate the route tree via your normal dev/build flow.

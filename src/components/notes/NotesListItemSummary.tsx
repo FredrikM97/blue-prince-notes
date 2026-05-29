@@ -1,7 +1,7 @@
 import { memo } from "react";
 import type { Note } from "@/lib/types";
 import { Lightbulb } from "lucide-react";
-import { TYPE_ICON, TYPE_LABEL, relTime } from "./constants";
+import { TYPE_ICON, TYPE_LABEL, relTime } from "@/lib/noteMetadata";
 
 const TYPE_ICON_CLASS: Record<Note["type"], string> = {
   clue: "note-summary-icon-clue",

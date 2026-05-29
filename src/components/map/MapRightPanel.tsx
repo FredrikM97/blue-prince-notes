@@ -1,8 +1,8 @@
-import { BrassButton, Button, GhostButton, IconButton } from "@/components/common/button";
+import { BrassButton, Button, GhostButton, IconButton } from "@/components/common/Button";
 import { useNavigate } from "@tanstack/react-router";
 import { Chip } from "@/components/common/Chip";
-import { MarkdownEditor } from "@/components/common/MarkdownEditor";
-import { RoomDropdown } from "@/components/common/RoomDropdown";
+import { RoomDropdown } from "@/components/common/dropdowns/RoomDropdown";
+import { DetailsField } from "@/components/common/inputs/DetailsField";
 import { Eraser, Trash2, X } from "lucide-react";
 import type { GridCell, Note, Todo } from "@/lib/types";
 
@@ -72,13 +72,15 @@ export function MapRightPanel({
         </div>
 
         <div>
-          <label className="map-field-label">Cell details</label>
-          <MarkdownEditor
+          <DetailsField
             value={commentDraft}
             onChange={setCommentDraft}
             onBlur={() => upsertCell({ row, col, comment: commentDraft })}
-            placeholder="Quick note about this cell - door direction, gem cost, danger..."
+            label="Cell details"
+            showOptionalHint={false}
             rows={6}
+            showShortcutToggle={false}
+            placeholder="Quick note about this cell - door direction, gem cost, danger..."
           />
           <p className="map-comment-help">
             Markdown supported: headings, lists, checkboxes, bold, italic, code.

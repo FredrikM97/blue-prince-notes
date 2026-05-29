@@ -31,7 +31,9 @@ export function PageLayout({
     if (event.deltaY === 0) return;
     const middleEl = middleRef.current;
     if (!middleEl) return;
-    event.preventDefault();
+    if (event.cancelable) {
+      event.preventDefault();
+    }
     middleEl.scrollTop += event.deltaY;
   }
 

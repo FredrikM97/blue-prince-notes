@@ -1,12 +1,10 @@
 import { useMemo, useRef, useState, type MouseEvent, type WheelEvent } from "react";
-import { Button } from "@/components/common/button";
-import { Chip } from "@/components/common/Chip";
+import { Button } from "@/components/common/Button";
 import { EmptyState } from "@/components/common/EmptyState";
 import { PageLayout } from "@/components/common/PageLayout";
-import { MarkdownPreview } from "@/components/common/MarkdownPreview";
-import { AttachedImagesGallery } from "@/components/common/AttachedImagesGallery";
 import { BookOpen, Eye, Key, Lightbulb, ListTodo, Sparkles } from "lucide-react";
-import { useStore } from "@/data/store";
+import { GraphRightPanel } from "@/components/graph/GraphRightPanel";
+import { useGraphStoreData } from "@/hooks/useGraphStoreData";
 import type { Note, Todo } from "@/lib/types";
 
 const GRAPH_VIEWBOX = "0 0 1000 680";
@@ -81,8 +79,7 @@ const TYPE_ICON: Record<
 };
 
 export function GraphPage() {
-  const notes = useStore((s) => s.notes);
-  const todos = useStore((s) => s.todos);
+  const { notes, todos, dataVersion } = useGraphStoreData();
   const [selectedNoteId, setSelectedNoteId] = useState<string | null>(null);
   const [zoom, setZoom] = useState(1);
   const [pan, setPan] = useState({ x: 0, y: 0 });
@@ -182,7 +179,7 @@ export function GraphPage() {
         <GraphRightPanel
           noteCount={nodes.length}
           edgeCount={edges.length}
-          selectedNode={selectedNode}
+          selectedNote={selectedNode?.note ?? null}
           incomingCount={incomingCount}
           outgoingCount={outgoingCount}
         />
@@ -201,6 +198,7 @@ export function GraphPage() {
               </Button>
             </div>
             <svg
+              key={`graph-${dataVersion}`}
               viewBox={GRAPH_VIEWBOX}
               className={`h-[68vh] min-h-[420px] w-full ${isDragging ? "cursor-grabbing" : "cursor-grab"}`}
               onMouseDown={startDrag}
@@ -242,112 +240,6 @@ export function GraphPage() {
     >
       {/* middle content is provided via the `middle` prop */}
     </PageLayout>
-  );
-}
-
-function GraphRightPanel({
-  noteCount,
-  edgeCount,
-  selectedNode,
-  incomingCount,
-  outgoingCount,
-}: {
-  noteCount: number;
-  edgeCount: number;
-  selectedNode: GraphNode | null;
-  incomingCount: number;
-  outgoingCount: number;
-}) {
-  const summary = (
-    <div className="space-y-3 rounded-md border border-border/70 bg-card/50 p-3">
-      <div>
-        <h2 className="font-serif text-lg">Connections</h2>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Arrows reflect explicit references in entry text: @room and #tag.
-        </p>
-      </div>
-      <div className="flex items-center gap-3 text-sm text-muted-foreground">
-        <span>{noteCount} entries</span>
-        <span>{edgeCount} links</span>
-      </div>
-    </div>
-  );
-
-  if (!selectedNode) {
-    return (
-      <div className="page-layout-panel space-y-3">
-        {summary}
-        <p className="text-sm text-muted-foreground">Select a note node to inspect details.</p>
-      </div>
-    );
-  }
-
-  return (
-    <div className="page-layout-panel space-y-4">
-      {summary}
-
-      <div>
-        <h3 className="font-serif text-lg">{selectedNode.note.title}</h3>
-      </div>
-
-      <div className="space-y-2 rounded-md border border-border/70 bg-card/50 p-3">
-        <div className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
-          Info
-        </div>
-        <div className="space-y-2 text-base">
-          <div className="flex items-center gap-2">
-            <span className="w-18 text-sm text-muted-foreground">Type</span>
-            <Chip>{selectedNode.note.type}</Chip>
-          </div>
-
-          {selectedNode.note.room && (
-            <div className="flex items-center gap-2">
-              <span className="w-18 text-sm text-muted-foreground">Room</span>
-              <Chip>@{selectedNode.note.room}</Chip>
-            </div>
-          )}
-
-          {selectedNode.note.tags.length > 0 && (
-            <div className="flex items-start gap-2">
-              <span className="w-18 pt-1 text-sm text-muted-foreground">Tags</span>
-              <div className="flex flex-wrap gap-1.5">
-                {selectedNode.note.tags.map((tag) => (
-                  <Chip key={tag}>#{tag}</Chip>
-                ))}
-              </div>
-            </div>
-          )}
-
-          <div className="flex items-center gap-3 text-sm text-muted-foreground">
-            <span>Outgoing: {outgoingCount}</span>
-            <span>Incoming: {incomingCount}</span>
-          </div>
-        </div>
-      </div>
-
-      <div className="h-px bg-border/80" />
-
-      <div className="space-y-1">
-        <div className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
-          Details
-        </div>
-        {selectedNode.note.body.trim() ? (
-          <MarkdownPreview>{selectedNode.note.body}</MarkdownPreview>
-        ) : (
-          <p className="text-xs text-muted-foreground">No details written for this note yet.</p>
-        )}
-
-        <AttachedImagesGallery
-          imageIds={selectedNode.note.imageIds}
-          wrapperClassName="mt-3"
-          gridClassName="grid grid-cols-2 gap-2"
-          itemButtonClassName="rounded p-1 transition-colors hover:bg-muted/40"
-          imageClassName="h-20 w-full rounded object-cover"
-          labelClassName="mt-1 truncate text-[11px] text-muted-foreground"
-          dialogPreviewClassName="mx-auto max-h-[70vh] w-full overflow-hidden rounded-md bg-muted/20 p-2"
-        />
-      </div>
-    </div>
   );
 }
 

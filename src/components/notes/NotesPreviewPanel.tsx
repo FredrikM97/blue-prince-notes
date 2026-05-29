@@ -1,5 +1,5 @@
 import type { Note } from "@/lib/types";
-import { MarkdownPreview } from "@/components/common/MarkdownPreview";
+import { MarkdownPreview } from "@/components/common/markdown/MarkdownPreview";
 import { AttachedImagesGallery } from "@/components/common/AttachedImagesGallery";
 
 export function NotesPreviewPanel({ note }: { note: Note }) {

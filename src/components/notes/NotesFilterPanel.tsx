@@ -1,5 +1,5 @@
 import type { NoteType } from "@/lib/types";
-import { SelectButton } from "@/components/common/button";
+import { SelectButton } from "@/components/common/Button";
 
 const TYPE_OPTIONS: { value: NoteType; label: string }[] = [
   { value: "observation", label: "Observations" },
@@ -29,13 +29,13 @@ export function NotesFilterPanel({
 }: {
   filterType?: NoteType;
   typeFilter: NoteType | null;
-  setTypeFilter: React.Dispatch<React.SetStateAction<NoteType | null>>;
+  setTypeFilter: (value: NoteType | null) => void;
   statusFilter: "open" | "solved" | null;
-  setStatusFilter: React.Dispatch<React.SetStateAction<"open" | "solved" | null>>;
+  setStatusFilter: (value: "open" | "solved" | null) => void;
   roomFilter: string | null;
-  setRoomFilter: React.Dispatch<React.SetStateAction<string | null>>;
+  setRoomFilter: (value: string | null) => void;
   tagFilter: string | null;
-  setTagFilter: React.Dispatch<React.SetStateAction<string | null>>;
+  setTagFilter: (value: string | null) => void;
   rooms: string[];
   tags: string[];
 }) {
@@ -69,12 +69,7 @@ export function NotesFilterPanel({
         />
       )}
       {tags.length > 0 && (
-        <FilterGroup
-          label="Tag"
-          options={tagOptions}
-          value={tagFilter}
-          onChange={setTagFilter}
-        />
+        <FilterGroup label="Tag" options={tagOptions} value={tagFilter} onChange={setTagFilter} />
       )}
     </div>
   );

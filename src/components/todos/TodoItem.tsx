@@ -1,9 +1,9 @@
 import { useState } from "react";
 import type { Todo, TodoStatus } from "@/lib/types";
 import { Chip } from "@/components/common/Chip";
-import { INPUT_BASE_CLASS } from "@/components/common/formClasses";
+import { INPUT_BASE_CLASS } from "@/components/common/FormClasses";
 import { Trash2 } from "lucide-react";
-import { DropdownSelect } from "@/components/common/DropdownSelect";
+import { DropdownSelect } from "@/components/common/dropdowns/DropdownSelect";
 import { todoPriorityClass } from "./constants";
 
 const TODO_STATUS_OPTIONS = [

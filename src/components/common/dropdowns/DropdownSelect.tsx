@@ -1,12 +1,12 @@
 import { memo } from "react";
 import { ChevronDown } from "lucide-react";
-import { Button } from "@/components/common/button";
+import { Button } from "@/components/common/Button";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from "@/components/common/DropdownMenu";
+} from "@/components/common/dropdowns/DropdownMenu";
 import { cn } from "@/lib/utils";
 
 export interface DropdownSelectOption {

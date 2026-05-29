@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { useStore } from "@/data/store";
-import { groupTodosByStatus } from "@/components/todos/constants";
+import { groupTodosByStatus } from "@/components/todos/Constants";
 import { PageLayout } from "@/components/common/PageLayout";
 import { TodoLeftPanel } from "./TodoLeftPanel";
 import { TodoMiddlePanel } from "./TodoMiddlePanel";

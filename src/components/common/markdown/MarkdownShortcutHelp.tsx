@@ -1,4 +1,7 @@
-export function NotesShortcutHelp() {
+/**
+ * Shared helper text for markdown/token shortcuts used by DetailsField.
+ */
+export function MarkdownShortcutHelp() {
   return (
     <div className="rounded-md border border-border bg-card/60 p-2 text-[11px] text-muted-foreground">
       You can type commands directly in the title:

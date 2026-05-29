@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import type { ReactNode } from "react";
 import { FolderOpen, FolderSync, Unlink } from "lucide-react";
 import { useStore } from "@/data/store";
-import { Button, BrassButton } from "@/components/common/button";
+import { Button, BrassButton } from "@/components/common/Button";
 import { KeyboardKey } from "@/components/common/KeyboardKey";
 import { PageLayout } from "@/components/common/PageLayout";
 import {
@@ -12,7 +12,7 @@ import {
   ROOM_GROUPS,
   type RoomCategory,
 } from "@/data/rooms";
-import { DropdownSelect } from "@/components/common/DropdownSelect";
+import { DropdownSelect } from "@/components/common/dropdowns/DropdownSelect";
 import { exportAll, importAll } from "@/data/io";
 import {
   pickSyncFolder,
@@ -20,6 +20,11 @@ import {
   readFromSyncFolder,
   importSyncManifest,
   writeToSyncFolder,
+  saveSyncNow,
+  loadSyncMode,
+  setSyncMode,
+  subscribeSyncStatus,
+  type SyncMode,
   getActiveSyncHandle,
   getActiveSyncFolderName,
   openSyncFolderInPicker,
@@ -387,8 +392,57 @@ function SyncFolderSection() {
   const setSyncFolderName = useStore((s) => s.setSyncFolderName);
   const load = useStore((s) => s.load);
   const [busy, setBusy] = useState(false);
+  const [syncMode, setSyncModeState] = useState<SyncMode>("auto");
+  const [dirty, setDirty] = useState(false);
+  const [lastDirtyAt, setLastDirtyAt] = useState<number | null>(null);
+  const [lastSyncedAt, setLastSyncedAt] = useState<number | null>(null);
+  const [reminderEnabled, setReminderEnabled] = useState(true);
+  const lastReminderRef = useRef<number>(0);
 
   const isSupported = typeof window !== "undefined" && "showDirectoryPicker" in window;
+
+  useEffect(() => {
+    void loadSyncMode().then(setSyncModeState);
+    const unsubscribe = subscribeSyncStatus((status) => {
+      setSyncModeState(status.mode);
+      setDirty(status.dirty);
+      setLastDirtyAt(status.lastDirtyAt);
+      setLastSyncedAt(status.lastSyncedAt);
+    });
+    return unsubscribe;
+  }, []);
+
+  useEffect(() => {
+    if (syncMode !== "manual" || !dirty || !lastDirtyAt || !reminderEnabled) {
+      return;
+    }
+
+    const interval = window.setInterval(() => {
+      const now = Date.now();
+      const dirtyFor = now - lastDirtyAt;
+      const sinceLastReminder = now - lastReminderRef.current;
+      if (dirtyFor < 5 * 60_000) return;
+      if (sinceLastReminder < 5 * 60_000) return;
+      lastReminderRef.current = now;
+      toast("Unsynced changes", {
+        description: "Manual sync is enabled. Press 'Save to disk now' to persist recent changes.",
+      });
+    }, 60_000);
+
+    return () => window.clearInterval(interval);
+  }, [syncMode, dirty, lastDirtyAt, reminderEnabled]);
+
+  async function handleModeChange(nextMode: SyncMode) {
+    setBusy(true);
+    try {
+      await setSyncMode(nextMode);
+      toast.success(nextMode === "manual" ? "Manual sync enabled" : "Auto sync enabled");
+    } catch {
+      toast.error("Could not update sync mode");
+    } finally {
+      setBusy(false);
+    }
+  }
 
   async function handleConnect() {
     setBusy(true);
@@ -428,12 +482,11 @@ function SyncFolderSection() {
   }
 
   async function handleSyncNow() {
-    const handle = getActiveSyncHandle();
-    if (!handle) return;
+    if (!getActiveSyncHandle()) return;
     setBusy(true);
     try {
-      await writeToSyncFolder(handle);
-      toast.success("Synced to folder");
+      await saveSyncNow();
+      toast.success("Saved to disk");
     } catch {
       toast.error("Sync failed — folder permission may have been revoked");
     } finally {
@@ -465,16 +518,54 @@ function SyncFolderSection() {
         <div className="flex items-center gap-2 rounded-lg border border-border bg-card/40 px-3 py-2.5 text-sm">
           <FolderSync className="h-4 w-4 shrink-0 text-green-500" />
           <span className="min-w-0 flex-1 truncate font-medium">{syncFolderName}</span>
-          <span className="shrink-0 text-xs text-muted-foreground">auto-syncing</span>
+          <span className="shrink-0 text-xs text-muted-foreground">
+            {syncMode === "manual" ? "manual sync" : "auto-syncing"}
+          </span>
         </div>
+        <label className="flex items-center gap-2 text-sm">
+          <input
+            type="checkbox"
+            checked={syncMode === "manual"}
+            onChange={(e) => void handleModeChange(e.target.checked ? "manual" : "auto")}
+            disabled={busy}
+          />
+          Manual sync mode
+        </label>
+        {syncMode === "manual" && (
+          <label className="flex items-center gap-2 text-xs text-muted-foreground">
+            <input
+              type="checkbox"
+              checked={reminderEnabled}
+              onChange={(e) => setReminderEnabled(e.target.checked)}
+            />
+            Remind every 5 minutes when unsynced for a while
+          </label>
+        )}
+        {dirty && (
+          <p className="text-xs font-medium text-amber-600 dark:text-amber-400">Unsynced changes</p>
+        )}
         <p className="text-xs text-muted-foreground">
           Sync writes manifest.json plus image files in images/. Place this folder inside Dropbox,
           OneDrive, or iCloud Drive to sync across devices.
         </p>
+        <p className="text-xs text-muted-foreground">
+          {lastSyncedAt
+            ? `Last saved: ${new Date(lastSyncedAt).toLocaleString()}`
+            : "Last saved: never"}
+          {dirty && lastDirtyAt
+            ? ` • Unsynced since ${new Date(lastDirtyAt).toLocaleTimeString()}`
+            : ""}
+        </p>
         <div className="flex flex-wrap gap-2">
-          <Button variant="outline" size="sm" onClick={handleSyncNow} disabled={busy}>
-            Sync now
-          </Button>
+          {syncMode === "manual" ? (
+            <BrassButton size="sm" onClick={handleSyncNow} disabled={busy || !dirty}>
+              Save to disk now
+            </BrassButton>
+          ) : (
+            <Button variant="outline" size="sm" onClick={handleSyncNow} disabled={busy}>
+              Sync now
+            </Button>
+          )}
           <Button variant="outline" size="sm" onClick={handleOpenSyncFolder} disabled={busy}>
             Open folder
           </Button>
@@ -498,6 +589,15 @@ function SyncFolderSection() {
         Connect a local folder and the app will keep <code>manifest.json</code> and an{" "}
         <code>images/</code> folder up to date after every change.
       </p>
+      <label className="flex items-center gap-2 text-sm">
+        <input
+          type="checkbox"
+          checked={syncMode === "manual"}
+          onChange={(e) => void handleModeChange(e.target.checked ? "manual" : "auto")}
+          disabled={busy}
+        />
+        Use manual sync mode when connected
+      </label>
       <BrassButton onClick={handleConnect} disabled={busy}>
         <FolderOpen className="mr-2 h-4 w-4" />
         Connect folder…

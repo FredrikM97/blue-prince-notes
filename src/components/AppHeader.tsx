@@ -11,8 +11,8 @@ import {
 import { useDeferredValue, useEffect, useMemo, useRef, useState } from "react";
 import { useStore } from "@/data/store";
 import { exportAll, importAll } from "@/data/io";
-import { INPUT_BASE_CLASS } from "@/components/common/formClasses";
-import { Button, IconButton } from "@/components/common/button";
+import { INPUT_BASE_CLASS } from "@/components/common/FormClasses";
+import { Button, IconButton } from "@/components/common/Button";
 import { ThemeToggle } from "@/components/common/ThemeToggle";
 import { toast } from "sonner";
 import {
@@ -21,7 +21,7 @@ import {
   DropdownMenuItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "@/components/common/DropdownMenu";
+} from "@/components/common/dropdowns/DropdownMenu";
 
 export function AppHeader() {
   const buyMeACoffeeUrl = "https://buymeacoffee.com/fredrikm97";

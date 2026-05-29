@@ -7,7 +7,6 @@
 @import "./components/app-header.css";
 @import "./components/common/layout.css";
 @import "./components/notes/notes.css";
-@import "./components/notes/note-row.css";
 @import "./components/images/images.css";
 @import "./components/map/map.css";
 @import "./components/todos/todos.css";

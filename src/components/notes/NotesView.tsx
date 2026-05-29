@@ -1,7 +1,7 @@
 import { memo } from "react";
 import type { Note } from "@/lib/types";
-import { BrassButton } from "@/components/common/button";
-import { IconButton } from "@/components/common/button";
+import { BrassButton } from "@/components/common/Button";
+import { IconButton } from "@/components/common/Button";
 import { NotesListItemSummary } from "./NotesListItemSummary";
 import { ChevronRight, Pencil, Trash2 } from "lucide-react";
 

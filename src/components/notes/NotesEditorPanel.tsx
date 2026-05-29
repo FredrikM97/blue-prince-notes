@@ -1,16 +1,17 @@
 import { useEffect, useMemo, useState } from "react";
 import type { Note } from "@/lib/types";
-import { INPUT_BASE_CLASS } from "@/components/common/formClasses";
-import { BrassButton, Button, GhostButton } from "@/components/common/button";
-import { RoomDropdown } from "@/components/common/RoomDropdown";
-import { DropdownSelect } from "@/components/common/DropdownSelect";
+import { INPUT_BASE_CLASS } from "@/components/common/FormClasses";
+import { BrassButton, Button, GhostButton } from "@/components/common/Button";
+import { RoomDropdown } from "@/components/common/dropdowns/RoomDropdown";
+import { DropdownSelect } from "@/components/common/dropdowns/DropdownSelect";
 import { StoredImageView } from "@/components/StoredImageView";
 import { useStore } from "@/data/store";
 import { ImagePlus, X } from "lucide-react";
-import { TYPE_LABEL } from "./constants";
-import { NoteDetailsField } from "@/components/notes/NoteDetailsField";
+import { TYPE_LABEL } from "@/lib/noteMetadata";
+import { DetailsField } from "@/components/common/inputs/DetailsField";
+import { TokenInputField } from "@/components/common/inputs/TokenInputField";
 import { toast } from "sonner";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/common/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/common/Dialog";
 
 type ImageSort = "newest" | "oldest" | "name-asc" | "name-desc";
 
@@ -94,23 +95,18 @@ export function NotesEditorPanel({
 
   return (
     <div className="note-editor-wrap">
-      <div>
-        <label className="capture-label">Title</label>
-        <input
-          value={draft.title}
-          onChange={(e) => setDraft({ ...draft, title: e.target.value })}
-          onKeyDown={(e) => {
-            if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
-              e.preventDefault();
-              onSave();
-            }
-          }}
-          placeholder="Title"
-          className={INPUT_BASE_CLASS}
-        />
-      </div>
+      <TokenInputField
+        label="Title"
+        value={draft.title}
+        onChange={(nextTitle) => setDraft({ ...draft, title: nextTitle })}
+        placeholder="Title"
+        onSubmitShortcut={() => {
+          void onSave();
+        }}
+        ariaLabel="Edit title suggestions"
+      />
 
-      <NoteDetailsField
+      <DetailsField
         value={draft.body}
         onChange={(value) => setDraft({ ...draft, body: value })}
         placeholder="Details (markdown supported)…"

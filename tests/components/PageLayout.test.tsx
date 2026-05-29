@@ -43,7 +43,11 @@ describe("PageLayout", () => {
 
   it("does not move middle scroll when wheel delta is zero", () => {
     const { container } = render(
-      <PageLayout prioritizeMiddleScroll leftSidebar={<div>left</div>} middle={<div>middle</div>} />,
+      <PageLayout
+        prioritizeMiddleScroll
+        leftSidebar={<div>left</div>}
+        middle={<div>middle</div>}
+      />,
     );
 
     const middle = container.querySelector("main") as HTMLElement;

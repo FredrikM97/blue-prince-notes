@@ -33,12 +33,7 @@ describe("buildUniqueFileName", () => {
   });
 
   it("keeps names without extension and appends duplicate suffix", () => {
-    const fileName = buildUniqueFileName(
-      ["evidence", "evidence (2)"],
-      "evidence",
-      "image",
-      "png",
-    );
+    const fileName = buildUniqueFileName(["evidence", "evidence (2)"], "evidence", "image", "png");
     expect(fileName).toBe("evidence (3)");
   });
 });

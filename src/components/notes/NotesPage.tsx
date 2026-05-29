@@ -1,20 +1,21 @@
-import { useCallback, useDeferredValue, useMemo, useState } from "react";
+import { useCallback, useDeferredValue, useMemo } from "react";
 import { useStore } from "@/data/store";
 import type { Note, NoteType, Todo } from "@/lib/types";
 import { PageLayout } from "@/components/common/PageLayout";
-import { Button, GhostButton } from "@/components/common/button";
+import { Button, GhostButton } from "@/components/common/Button";
 import {
   Dialog,
   DialogContent,
   DialogDescription,
   DialogHeader,
   DialogTitle,
-} from "@/components/common/dialog";
+} from "@/components/common/Dialog";
 import { NotesCreatePanel } from "./NotesCreatePanel";
 import { NotesEditorPanel } from "./NotesEditorPanel";
 import { NotesFilterPanel } from "./NotesFilterPanel";
 import { NotesPreviewPanel } from "./NotesPreviewPanel";
 import { NotesView } from "./NotesView";
+import { useNotesPageState } from "@/hooks/useNotesPageState";
 
 export function NotesPage({
   filterType,
@@ -35,16 +36,12 @@ export function NotesPage({
   const removeNote = useStore((s) => s.removeNote);
   const removeTodo = useStore((s) => s.removeTodo);
   const deferredSearch = useDeferredValue(search);
-  const [typeFilter, setTypeFilter] = useState<NoteType | null>(null);
-  const [roomFilter, setRoomFilter] = useState<string | null>(null);
-  const [tagFilter, setTagFilter] = useState<string | null>(null);
-  const [statusFilter, setStatusFilter] = useState<"open" | "solved" | null>(null);
-  const [activeNoteId, setActiveNoteId] = useState<string | null>(null);
-  const [panelMode, setPanelMode] = useState<"edit" | "preview">("edit");
-  const [draft, setDraft] = useState<Note | null>(null);
-  const [pendingDelete, setPendingDelete] = useState<Note | null>(null);
+  const { state: uiState, actions: uiActions } = useNotesPageState();
 
-  const effectiveType = filterType ?? typeFilter;
+  const effectiveType = filterType ?? uiState.typeFilter;
+  const roomFilter = uiState.roomFilter;
+  const tagFilter = uiState.tagFilter;
+  const statusFilter = uiState.statusFilter;
 
   const todoByVirtualId = useMemo(() => {
     const index = new Map<string, Todo>();
@@ -100,62 +97,54 @@ export function NotesPage({
   }, [noteListItems, effectiveType, roomFilter, tagFilter, statusFilter, deferredSearch]);
 
   const activeNote = useMemo(
-    () => notes.find((n) => n.id === activeNoteId) ?? null,
-    [notes, activeNoteId],
+    () => notes.find((n) => n.id === uiState.activeNoteId) ?? null,
+    [notes, uiState.activeNoteId],
   );
 
   const currentDraft = useMemo(() => {
     if (!activeNote) return null;
-    if (draft && draft.id === activeNote.id) return draft;
+    if (uiState.draft && uiState.draft.id === activeNote.id) return uiState.draft;
     return activeNote;
-  }, [activeNote, draft]);
+  }, [activeNote, uiState.draft]);
 
   const setEditorDraft: React.Dispatch<React.SetStateAction<Note>> = (next) => {
-    setDraft((prev) => {
-      const base = prev ?? activeNote;
-      if (!base) return prev;
-      return typeof next === "function" ? next(base) : next;
-    });
+    const base = uiState.draft ?? activeNote;
+    if (!base) return;
+    const resolved = typeof next === "function" ? next(base) : next;
+    uiActions.setDraft(resolved);
   };
 
   const openCaptureForNotes = useCallback(() => {
-    setActiveNoteId(null);
-    setDraft(null);
+    uiActions.clearSelection();
     openCapture({ kind: "note", noteType: filterType });
-  }, [openCapture, filterType]);
+  }, [openCapture, filterType, uiActions]);
 
   const openEditFromList = useCallback(
     (note: Note) => {
       const todo = todoByVirtualId.get(note.id);
       if (todo) {
-        setActiveNoteId(null);
-        setDraft(null);
+        uiActions.clearSelection();
         openCapture({ todo });
         return;
       }
       closeCapture();
-      setPanelMode("edit");
-      setActiveNoteId(note.id);
-      setDraft(note);
+      uiActions.openEdit(note);
     },
-    [todoByVirtualId, openCapture, closeCapture],
+    [todoByVirtualId, openCapture, closeCapture, uiActions],
   );
 
   const openPreviewFromList = useCallback(
     (note: Note) => {
       const todo = todoByVirtualId.get(note.id);
       if (todo) {
-        setActiveNoteId(null);
-        setDraft(null);
+        uiActions.clearSelection();
         openCapture({ todo });
         return;
       }
       closeCapture();
-      setPanelMode("preview");
-      setActiveNoteId(note.id);
-      setDraft(note);
+      uiActions.openPreview(note);
     },
-    [todoByVirtualId, openCapture, closeCapture],
+    [todoByVirtualId, openCapture, closeCapture, uiActions],
   );
 
   const deleteFromList = useCallback(
@@ -165,9 +154,9 @@ export function NotesPage({
         void removeTodo(todo.id);
         return;
       }
-      setPendingDelete(note);
+      uiActions.setPendingDelete(note);
     },
-    [todoByVirtualId, removeTodo],
+    [todoByVirtualId, removeTodo, uiActions],
   );
 
   return (
@@ -180,14 +169,14 @@ export function NotesPage({
             title={title}
             total={filtered.length}
             filterType={filterType}
-            typeFilter={typeFilter}
-            setTypeFilter={setTypeFilter}
-            statusFilter={statusFilter}
-            setStatusFilter={setStatusFilter}
-            roomFilter={roomFilter}
-            setRoomFilter={setRoomFilter}
-            tagFilter={tagFilter}
-            setTagFilter={setTagFilter}
+            typeFilter={uiState.typeFilter}
+            setTypeFilter={uiActions.setTypeFilter}
+            statusFilter={uiState.statusFilter}
+            setStatusFilter={uiActions.setStatusFilter}
+            roomFilter={uiState.roomFilter}
+            setRoomFilter={uiActions.setRoomFilter}
+            tagFilter={uiState.tagFilter}
+            setTagFilter={uiActions.setTagFilter}
             rooms={rooms}
             tags={tags}
           />
@@ -200,16 +189,15 @@ export function NotesPage({
               <NotesRightPanel
                 activeNote={activeNote}
                 draft={currentDraft}
-                panelMode={panelMode}
+                panelMode={uiState.panelMode}
                 setDraft={setEditorDraft}
                 onSave={async () => {
                   if (!currentDraft) return;
                   await saveNote(currentDraft);
-                  setPanelMode("preview");
+                  uiActions.openPreview(currentDraft);
                 }}
                 onClose={() => {
-                  setDraft(null);
-                  setActiveNoteId(null);
+                  uiActions.clearSelection();
                   closeCapture();
                 }}
               />
@@ -230,25 +218,29 @@ export function NotesPage({
         {/* middle content is provided via the `middle` prop */}
       </PageLayout>
 
-      <Dialog open={!!pendingDelete} onOpenChange={(open) => !open && setPendingDelete(null)}>
+      <Dialog
+        open={!!uiState.pendingDelete}
+        onOpenChange={(open) => !open && uiActions.setPendingDelete(null)}
+      >
         <DialogContent className="max-w-md">
           <DialogHeader>
             <DialogTitle className="font-serif">Delete note</DialogTitle>
             <DialogDescription>
-              {pendingDelete
-                ? `Delete "${pendingDelete.title}"? This cannot be undone.`
+              {uiState.pendingDelete
+                ? `Delete "${uiState.pendingDelete.title}"? This cannot be undone.`
                 : "Delete this note?"}
             </DialogDescription>
           </DialogHeader>
           <div className="flex justify-end gap-2">
-            <GhostButton onClick={() => setPendingDelete(null)}>Cancel</GhostButton>
+            <GhostButton onClick={() => uiActions.setPendingDelete(null)}>Cancel</GhostButton>
             <Button
               variant="destructive"
               onClick={async () => {
+                const pendingDelete = uiState.pendingDelete;
                 if (!pendingDelete) return;
                 await removeNote(pendingDelete.id);
-                if (activeNoteId === pendingDelete.id) setActiveNoteId(null);
-                setPendingDelete(null);
+                uiActions.clearDeletedIfActive(pendingDelete.id);
+                uiActions.setPendingDelete(null);
               }}
             >
               Delete
@@ -279,13 +271,13 @@ function NotesLeftPanel({
   total: number;
   filterType?: NoteType;
   typeFilter: NoteType | null;
-  setTypeFilter: React.Dispatch<React.SetStateAction<NoteType | null>>;
+  setTypeFilter: (value: NoteType | null) => void;
   statusFilter: "open" | "solved" | null;
-  setStatusFilter: React.Dispatch<React.SetStateAction<"open" | "solved" | null>>;
+  setStatusFilter: (value: "open" | "solved" | null) => void;
   roomFilter: string | null;
-  setRoomFilter: React.Dispatch<React.SetStateAction<string | null>>;
+  setRoomFilter: (value: string | null) => void;
   tagFilter: string | null;
-  setTagFilter: React.Dispatch<React.SetStateAction<string | null>>;
+  setTagFilter: (value: string | null) => void;
   rooms: string[];
   tags: string[];
 }) {

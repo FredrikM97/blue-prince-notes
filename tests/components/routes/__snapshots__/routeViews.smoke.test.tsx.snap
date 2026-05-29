@@ -1,0 +1,119 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`route views smoke snapshots > matches snapshot for builtin section route mapping 1`] = `
+<DocumentFragment>
+  <div
+    data-testid="todos-page"
+  >
+    todos
+  </div>
+</DocumentFragment>
+`;
+
+exports[`route views smoke snapshots > matches snapshot for builtin section route mapping 2`] = `
+<DocumentFragment>
+  <div
+    data-testid="map-page"
+  >
+    map
+  </div>
+</DocumentFragment>
+`;
+
+exports[`route views smoke snapshots > matches snapshot for builtin section route mapping 3`] = `
+<DocumentFragment>
+  <div
+    data-testid="graph-page"
+  >
+    graph
+  </div>
+</DocumentFragment>
+`;
+
+exports[`route views smoke snapshots > matches snapshot for builtin section route mapping 4`] = `
+<DocumentFragment>
+  <div
+    data-testid="images-page"
+  >
+    images
+  </div>
+</DocumentFragment>
+`;
+
+exports[`route views smoke snapshots > matches snapshot for builtin section route mapping 5`] = `
+<DocumentFragment>
+  <div
+    data-testid="settings-page"
+  >
+    settings
+  </div>
+</DocumentFragment>
+`;
+
+exports[`route views smoke snapshots > matches snapshot for custom notes section route 1`] = `
+<DocumentFragment>
+  <div
+    data-testid="notes-page"
+  >
+    notes:{"filterType":"story","title":"Story"}
+  </div>
+</DocumentFragment>
+`;
+
+exports[`route views smoke snapshots > matches snapshot for missing section route 1`] = `
+<DocumentFragment>
+  <div
+    class="mx-auto max-w-3xl px-4 py-10 text-center text-muted-foreground"
+  >
+    Section not found.
+  </div>
+</DocumentFragment>
+`;
+
+exports[`route views smoke snapshots > matches snapshot for not-found route shell 1`] = `
+<DocumentFragment>
+  <div
+    class="flex min-h-[60vh] items-center justify-center px-4"
+  >
+    <div
+      class="max-w-md text-center"
+    >
+      <h1
+        class="font-serif text-7xl text-brass"
+      >
+        404
+      </h1>
+      <h2
+        class="mt-4 font-serif text-xl"
+      >
+        A door that doesn't open
+      </h2>
+      <p
+        class="mt-2 text-sm text-muted-foreground"
+      >
+        This room isn't on the map. Head back to the entrance hall.
+      </p>
+      <div
+        class="mt-6"
+      >
+        <a
+          class="inline-flex rounded-md bg-brass px-4 py-2 text-sm font-medium text-brass-foreground hover:bg-brass/90"
+          href="/"
+        >
+          Go home
+        </a>
+      </div>
+    </div>
+  </div>
+</DocumentFragment>
+`;
+
+exports[`route views smoke snapshots > matches snapshot for notes index route 1`] = `
+<DocumentFragment>
+  <div
+    data-testid="notes-page"
+  >
+    notes:{"title":"Notes","emptyHint":"No notes yet. Press N anywhere to add one."}
+  </div>
+</DocumentFragment>
+`;

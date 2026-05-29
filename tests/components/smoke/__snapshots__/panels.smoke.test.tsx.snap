@@ -1,0 +1,900 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`smoke panels > matches snapshot for graph details panel 1`] = `
+<DocumentFragment>
+  <div
+    class="page-layout-panel space-y-4"
+  >
+    <div
+      class="space-y-3 rounded-md border border-border/70 bg-card/50 p-3"
+    >
+      <div>
+        <h2
+          class="font-serif text-lg"
+        >
+          Connections
+        </h2>
+        <p
+          class="mt-1 text-sm text-muted-foreground"
+        >
+          Arrows reflect explicit references in entry text: @room and #tag.
+        </p>
+      </div>
+      <div
+        class="flex items-center gap-3 text-sm text-muted-foreground"
+      >
+        <span>
+          2 entries
+        </span>
+        <span>
+          1 links
+        </span>
+      </div>
+    </div>
+    <div>
+      <h3
+        class="font-serif text-lg"
+      >
+        Find the hidden key
+      </h3>
+    </div>
+    <div
+      class="space-y-2 rounded-md border border-border/70 bg-card/50 p-3"
+    >
+      <div
+        class="text-xs font-medium uppercase tracking-wider text-muted-foreground"
+      >
+        Info
+      </div>
+      <div
+        class="space-y-2 text-base"
+      >
+        <div
+          class="flex items-center gap-2"
+        >
+          <span
+            class="w-18 text-sm text-muted-foreground"
+          >
+            Type
+          </span>
+          <span
+            class="inline-flex items-center rounded border px-1.5 py-0.5 text-[10px]"
+          >
+            clue
+          </span>
+        </div>
+        <div
+          class="flex items-center gap-2"
+        >
+          <span
+            class="w-18 text-sm text-muted-foreground"
+          >
+            Room
+          </span>
+          <span
+            class="inline-flex items-center rounded border px-1.5 py-0.5 text-[10px]"
+          >
+            @Entrance Hall
+          </span>
+        </div>
+        <div
+          class="flex items-start gap-2"
+        >
+          <span
+            class="w-18 pt-1 text-sm text-muted-foreground"
+          >
+            Tags
+          </span>
+          <div
+            class="flex flex-wrap gap-1.5"
+          >
+            <span
+              class="inline-flex items-center rounded border px-1.5 py-0.5 text-[10px]"
+            >
+              #keys
+            </span>
+          </div>
+        </div>
+        <div
+          class="flex items-center gap-3 text-sm text-muted-foreground"
+        >
+          <span>
+            Outgoing: 0
+          </span>
+          <span>
+            Incoming: 1
+          </span>
+        </div>
+      </div>
+    </div>
+    <div
+      class="h-px bg-border/80"
+    />
+    <div
+      class="space-y-1"
+    >
+      <div
+        class="text-xs font-medium uppercase tracking-wider text-muted-foreground"
+      >
+        Details
+      </div>
+      <div
+        class="markdown-preview-surface prose prose-sm dark:prose-invert max-w-none text-sm leading-relaxed"
+      >
+        <p>
+          Check @Entrance-Hall and #keys
+        </p>
+      </div>
+      <div
+        data-testid="attached-images-gallery"
+      />
+    </div>
+  </div>
+</DocumentFragment>
+`;
+
+exports[`smoke panels > matches snapshot for images left panel 1`] = `
+<DocumentFragment>
+  <div
+    class="page-layout-panel"
+  >
+    <h1
+      class="font-serif text-2xl"
+    >
+      Images
+    </h1>
+    <p
+      class="mt-1 text-xs text-muted-foreground"
+    >
+      3 stored images
+    </p>
+    <p
+      class="mt-2 text-xs text-muted-foreground"
+    >
+      Click an image to open details in the right panel. Use the preview button there for full size.
+    </p>
+    <div
+      class="mt-2 space-y-1.5"
+    >
+      <h2
+        class="font-serif text-base"
+      >
+        Steam Images
+      </h2>
+      <div
+        class="flex items-center justify-between gap-2"
+      >
+        <button
+          class="inline-flex items-center justify-center gap-2 whitespace-nowrap font-medium cursor-pointer transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 disabled:cursor-not-allowed [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 border border-input bg-background shadow-sm hover:bg-accent hover:text-accent-foreground h-8 rounded-md px-3 text-xs"
+        >
+          Refresh
+        </button>
+        <span
+          class="text-xs text-muted-foreground"
+          title="11/14/2023, 10:13:20 PM"
+        >
+          Last refresh: 22:13
+        </span>
+      </div>
+    </div>
+  </div>
+</DocumentFragment>
+`;
+
+exports[`smoke panels > matches snapshot for map shell and supports opening a cell 1`] = `
+<DocumentFragment>
+  <div
+    class="page-layout-panel"
+  >
+    <h1
+      class="font-serif text-xl font-semibold"
+    >
+      Mt. Holly Map
+    </h1>
+    <p
+      class="mt-1 text-xs text-muted-foreground"
+    >
+      5 × 9 grid — click a cell to place a room and add comments.
+    </p>
+  </div>
+  <div
+    class="map-layout-main"
+  >
+    <div
+      class="map-grid"
+      style="grid-template-columns: repeat(5, minmax(0, 1fr)); max-width: clamp(28rem, calc((100dvh - 8rem) * 5 / 9), 36rem);"
+    >
+      <button
+        class="map-cell map-cell-neutral"
+      >
+        <span
+          class="map-cell-coord"
+        >
+          0,0
+        </span>
+      </button>
+      <button
+        class="map-cell map-cell-neutral"
+      >
+        <span
+          class="map-cell-coord"
+        >
+          0,1
+        </span>
+      </button>
+      <button
+        class="map-cell map-cell-neutral"
+      >
+        <span
+          class="map-cell-coord"
+        >
+          0,2
+        </span>
+      </button>
+      <button
+        class="map-cell map-cell-neutral"
+      >
+        <span
+          class="map-cell-coord"
+        >
+          0,3
+        </span>
+      </button>
+      <button
+        class="map-cell map-cell-neutral"
+      >
+        <span
+          class="map-cell-coord"
+        >
+          0,4
+        </span>
+      </button>
+      <button
+        class="map-cell map-cell-neutral"
+      >
+        <span
+          class="map-cell-coord"
+        >
+          1,0
+        </span>
+      </button>
+      <button
+        class="map-cell map-cell-neutral"
+      >
+        <span
+          class="map-cell-coord"
+        >
+          1,1
+        </span>
+      </button>
+      <button
+        class="map-cell map-cell-neutral"
+      >
+        <span
+          class="map-cell-coord"
+        >
+          1,2
+        </span>
+      </button>
+      <button
+        class="map-cell map-cell-neutral"
+      >
+        <span
+          class="map-cell-coord"
+        >
+          1,3
+        </span>
+      </button>
+      <button
+        class="map-cell map-cell-neutral"
+      >
+        <span
+          class="map-cell-coord"
+        >
+          1,4
+        </span>
+      </button>
+      <button
+        class="map-cell map-cell-neutral"
+      >
+        <span
+          class="map-cell-coord"
+        >
+          2,0
+        </span>
+      </button>
+      <button
+        class="map-cell map-cell-neutral"
+      >
+        <span
+          class="map-cell-coord"
+        >
+          2,1
+        </span>
+      </button>
+      <button
+        class="map-cell map-cell-neutral"
+      >
+        <span
+          class="map-cell-coord"
+        >
+          2,2
+        </span>
+      </button>
+      <button
+        class="map-cell map-cell-neutral"
+      >
+        <span
+          class="map-cell-coord"
+        >
+          2,3
+        </span>
+      </button>
+      <button
+        class="map-cell map-cell-neutral"
+      >
+        <span
+          class="map-cell-coord"
+        >
+          2,4
+        </span>
+      </button>
+      <button
+        class="map-cell map-cell-neutral"
+      >
+        <span
+          class="map-cell-coord"
+        >
+          3,0
+        </span>
+      </button>
+      <button
+        class="map-cell map-cell-neutral"
+      >
+        <span
+          class="map-cell-coord"
+        >
+          3,1
+        </span>
+      </button>
+      <button
+        class="map-cell map-cell-neutral"
+      >
+        <span
+          class="map-cell-coord"
+        >
+          3,2
+        </span>
+      </button>
+      <button
+        class="map-cell map-cell-neutral"
+      >
+        <span
+          class="map-cell-coord"
+        >
+          3,3
+        </span>
+      </button>
+      <button
+        class="map-cell map-cell-neutral"
+      >
+        <span
+          class="map-cell-coord"
+        >
+          3,4
+        </span>
+      </button>
+      <button
+        class="map-cell map-cell-neutral"
+      >
+        <span
+          class="map-cell-coord"
+        >
+          4,0
+        </span>
+      </button>
+      <button
+        class="map-cell map-cell-neutral"
+      >
+        <span
+          class="map-cell-coord"
+        >
+          4,1
+        </span>
+      </button>
+      <button
+        class="map-cell map-cell-neutral"
+      >
+        <span
+          class="map-cell-coord"
+        >
+          4,2
+        </span>
+      </button>
+      <button
+        class="map-cell map-cell-neutral"
+      >
+        <span
+          class="map-cell-coord"
+        >
+          4,3
+        </span>
+      </button>
+      <button
+        class="map-cell map-cell-neutral"
+      >
+        <span
+          class="map-cell-coord"
+        >
+          4,4
+        </span>
+      </button>
+      <button
+        class="map-cell map-cell-neutral"
+      >
+        <span
+          class="map-cell-coord"
+        >
+          5,0
+        </span>
+      </button>
+      <button
+        class="map-cell map-cell-neutral"
+      >
+        <span
+          class="map-cell-coord"
+        >
+          5,1
+        </span>
+      </button>
+      <button
+        class="map-cell map-cell-neutral"
+      >
+        <span
+          class="map-cell-coord"
+        >
+          5,2
+        </span>
+      </button>
+      <button
+        class="map-cell map-cell-neutral"
+      >
+        <span
+          class="map-cell-coord"
+        >
+          5,3
+        </span>
+      </button>
+      <button
+        class="map-cell map-cell-neutral"
+      >
+        <span
+          class="map-cell-coord"
+        >
+          5,4
+        </span>
+      </button>
+      <button
+        class="map-cell map-cell-neutral"
+      >
+        <span
+          class="map-cell-coord"
+        >
+          6,0
+        </span>
+      </button>
+      <button
+        class="map-cell map-cell-neutral"
+      >
+        <span
+          class="map-cell-coord"
+        >
+          6,1
+        </span>
+      </button>
+      <button
+        class="map-cell map-cell-neutral"
+      >
+        <span
+          class="map-cell-coord"
+        >
+          6,2
+        </span>
+      </button>
+      <button
+        class="map-cell map-cell-neutral"
+      >
+        <span
+          class="map-cell-coord"
+        >
+          6,3
+        </span>
+      </button>
+      <button
+        class="map-cell map-cell-neutral"
+      >
+        <span
+          class="map-cell-coord"
+        >
+          6,4
+        </span>
+      </button>
+      <button
+        class="map-cell map-cell-neutral"
+      >
+        <span
+          class="map-cell-coord"
+        >
+          7,0
+        </span>
+      </button>
+      <button
+        class="map-cell map-cell-neutral"
+      >
+        <span
+          class="map-cell-coord"
+        >
+          7,1
+        </span>
+      </button>
+      <button
+        class="map-cell map-cell-neutral"
+      >
+        <span
+          class="map-cell-coord"
+        >
+          7,2
+        </span>
+      </button>
+      <button
+        class="map-cell map-cell-neutral"
+      >
+        <span
+          class="map-cell-coord"
+        >
+          7,3
+        </span>
+      </button>
+      <button
+        class="map-cell map-cell-neutral"
+      >
+        <span
+          class="map-cell-coord"
+        >
+          7,4
+        </span>
+      </button>
+      <button
+        class="map-cell map-cell-neutral"
+      >
+        <span
+          class="map-cell-coord"
+        >
+          8,0
+        </span>
+      </button>
+      <button
+        class="map-cell map-cell-neutral"
+      >
+        <span
+          class="map-cell-coord"
+        >
+          8,1
+        </span>
+      </button>
+      <button
+        class="map-cell map-cell-neutral"
+      >
+        <span
+          class="map-cell-coord"
+        >
+          8,2
+        </span>
+      </button>
+      <button
+        class="map-cell map-cell-neutral"
+      >
+        <span
+          class="map-cell-coord"
+        >
+          8,3
+        </span>
+      </button>
+      <button
+        class="map-cell map-cell-neutral"
+      >
+        <span
+          class="map-cell-coord"
+        >
+          8,4
+        </span>
+      </button>
+    </div>
+  </div>
+</DocumentFragment>
+`;
+
+exports[`smoke panels > matches snapshot for notes list row and actions 1`] = `
+<DocumentFragment>
+  <section
+    class="notes-view-section"
+  >
+    <div
+      class="notes-view-list"
+    >
+      <div
+        class="note-row-item"
+      >
+        <div
+          class="note-row-inner group"
+        >
+          <button
+            class="note-row-preview-btn"
+            type="button"
+          >
+            <div
+              class="note-summary-wrap"
+            >
+              <span
+                class="note-summary-icon note-summary-icon-clue"
+                title="Type: Clue"
+              >
+                <svg
+                  aria-label="Type: Clue"
+                  class="lucide lucide-lightbulb note-summary-icon-svg group-hover:scale-110"
+                  fill="none"
+                  height="24"
+                  stroke="currentColor"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  viewBox="0 0 24 24"
+                  width="24"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                    d="M15 14c.2-1 .7-1.7 1.5-2.5 1-.9 1.5-2.2 1.5-3.5A6 6 0 0 0 6 8c0 1 .2 2.2 1.5 3.5.7.7 1.3 1.5 1.5 2.5"
+                  />
+                  <path
+                    d="M9 18h6"
+                  />
+                  <path
+                    d="M10 22h4"
+                  />
+                </svg>
+              </span>
+              <div
+                class="note-summary-body"
+              >
+                <h3
+                  class="note-summary-title"
+                >
+                  Find the hidden key
+                </h3>
+                <div
+                  class="note-summary-meta"
+                >
+                  <span
+                    class="note-summary-time"
+                  >
+                    20602d
+                  </span>
+                  <div
+                    class="note-summary-pills"
+                  >
+                    <span
+                      class="note-pill note-pill-room"
+                    >
+                      @Entrance Hall
+                    </span>
+                    <span
+                      class="note-pill note-pill-tag"
+                    >
+                      #keys
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </button>
+          <button
+            aria-label="Edit note"
+            class="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium cursor-pointer transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 disabled:cursor-not-allowed [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 hover:bg-accent hover:text-accent-foreground h-9 w-9 shrink-0"
+            type="button"
+          >
+            <svg
+              aria-hidden="true"
+              class="lucide lucide-pencil h-4 w-4"
+              fill="none"
+              height="24"
+              stroke="currentColor"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              viewBox="0 0 24 24"
+              width="24"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                d="M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z"
+              />
+              <path
+                d="m15 5 4 4"
+              />
+            </svg>
+          </button>
+          <button
+            aria-label="Delete note"
+            class="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium cursor-pointer transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 disabled:cursor-not-allowed [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 hover:bg-accent h-9 w-9 shrink-0 text-destructive hover:text-destructive"
+            type="button"
+          >
+            <svg
+              aria-hidden="true"
+              class="lucide lucide-trash2 lucide-trash-2 h-4 w-4"
+              fill="none"
+              height="24"
+              stroke="currentColor"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              viewBox="0 0 24 24"
+              width="24"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                d="M10 11v6"
+              />
+              <path
+                d="M14 11v6"
+              />
+              <path
+                d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"
+              />
+              <path
+                d="M3 6h18"
+              />
+              <path
+                d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"
+              />
+            </svg>
+          </button>
+          <button
+            aria-label="Preview note"
+            class="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium cursor-pointer transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 disabled:cursor-not-allowed [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 hover:bg-accent hover:text-accent-foreground h-9 w-9 shrink-0"
+            type="button"
+          >
+            <svg
+              aria-hidden="true"
+              class="lucide lucide-chevron-right h-4 w-4"
+              fill="none"
+              height="24"
+              stroke="currentColor"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              viewBox="0 0 24 24"
+              width="24"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                d="m9 18 6-6-6-6"
+              />
+            </svg>
+          </button>
+        </div>
+      </div>
+    </div>
+  </section>
+</DocumentFragment>
+`;
+
+exports[`smoke panels > matches snapshot for todo sidebar panel 1`] = `
+<DocumentFragment>
+  <div
+    class="space-y-4"
+  >
+    <div
+      class="page-layout-panel"
+    >
+      <h1
+        class="font-serif text-2xl"
+      >
+        Todo
+      </h1>
+      <p
+        class="mt-1 text-xs text-muted-foreground"
+      >
+        1 item
+      </p>
+      <div
+        class="mt-3 space-y-1 text-xs text-muted-foreground"
+      >
+        <p>
+          Open: 1
+        </p>
+        <p>
+          In progress: 0
+        </p>
+        <p>
+          Done: 0
+        </p>
+      </div>
+    </div>
+    <div
+      class="page-layout-panel"
+    >
+      <p
+        class="todos-sidebar-label"
+      >
+        Scope
+      </p>
+      <div
+        class="flex flex-wrap gap-1"
+      >
+        <button
+          class="inline-flex items-center justify-center gap-2 whitespace-nowrap cursor-pointer transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 disabled:cursor-not-allowed [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 h-auto rounded px-2 py-0.5 text-xs bg-brass font-medium text-brass-foreground"
+          type="button"
+        >
+          All
+        </button>
+        <button
+          class="inline-flex items-center justify-center gap-2 whitespace-nowrap font-medium cursor-pointer transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 disabled:cursor-not-allowed [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 h-auto rounded px-2 py-0.5 text-xs text-muted-foreground hover:bg-brass/20 hover:text-foreground"
+          type="button"
+        >
+          This run
+        </button>
+        <button
+          class="inline-flex items-center justify-center gap-2 whitespace-nowrap font-medium cursor-pointer transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 disabled:cursor-not-allowed [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 h-auto rounded px-2 py-0.5 text-xs text-muted-foreground hover:bg-brass/20 hover:text-foreground"
+          type="button"
+        >
+          Cross-run
+        </button>
+        <button
+          class="inline-flex items-center justify-center gap-2 whitespace-nowrap font-medium cursor-pointer transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 disabled:cursor-not-allowed [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 h-auto rounded px-2 py-0.5 text-xs text-muted-foreground hover:bg-brass/20 hover:text-foreground"
+          type="button"
+        >
+          Someday
+        </button>
+      </div>
+    </div>
+    <div
+      class="page-layout-panel"
+    >
+      <p
+        class="todos-sidebar-label"
+      >
+        This run
+      </p>
+      <div
+        class="todos-run-open-card"
+      >
+        <div
+          class="todos-run-open-title"
+        >
+          This run · 1 open
+        </div>
+        <ul
+          class="todos-run-open-list"
+        >
+          <li
+            class="todos-run-open-item"
+          >
+            <input
+              class="todos-run-open-checkbox"
+              type="checkbox"
+            />
+            <span>
+              Check west wing
+            </span>
+            <span
+              class="inline-flex items-center rounded border px-1.5 py-0.5 text-[10px] todos-run-open-chip"
+            >
+              @Parlor
+            </span>
+          </li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</DocumentFragment>
+`;

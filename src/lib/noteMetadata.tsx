@@ -1,6 +1,7 @@
 import type { NoteType } from "@/lib/types";
-import { Key, BookOpen, Lightbulb, Eye, Sparkles, ListTodo } from "lucide-react";
+import { BookOpen, Eye, Key, Lightbulb, ListTodo, Sparkles } from "lucide-react";
 
+// eslint-disable-next-line react-refresh/only-export-components -- shared metadata constants, not a React component module
 export const NOTE_TYPES: { value: NoteType; label: string }[] = [
   { value: "observation", label: "Observation" },
   { value: "clue", label: "Clue" },
@@ -27,10 +28,14 @@ export const TYPE_LABEL = {
   task: "Todo",
 } as const;
 
+/**
+ * Formats a timestamp into a short relative string for note rows.
+ */
+// eslint-disable-next-line react-refresh/only-export-components -- shared utility used by row summaries
 export function relTime(ts: number) {
-  const d = Date.now() - ts;
-  if (d < 60_000) return "just now";
-  if (d < 3_600_000) return `${Math.floor(d / 60_000)}m`;
-  if (d < 86_400_000) return `${Math.floor(d / 3_600_000)}h`;
-  return `${Math.floor(d / 86_400_000)}d`;
+  const delta = Date.now() - ts;
+  if (delta < 60_000) return "just now";
+  if (delta < 3_600_000) return `${Math.floor(delta / 60_000)}m`;
+  if (delta < 86_400_000) return `${Math.floor(delta / 3_600_000)}h`;
+  return `${Math.floor(delta / 86_400_000)}d`;
 }

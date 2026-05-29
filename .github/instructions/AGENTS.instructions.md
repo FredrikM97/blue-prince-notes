@@ -32,6 +32,11 @@ description: Describe when these instructions should be loaded by the agent base
 - Prefer small, focused unit tests for utility/business logic and component tests for UI behavior.
 - Include snapshot tests for stable, user-facing UI structure when layout/markup changes are part of the task.
 - When snapshots change intentionally, review and keep them only when they represent the expected UI output.
+- For changes that affect interaction-heavy UI (editing, scrolling, suggestions, drag/drop, routing), run a quick devtools-style hotspot audit: identify the worst callback/long task and patch the highest-impact offender in the same task when feasible.
+- For frontend behavior changes, validate both functionality and performance:
+  - functionality: run automated tests relevant to touched features and at least one end-to-end user flow smoke check (manual or automated) covering create/edit/delete and navigation paths touched by the change.
+  - performance: verify no new repeated long-task warnings, no `Maximum update depth exceeded`, and no unstable external-store snapshot loops before finalizing.
+- If full UI automation is not yet available for a touched workflow, explicitly report that gap and add/adjust the closest component-level or integration test in the same change.
 
 ## Theme Token Structure
 
@@ -64,6 +69,55 @@ description: Describe when these instructions should be loaded by the agent base
 - Prefer focused local hooks (for example: derived data, global listeners, submit handlers) instead of one giant hook return object.
 - Destructure only what a component section needs; avoid pulling large state/action sets into a single top-level function when they can be delegated.
 
+## Reusable Placement And Boundaries
+
+- Keep a clear distinction between feature-specific code and shared cross-feature code.
+- If logic is reused across pages/features, move it to shared locations instead of leaving it in a feature folder.
+- Shared input building blocks belong in `src/components/common/inputs/`.
+- Markdown-related components/utilities belong in `src/components/common/markdown/`.
+- Dropdown-related components belong in `src/components/common/dropdowns/`.
+- Shared cross-feature hooks belong in `src/hooks/`.
+- Store-derived data hooks/selectors should live in `src/hooks/` (not `src/data/`) unless they are persistence/IO concerns.
+- Feature folders (for example `src/components/notes/`) should only contain logic primarily owned by that feature.
+- Do not mix unrelated concerns in one file just to add features faster; split by responsibility first.
+
+## Folder Creation Policy
+
+- It is OK to create new folders when needed to isolate and group functionality.
+- Prefer adding focused folders (for example `inputs`, `hooks`, `selectors`) over growing mixed-purpose files.
+- Create folders when it improves discoverability, reuse, and ownership boundaries.
+- Group by functionality first (for example one markdown folder, one dropdown folder) so related behavior is easy to find.
+
+## Naming And File Placement Convention
+
+- Use one consistent naming convention across the repo.
+- Folder names: lowercase, short, and purpose-based (`common`, `notes`, `inputs`, `hooks`).
+- React component files: PascalCase (for example `TokenInputField.tsx`).
+- Hook files: `use` prefix + PascalCase stem (for example `useTokenSuggestionController.tsx`).
+- Utility files: descriptive camelCase (for example `tokenSuggestions.tsx`).
+- Do not add the `Common` prefix to file names by default. Prefer direct names like `Button`, `Dialog`, `Tabs`, `Sonner`.
+- Avoid feature-prefixed names for shared files (for example use `SuggestionsDropdown`, not `NotesSuggestionsDropdown`).
+- Use stable naming and placement over time; avoid mixing equivalent names/locations for the same kind of artifact.
+- Framework-required special files (for example route files like `__root.tsx`) may keep framework naming.
+- For legacy lowercase component wrapper files already in the codebase, prefer normalizing to PascalCase only in dedicated rename tasks; do not introduce new lowercase component filenames.
+
+## Move/Rename Hygiene
+
+- When moving or renaming a file, remove the old file in the same change.
+- Update all imports/references in the same change so there is only one active source of truth.
+- Do not leave duplicate implementations behind after extraction/migration.
+
+## Extension Convention
+
+- Use `.tsx` for all TypeScript files under `src/` and `tests/` (components, hooks, utilities, data, tests).
+- Do not introduce new `.ts` files in `src/` or `tests/`.
+
+## Documentation Requirements
+
+- Add concise TSDoc comments above every exported component, hook, and utility function.
+- For non-trivial internal helpers, add a short comment describing purpose and boundaries.
+- Keep docs focused on intent and usage, not line-by-line narration.
+
 ## Panel Naming And Sidebar Structure
 
 - For sidebar UI components, use names suffixed with `Panel`.
@@ -74,19 +128,28 @@ description: Describe when these instructions should be loaded by the agent base
 
 - Keep naming consistent for note-domain UI components; prefer `Notes*` names over mixing `Note*` and `Notes*` at the same architectural level.
 - Avoid reintroducing retired names (for example `Capture*`) once a new naming direction is chosen.
+- For shared cross-feature input building blocks (for example details editors used in notes and map), prefer generic names (for example `DetailsField`) over feature-prefixed duplicates.
 
 ## Button Usage
 
-- Use the premade button components from `ui/button.tsx` instead of calling `buttonClass()` directly.
+- Use the premade button components from `components/common/Button.tsx` instead of calling `buttonClass()` directly.
 - Available components: `Button` (general, supports `variant` and `size` props), `IconButton` (ghost icon, always square with `shrink-0` and `type="button"` built in), `BrassButton` (accent primary action), `GhostButton` (secondary/cancel action).
-- Do not reach for `buttonClass()` for new code. If an exact combination is not covered by a premade component, add a new variant to `ui/button.tsx` rather than using the raw function.
+- Do not reach for `buttonClass()` for new code. If an exact combination is not covered by a premade component, add a new variant to `components/common/Button.tsx` rather than using the raw function.
 - `IconButton` has `type="button"` and `shrink-0` built in — never pass these explicitly at the call site.
 
 ## Markdown Support
 
-- Use `MarkdownEditor` from `common/MarkdownEditor.tsx` wherever users write markdown text (note body, details fields). It includes a toolbar and live preview toggle.
-- Use `MarkdownPreview` from `common/MarkdownPreview.tsx` to render stored markdown in read-only contexts (note detail views, map cell previews).
+- Use `MarkdownEditor` from `common/markdown/MarkdownEditor.tsx` wherever users write markdown text (note body, details fields). It includes a toolbar and live preview toggle.
+- Use `DetailsField` from `common/inputs/DetailsField.tsx` for all user-editable details inputs (notes, todos, map cell details, and similar forms) so behavior stays consistent.
+- Map cell editing panels must use `DetailsField` for the cell-details input instead of bespoke textarea/editor wiring.
+- Use `MarkdownPreview` from `common/markdown/MarkdownPreview.tsx` to render stored markdown in read-only contexts (note detail views, map cell previews).
 - Do not reach for raw `ReactMarkdown` + `remarkGfm` inline in components — always use these shared wrappers.
+
+## Suggestions UX
+
+- Keep token suggestions centralized through shared notes suggestion helpers/components; avoid per-field custom suggestion renderers.
+- Suggestions must support `@` room tokens, `#` tag tokens, and `!` type tokens anywhere the shared details/title suggestion UX is used.
+- Suggestion dropdowns must support keyboard navigation (`ArrowUp`, `ArrowDown`, `Enter`, `Tab`, `Escape`) in addition to mouse selection.
 
 ## Hook Complexity
 
@@ -97,16 +160,32 @@ description: Describe when these instructions should be loaded by the agent base
 - Avoid adding `useMemo` by default. Use it only when a value is demonstrably expensive to recompute, or when a stable reference is required for a memoized child or effect dependency. Prefer plain computation, module constants, or derived selectors first.
 - Avoid `setState` when the value is purely derived from props or can live in a ref/controlled DOM element without changing render output. In hot UI paths, keep state as local and minimal; prefer refs for transient cursor/selection data and uncontrolled inputs only when that measurably reduces rerenders.
 
+## Infinite Loop Prevention
+
+- Treat potential render/update loops as release-blocking defects; do not ship code that can trigger `Maximum update depth exceeded`.
+- Before merging hook/component state changes, verify that effects cannot write state from unstable dependencies that change every render.
+- Reducers and state setters must be idempotent for no-op updates: if the next value is equal to current state, return/keep current state.
+- Avoid selector patterns that allocate new objects on every render in frequently mounted boundaries; prefer stable selectors or separate primitive/array selectors.
+- When introducing context providers at app boundaries, ensure provider values are stable and that consumers do not subscribe to alternate fallback stores during normal provider usage.
+- After state-management refactors, run a quick runtime sanity check for repeated rerenders or loop warnings in addition to lint/build.
+
 ## Structural Simplicity
 
 - Prefer fewer div layers. Before wrapping in a new `<div>`, check if the existing parent container can receive the needed class instead.
 - Avoid wrapping a single child in a structural div that adds no layout behavior — remove it and apply the class directly.
 - Regularly review components for redundant container elements after refactors.
 
+## Duplication Reduction
+
+- When the same or highly similar logic appears in more than one feature/component, refactor it into a shared generic hook/component/file.
+- Avoid copy-pasting suggestion wiring, derived selectors, or repetitive field controllers across panels; centralize the behavior once and reuse it.
+- Keep files focused and reasonably sized; if a file starts mixing unrelated concerns, split by responsibility before adding more logic.
+
 ## Panel Visual Rules
 
 - Avoid adding decorative inner borders inside existing panel containers (for example inside `page-layout-panel`).
 - Prefer spacing, typography, and subtle background contrast over nested bordered boxes within panels.
+- Avoid boxed/bordered styling for every list item by default (for example map room note rows). Use borders only when they communicate state or interaction, not as baseline decoration.
 
 ## Instruction Maintenance
 

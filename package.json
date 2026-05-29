@@ -9,6 +9,10 @@
     "build:dev": "vite build --mode development",
     "preview": "vite preview",
     "test": "vitest run",
+    "test:e2e": "playwright test",
+    "test:smoke:local": "playwright test tests/e2e",
+    "test:e2e:headed": "xvfb-run --auto-servernum playwright test --headed",
+    "test:e2e:headed:native": "playwright test --headed",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
     "lint": "eslint .",
@@ -44,6 +48,7 @@
   },
   "devDependencies": {
     "@eslint/js": "^9.32.0",
+    "@playwright/test": "^1.54.2",
     "@types/node": "^25.9.1",
     "@types/react": "^19.2.0",
     "@types/react-dom": "^19.2.0",

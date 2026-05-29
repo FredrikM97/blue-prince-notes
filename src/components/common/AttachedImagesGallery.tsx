@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import { ChevronDown, ChevronUp } from "lucide-react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/common/dialog";
-import { IconButton } from "@/components/common/button";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/common/Dialog";
+import { IconButton } from "@/components/common/Button";
 import { StoredImageView } from "@/components/StoredImageView";
 import { useStore } from "@/data/store";
 import { cn } from "@/lib/utils";

@@ -42,6 +42,7 @@ import { buildUniqueFileName } from "./imageNames";
 
 interface State {
   loaded: boolean;
+  dataVersion: number;
   notes: Note[];
   todos: Todo[];
   images: StoredImage[];
@@ -178,6 +179,7 @@ async function ensureGridSeed(existing: GridCell[]) {
 
 export const useStore = create<State>((set, get) => ({
   loaded: false,
+  dataVersion: 0,
   notes: [],
   todos: [],
   images: [],
@@ -219,6 +221,7 @@ export const useStore = create<State>((set, get) => ({
       rooms,
       sections: sections2.sort((a, b) => a.order - b.order),
       gridCells: seededGridCells,
+      dataVersion: Date.now(),
       loaded: true,
     });
   },
@@ -235,6 +238,7 @@ export const useStore = create<State>((set, get) => ({
       rooms: [],
       sections: [],
       gridCells: [],
+      dataVersion: Date.now(),
       syncFolderName: null,
     });
     await clearAllData();
@@ -337,7 +341,7 @@ export const useStore = create<State>((set, get) => ({
         completedAt: parsed.status === "solved" ? now : undefined,
       };
       await putTodo(todo);
-      set((s) => ({ todos: [todo, ...s.todos] }));
+      set((s) => ({ todos: [todo, ...s.todos], dataVersion: s.dataVersion + 1 }));
       scheduleSyncWrite();
       return { todoId: todo.id };
     }
@@ -356,7 +360,7 @@ export const useStore = create<State>((set, get) => ({
       updatedAt: now,
     };
     await putNote(note);
-    set((s) => ({ notes: [note, ...s.notes] }));
+    set((s) => ({ notes: [note, ...s.notes], dataVersion: s.dataVersion + 1 }));
     scheduleSyncWrite();
     return { noteId: note.id };
   },

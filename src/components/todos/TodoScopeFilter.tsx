@@ -1,5 +1,5 @@
 import { TODO_SCOPE_OPTIONS } from "./constants";
-import { SelectButton } from "@/components/common/button";
+import { SelectButton } from "@/components/common/Button";
 
 export function TodoScopeFilter({
   value,

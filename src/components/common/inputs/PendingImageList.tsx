@@ -30,6 +30,9 @@ const PendingImageItem = memo(function PendingImageItem({
   );
 });
 
+/**
+ * Renders removable previews for images selected but not yet persisted.
+ */
 export function PendingImageList({
   images,
   onRemove,

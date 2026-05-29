@@ -1,23 +1,18 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "@tanstack/react-router";
 import { useStore } from "@/data/store";
-import { INPUT_BASE_CLASS } from "@/components/common/formClasses";
-import { GhostButton, BrassButton, IconButton } from "@/components/common/button";
-import { RoomDropdown } from "@/components/common/RoomDropdown";
-import { Tabs, TabsList, TabsTrigger } from "@/components/common/tabs";
-import { DropdownSelect } from "@/components/common/DropdownSelect";
+import { INPUT_BASE_CLASS } from "@/components/common/FormClasses";
+import { GhostButton, BrassButton, IconButton } from "@/components/common/Button";
+import { RoomDropdown } from "@/components/common/dropdowns/RoomDropdown";
+import { Tabs, TabsList, TabsTrigger } from "@/components/common/Tabs";
+import { DropdownSelect } from "@/components/common/dropdowns/DropdownSelect";
 import { toast } from "sonner";
 import { ImagePlus } from "lucide-react";
 import type { NoteType, Priority } from "@/lib/types";
-import { getRoomCatalog } from "@/data/rooms";
-import { NOTE_TYPES } from "@/components/notes/constants";
-import { PendingImageList } from "@/components/notes/PendingImageList";
-import { NoteDetailsField } from "@/components/notes/NoteDetailsField";
-
-interface NotesSuggestion {
-  value: string;
-  hint: string;
-}
+import { NOTE_TYPES } from "@/lib/noteMetadata";
+import { PendingImageList } from "@/components/common/inputs/PendingImageList";
+import { DetailsField } from "@/components/common/inputs/DetailsField";
+import { TokenInputField } from "@/components/common/inputs/TokenInputField";
 
 const NOTE_PRIORITY_OPTIONS = [
   { value: "high", label: "High" },
@@ -36,9 +31,6 @@ function useNotesStoreSlice() {
   const prefillRoom = useStore((s) => s.capturePrefillRoom);
   const prefillType = useStore((s) => s.capturePrefillType);
   const returnTo = useStore((s) => s.captureReturnTo);
-  const gridCells = useStore((s) => s.gridCells);
-  const notes = useStore((s) => s.notes);
-  const todos = useStore((s) => s.todos);
   const create = useStore((s) => s.createFromCapture);
 
   return {
@@ -49,9 +41,6 @@ function useNotesStoreSlice() {
     prefillRoom,
     prefillType,
     returnTo,
-    gridCells,
-    notes,
-    todos,
     create,
   };
 }
@@ -78,19 +67,12 @@ function useNotesFormState({
   const [priority, setPriority] = useState<Priority>("med");
   const [body, setBody] = useState("");
   const [pendingImages, setPendingImages] = useState<Blob[]>([]);
-  const [cursorPos, setCursorPos] = useState(prefill.length);
-  const inputRef = useRef<HTMLInputElement>(null);
-
-  useEffect(() => {
-    setTimeout(() => inputRef.current?.focus(), 50);
-  }, []);
 
   function resetAfterSubmit() {
     setTitle("");
     setBody("");
     setDateInput("");
     setPendingImages([]);
-    setTimeout(() => inputRef.current?.focus(), 0);
   }
 
   return {
@@ -112,92 +94,8 @@ function useNotesFormState({
     setBody,
     pendingImages,
     setPendingImages,
-    cursorPos,
-    setCursorPos,
-    inputRef,
     resetAfterSubmit,
   };
-}
-
-function NotesTitleField({
-  mode,
-  title,
-  setTitle,
-  cursorPos,
-  setCursorPos,
-  inputRef,
-  suggestions,
-  activeToken,
-  onSubmit,
-}: {
-  mode: "note" | "todo";
-  title: string;
-  setTitle: React.Dispatch<React.SetStateAction<string>>;
-  cursorPos: number;
-  setCursorPos: React.Dispatch<React.SetStateAction<number>>;
-  inputRef: React.RefObject<HTMLInputElement | null>;
-  suggestions: NotesSuggestion[];
-  activeToken: { token: string; start: number; end: number };
-  onSubmit: (keepOpen: boolean) => void;
-}) {
-  const cursorPosRef = useRef(cursorPos);
-
-  function updateCursorPos(next: number) {
-    if (next === cursorPosRef.current) return;
-    cursorPosRef.current = next;
-    setCursorPos(next);
-  }
-
-  return (
-    <div>
-      <label className="capture-label">Title</label>
-      <input
-        ref={inputRef}
-        value={title}
-        onChange={(e) => {
-          setTitle(e.target.value);
-          updateCursorPos(e.target.selectionStart ?? e.target.value.length);
-        }}
-        onClick={(e) => updateCursorPos(e.currentTarget.selectionStart ?? title.length)}
-        onKeyUp={(e) =>
-          updateCursorPos((e.currentTarget as HTMLInputElement).selectionStart ?? title.length)
-        }
-        onKeyDown={(e) => {
-          if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
-            e.preventDefault();
-            onSubmit(e.shiftKey);
-          }
-        }}
-        placeholder={mode === "todo" ? "Check Den bookshelf" : "Parlor safe = 4271"}
-        className={`${INPUT_BASE_CLASS} h-10`}
-      />
-      {suggestions.length > 0 && (
-        <div className="capture-suggestions">
-          <div className="capture-suggestions-title">Suggestions</div>
-          <div className="capture-suggestions-wrap">
-            {suggestions.map((s) => (
-              <button
-                key={s.value}
-                type="button"
-                onMouseDown={(e) => {
-                  e.preventDefault();
-                  const next =
-                    `${title.slice(0, activeToken.start)}${s.value} ${title.slice(activeToken.end).trimStart()}`.trim();
-                  setTitle(next);
-                  updateCursorPos(next.length);
-                  setTimeout(() => inputRef.current?.focus(), 0);
-                }}
-                className="capture-suggestion-btn"
-              >
-                {s.value}
-                <span className="ml-1 text-[10px] text-muted-foreground">{s.hint}</span>
-              </button>
-            ))}
-          </div>
-        </div>
-      )}
-    </div>
-  );
 }
 
 function NotesRoomField({
@@ -338,7 +236,7 @@ function NotesFooterActions({
     <div className="capture-footer">
       <label className="capture-attach-label">
         <span className="inline-flex items-center gap-1">
-          <ImagePlus className="h-3.5 w-3.5" /> Attach image
+          <ImagePlus className="h-3.5 w-3.5" /> Attach
         </span>
         <input
           type="file"
@@ -352,55 +250,19 @@ function NotesFooterActions({
           }}
         />
       </label>
-      <div className="flex gap-2 sm:ml-auto">
-        <GhostButton onClick={close}>Cancel</GhostButton>
-        <GhostButton onClick={() => submit(true)}>Save &amp; add another</GhostButton>
-        <BrassButton onClick={() => submit(false)}>Save</BrassButton>
+      <div className="capture-footer-actions">
+        <GhostButton size="sm" onClick={close}>
+          Cancel
+        </GhostButton>
+        <GhostButton size="sm" onClick={() => submit(true)}>
+          Save + next
+        </GhostButton>
+        <BrassButton size="sm" onClick={() => submit(false)}>
+          Save
+        </BrassButton>
       </div>
     </div>
   );
-}
-
-function useNotesDerivedData({
-  gridCells,
-  notes,
-  todos,
-  title,
-  cursorPos,
-}: {
-  gridCells: NotesStoreSlice["gridCells"];
-  notes: NotesStoreSlice["notes"];
-  todos: NotesStoreSlice["todos"];
-  title: string;
-  cursorPos: number;
-}) {
-  // All room names known to the app, merged from catalog, map cells, notes, and todos.
-  const roomOptions = useMemo(() => {
-    const all = new Set<string>(getRoomCatalog().map((r) => r.name));
-    gridCells.forEach((c) => c.roomName && all.add(c.roomName));
-    notes.forEach((n) => n.room?.trim() && all.add(n.room.trim()));
-    todos.forEach((t) => t.room?.trim() && all.add(t.room.trim()));
-    return Array.from(all).sort();
-  }, [gridCells, notes, todos]);
-
-  // All tags seen across notes and todos.
-  const tagSuggestions = useMemo(() => {
-    const all = new Set<string>();
-    notes.forEach((n) => n.tags.forEach((t) => all.add(t)));
-    todos.forEach((t) => t.tags.forEach((x) => all.add(x)));
-    return Array.from(all).sort();
-  }, [notes, todos]);
-
-  // The word being typed at the cursor — used for inline command suggestions.
-  const activeToken = useMemo(() => getActiveToken(title, cursorPos), [title, cursorPos]);
-
-  // Inline title suggestions (e.g. @room, #tag autocomplete).
-  const suggestions = useMemo(
-    () => buildSuggestions(activeToken, roomOptions, tagSuggestions),
-    [activeToken, roomOptions, tagSuggestions],
-  );
-
-  return { activeToken, suggestions };
 }
 
 function useNotesGlobalEffects({
@@ -498,13 +360,6 @@ export function NotesCreatePanel({ defaultNoteType }: { defaultNoteType?: NoteTy
     prefillType: store.prefillType,
     defaultNoteType,
   });
-  const derived = useNotesDerivedData({
-    gridCells: store.gridCells,
-    notes: store.notes,
-    todos: store.todos,
-    title: form.title,
-    cursorPos: form.cursorPos,
-  });
 
   useNotesGlobalEffects({
     open: store.open,
@@ -540,19 +395,18 @@ export function NotesCreatePanel({ defaultNoteType }: { defaultNoteType?: NoteTy
       <NotesModeTabs mode={form.mode} setMode={form.setMode} />
 
       <div className="capture-form-stack">
-        <NotesTitleField
-          mode={form.mode}
-          title={form.title}
-          setTitle={form.setTitle}
-          cursorPos={form.cursorPos}
-          setCursorPos={form.setCursorPos}
-          inputRef={form.inputRef}
-          suggestions={derived.suggestions}
-          activeToken={derived.activeToken}
-          onSubmit={submit}
+        <TokenInputField
+          label="Title"
+          value={form.title}
+          onChange={form.setTitle}
+          placeholder={form.mode === "todo" ? "Check Den bookshelf" : "Parlor safe = 4271"}
+          onSubmitShortcut={submit}
+          inputClassName={`${INPUT_BASE_CLASS} h-10`}
+          ariaLabel="Title suggestions"
+          autoFocus
         />
 
-        <NoteDetailsField
+        <DetailsField
           value={form.body}
           onChange={form.setBody}
           placeholder={
@@ -603,62 +457,4 @@ export function NotesCreatePanel({ defaultNoteType }: { defaultNoteType?: NoteTy
       {content}
     </div>
   );
-}
-
-function getActiveToken(value: string, cursorPos: number) {
-  const pos = Math.max(0, Math.min(cursorPos, value.length));
-  const left = value.slice(0, pos);
-  const tokenStart = left.lastIndexOf(" ") + 1;
-  const right = value.slice(pos);
-  const nextSpaceOffset = right.indexOf(" ");
-  const tokenEnd = nextSpaceOffset === -1 ? value.length : pos + nextSpaceOffset;
-  const token = value.slice(tokenStart, tokenEnd);
-  return { token, start: tokenStart, end: tokenEnd };
-}
-
-function buildSuggestions(
-  activeToken: { token: string },
-  rooms: string[],
-  tags: string[],
-): NotesSuggestion[] {
-  const token = activeToken.token;
-  if (!token) return [];
-
-  const normalize = (value: string) =>
-    value
-      .toLowerCase()
-      .replace(/[.,!?;:]+$/g, "")
-      .replace(/[_-]+/g, " ")
-      .trim();
-
-  if (token.startsWith("@") || /^room:/i.test(token)) {
-    const q = token.startsWith("@") ? normalize(token.slice(1)) : normalize(token.slice(5));
-    return rooms
-      .filter((room) => normalize(room).includes(q))
-      .slice(0, 8)
-      .map((room) => ({ value: `@${room.replace(/\s+/g, "-")}`, hint: "room" }));
-  }
-
-  if (token.startsWith("#")) {
-    const q = normalize(token.slice(1));
-    return tags
-      .filter((tag) => normalize(tag).includes(q))
-      .slice(0, 8)
-      .map((tag) => ({ value: `#${tag.replace(/\s+/g, "-")}`, hint: "tag" }));
-  }
-
-  if (token.startsWith("!")) {
-    const typeCommands = ["!clue", "!code", "!observation", "!theory", "!story", "!todo"];
-    const q = token.toLowerCase();
-    return typeCommands
-      .filter((cmd) => cmd.includes(q))
-      .map((cmd) => ({ value: cmd, hint: "type" }));
-  }
-
-  if (token.startsWith(">")) {
-    const today = new Date().toISOString().slice(0, 10);
-    return [{ value: `>${today}`, hint: "date" }];
-  }
-
-  return [];
 }

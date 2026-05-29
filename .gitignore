@@ -31,3 +31,6 @@ dist-ssr
 *.sln
 *.sw?
 coverage
+playwright-report
+test-results
+blob-report
