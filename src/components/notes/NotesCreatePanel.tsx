@@ -12,7 +12,8 @@ import type { NoteType, Priority } from "@/lib/types";
 import { NOTE_TYPES } from "@/lib/noteMetadata";
 import { PendingImageList } from "@/components/common/inputs/PendingImageList";
 import { DetailsField } from "@/components/common/inputs/DetailsField";
-import { TokenInputField } from "@/components/common/inputs/TokenInputField";
+import { InputField } from "@/components/common/inputs/InputField";
+import { SuggestionsDropdown } from "@/components/common/dropdowns/SuggestionsDropdown";
 
 const NOTE_PRIORITY_OPTIONS = [
   { value: "high", label: "High" },
@@ -395,24 +396,26 @@ export function NotesCreatePanel({ defaultNoteType }: { defaultNoteType?: NoteTy
       <NotesModeTabs mode={form.mode} setMode={form.setMode} />
 
       <div className="capture-form-stack">
-        <TokenInputField
-          label="Title"
-          value={form.title}
-          onChange={form.setTitle}
-          placeholder={form.mode === "todo" ? "Check Den bookshelf" : "Parlor safe = 4271"}
-          onSubmitShortcut={submit}
-          inputClassName={`${INPUT_BASE_CLASS} h-10`}
-          ariaLabel="Title suggestions"
-          autoFocus
-        />
+        <SuggestionsDropdown value={form.title} onChange={form.setTitle} onSubmitShortcut={submit} ariaLabel="Title suggestions">
+          <InputField
+            label="Title"
+            value={form.title}
+            onChange={form.setTitle}
+            placeholder={form.mode === "todo" ? "Check Den bookshelf" : "Parlor safe = 4271"}
+            inputClassName={`${INPUT_BASE_CLASS} h-10`}
+            autoFocus
+          />
+        </SuggestionsDropdown>
 
-        <DetailsField
-          value={form.body}
-          onChange={form.setBody}
-          placeholder={
-            form.mode === "todo" ? "Details about this todo…" : "Longer note, paste evidence…"
-          }
-        />
+        <SuggestionsDropdown value={form.body} onChange={form.setBody} ariaLabel="Details suggestions">
+          <DetailsField
+            value={form.body}
+            onChange={form.setBody}
+            placeholder={
+              form.mode === "todo" ? "Details about this todo…" : "Longer note, paste evidence…"
+            }
+          />
+        </SuggestionsDropdown>
 
         <NotesMetaFields
           mode={form.mode}

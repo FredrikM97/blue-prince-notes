@@ -19,6 +19,7 @@ description: Describe when these instructions should be loaded by the agent base
 - Remove redundant code, duplicate helpers, and low-value indirection when touching related areas.
 - Keep folders, APIs, and test utilities intentionally small and purpose-driven.
 - Before adding a new file, helper, or test, check whether the existing structure can be simplified instead.
+- Do not add or keep minimum compatibility layers/wrappers just to preserve old structure; simplify directly unless compatibility is explicitly required.
 
 ## Formatting And Lint Hygiene
 

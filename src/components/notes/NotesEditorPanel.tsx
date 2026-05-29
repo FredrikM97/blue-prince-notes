@@ -9,7 +9,8 @@ import { useStore } from "@/data/store";
 import { ImagePlus, X } from "lucide-react";
 import { TYPE_LABEL } from "@/lib/noteMetadata";
 import { DetailsField } from "@/components/common/inputs/DetailsField";
-import { TokenInputField } from "@/components/common/inputs/TokenInputField";
+import { InputField } from "@/components/common/inputs/InputField";
+import { SuggestionsDropdown } from "@/components/common/dropdowns/SuggestionsDropdown";
 import { toast } from "sonner";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/common/Dialog";
 
@@ -95,22 +96,31 @@ export function NotesEditorPanel({
 
   return (
     <div className="note-editor-wrap">
-      <TokenInputField
-        label="Title"
+      <SuggestionsDropdown
         value={draft.title}
         onChange={(nextTitle) => setDraft({ ...draft, title: nextTitle })}
-        placeholder="Title"
-        onSubmitShortcut={() => {
-          void onSave();
-        }}
+        onSubmitShortcut={() => { void onSave(); }}
         ariaLabel="Edit title suggestions"
-      />
+      >
+        <InputField
+          label="Title"
+          value={draft.title}
+          onChange={(nextTitle) => setDraft({ ...draft, title: nextTitle })}
+          placeholder="Title"
+        />
+      </SuggestionsDropdown>
 
-      <DetailsField
+      <SuggestionsDropdown
         value={draft.body}
         onChange={(value) => setDraft({ ...draft, body: value })}
-        placeholder="Details (markdown supported)…"
-      />
+        ariaLabel="Details suggestions"
+      >
+        <DetailsField
+          value={draft.body}
+          onChange={(value) => setDraft({ ...draft, body: value })}
+          placeholder="Details (markdown supported)…"
+        />
+      </SuggestionsDropdown>
 
       <div className="note-editor-grid-2">
         <div>

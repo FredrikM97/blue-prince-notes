@@ -3,6 +3,7 @@ import { useNavigate } from "@tanstack/react-router";
 import { Chip } from "@/components/common/Chip";
 import { RoomDropdown } from "@/components/common/dropdowns/RoomDropdown";
 import { DetailsField } from "@/components/common/inputs/DetailsField";
+import { SuggestionsDropdown } from "@/components/common/dropdowns/SuggestionsDropdown";
 import { Eraser, Trash2, X } from "lucide-react";
 import type { GridCell, Note, Todo } from "@/lib/types";
 
@@ -72,16 +73,18 @@ export function MapRightPanel({
         </div>
 
         <div>
-          <DetailsField
-            value={commentDraft}
-            onChange={setCommentDraft}
-            onBlur={() => upsertCell({ row, col, comment: commentDraft })}
-            label="Cell details"
-            showOptionalHint={false}
-            rows={6}
-            showShortcutToggle={false}
-            placeholder="Quick note about this cell - door direction, gem cost, danger..."
-          />
+          <SuggestionsDropdown value={commentDraft} onChange={setCommentDraft} ariaLabel="Cell details suggestions">
+            <DetailsField
+              value={commentDraft}
+              onChange={setCommentDraft}
+              onBlur={() => upsertCell({ row, col, comment: commentDraft })}
+              label="Cell details"
+              showOptionalHint={false}
+              rows={6}
+              showShortcutToggle={false}
+              placeholder="Quick note about this cell - door direction, gem cost, danger..."
+            />
+          </SuggestionsDropdown>
           <p className="map-comment-help">
             Markdown supported: headings, lists, checkboxes, bold, italic, code.
           </p>
