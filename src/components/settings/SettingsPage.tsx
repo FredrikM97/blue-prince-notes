@@ -15,6 +15,7 @@ import {
 } from "@/data/rooms";
 import { DropdownSelect } from "@/components/common/dropdown/DropdownSelect";
 import { exportAll, importAll } from "@/data/io";
+import { buildGraphTestNotes } from "@/data/seedGraphTest";
 import {
   pickSyncFolder,
   disconnectSyncFolder,
@@ -51,6 +52,7 @@ function SettingsSection({ title, children }: { title: string; children: ReactNo
 
 export function SettingsPage() {
   const load = useStore((s) => s.load);
+  const save = useStore((s) => s.saveNote);
   const fileRef = useRef<HTMLInputElement>(null);
   const [customRooms, setCustomRooms] = useState(() => listCustomRooms());
   const [newRoomName, setNewRoomName] = useState("");
@@ -153,6 +155,25 @@ export function SettingsPage() {
                 Steam screenshots import (optional)
               </h3>
               <SteamImportSection />
+            </div>
+
+            <div className="space-y-3 border-t border-border/70 pt-4">
+              <h3 className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+                Dev utilities
+              </h3>
+              <Button
+                variant="outline"
+                onClick={async () => {
+                  const notes = buildGraphTestNotes();
+                  for (const n of notes) await save(n);
+                  await load();
+                  toast.success(
+                    `Seeded ${notes.length} notes across ${new Set(notes.map((n) => n.room)).size} rooms`,
+                  );
+                }}
+              >
+                Seed graph test data (~70 rooms)
+              </Button>
             </div>
           </SettingsSection>
 
